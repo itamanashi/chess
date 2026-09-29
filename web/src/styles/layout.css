@@ -282,6 +282,17 @@ button.side-brand:hover { background: var(--bg-raised); }
 .main-content-container.game-viewer .board-column { max-width: 980px; }
 .chessboard-wrapper { width: 100%; min-width: 0; position: relative; }
 .chessboard-container { width: 100%; aspect-ratio: 1; overflow: hidden; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 /* Calque des flèches coudées (cavaliers) : superposé au plateau, passif. */
 .knight-arrows-layer {
   position: absolute;

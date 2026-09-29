@@ -237,10 +237,36 @@ export const Chessboard: React.FC<ChessboardProps> = ({
   };
 
   const promoColor = pendingPromotion?.color ?? (orientation === 'white' ? 'w' : 'b');
+  const { boardDescription, turnAnnouncement } = (() => {
+    const pieceNames: Record<string, string> = {
+      p: 'pion',
+      n: 'cavalier',
+      b: 'fou',
+      r: 'tour',
+      q: 'dame',
+      k: 'roi',
+    };
+    const position = new Chess(fen);
+    const pieces = position.board().flatMap((rank, rankIndex) =>
+      rank.flatMap((piece, fileIndex) =>
+        piece
+          ? [`${pieceNames[piece.type]} ${piece.color === 'w' ? 'blanc' : 'noir'} en ${'abcdefgh'[fileIndex]}${8 - rankIndex}`]
+          : [],
+      ),
+    );
+    const turn = position.turn() === 'w' ? 'Aux blancs de jouer.' : 'Aux noirs de jouer.';
+    const check = position.inCheck() ? ' Échec.' : '';
+    return {
+      boardDescription: `${turn}${check} Pièces : ${pieces.join(', ')}.`,
+      turnAnnouncement: `${turn}${check}`,
+    };
+  })();
 
   return (
-    <div className="chessboard-wrapper">
-      <div className="chessboard-container" ref={containerRef} />
+    <div className="chessboard-wrapper" role="region" aria-label="Échiquier d'étude">
+      <div className="chessboard-container" ref={containerRef} aria-hidden="true" />
+      <p className="sr-only">{boardDescription}</p>
+      <p className="sr-only" aria-live="polite">{turnAnnouncement}</p>
       {/* Coudes en L des cavaliers (Chessground = droit uniquement).
           Calque passif : la souris traverse (drag & drop intact). */}
       {knightOverlay.length > 0 && (

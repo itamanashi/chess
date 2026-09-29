@@ -259,6 +259,11 @@
 .lichess-live-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
 .db-toggle-row { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
 .db-toggle-row .db-toggle-btn { flex: 1; }
+.live-auto-toggle { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-small); }
+.lichess-status-badge { align-self: flex-start; color: var(--text-3); font-size: var(--fs-small); }
+.lichess-status-badge.online { color: var(--accent-text); }
+.lichess-status-badge.offline { color: var(--danger); }
+.lichess-total-games { color: var(--text-3); font-size: var(--fs-small); white-space: nowrap; }
 .results-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); margin-bottom: 0; }
 .lichess-moves-list { display: flex; flex-direction: column; gap: var(--sp-1); }
 .lichess-move-row {

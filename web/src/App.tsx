@@ -1101,6 +1101,7 @@ export const App: React.FC = () => {
             {activeStudioTab === 'live' && (
               <LichessLivePanel
                 currentFen={fen}
+                candidateUcis={new Set(candidateMoves.map((move) => normalizeCastleUci(fen, move.uci)))}
                 onPlayMoveFromLichess={(m) => playUciMove(m.uci)}
                 onAddMoveToRepertoire={handleAddAndPlayMove}
                 onHoverMove={preview.handleHoverMove}

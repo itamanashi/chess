@@ -5,7 +5,7 @@ import type {
   RepertoireItem,
   RepertoireRoot,
 } from '../types/chess';
-import { isAbortError, warn } from '../utils/async';
+import { warn } from '../utils/async';
 import {
   STORE_INIT_SAVE_FAILED,
   TOAST_LIBRARY_CORRUPT,
@@ -22,24 +22,9 @@ import {
   saveLibrary,
   type ImportParseResult,
 } from '../storage/libraryRepository';
+import { createDefaultOpenings } from '../storage/defaultOpenings';
 import { cloneRepertoireRoot, deleteMoveByPath } from '../utils/repertoireTree';
 import { useToast } from './useToast';
-
-function defaultLibrary(): RepertoireItem[] {
-  const now = new Date().toISOString();
-  return [
-    {
-      id: 'rep_default_black',
-      title: 'Mon Répertoire Noirs',
-      color: 'black',
-      targetElo: 'all_700',
-      createdAt: now,
-      updatedAt: now,
-      schemaVersion: LIBRARY_SCHEMA_VERSION,
-      root: emptyRoot(),
-    },
-  ];
-}
 
 /**
  * Bibliothèque de répertoires : CRUD + persistance via le repository
@@ -55,7 +40,6 @@ export function useRepertoireLibrary() {
 
   // Chargement initial : repository (migré si besoin) puis défauts embarqués.
   useEffect(() => {
-    const ctrl = new AbortController();
     const loaded = loadLibrary();
     if (loaded.status === 'ready' || loaded.status === 'migrated') {
       setRepertoires(loaded.items);
@@ -67,7 +51,7 @@ export function useRepertoireLibrary() {
         loadFeedbackSent.current = true;
         toast.info(toastLibraryUpgraded(loaded.issues[0], LIBRARY_SCHEMA_VERSION));
       }
-      return () => ctrl.abort();
+      return;
     }
     if (loaded.status === 'corrupt' && !loadFeedbackSent.current) {
       loadFeedbackSent.current = true;
@@ -77,45 +61,11 @@ export function useRepertoireLibrary() {
       loadFeedbackSent.current = true;
       toast.error(TOAST_STORAGE_UNAVAILABLE);
     }
-    fetch('/default_repertoire.json', { signal: ctrl.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (ctrl.signal.aborted) return;
-        const defaultBase: RepertoireRoot = data || emptyRoot();
-        const now = new Date().toISOString();
-        const initialLib: RepertoireItem[] = [
-          {
-            id: 'rep_black_700',
-            title: 'Défenses Noires (> 700 Elo)',
-            color: 'black',
-            targetElo: 'all_700',
-            createdAt: now,
-            updatedAt: now,
-            schemaVersion: LIBRARY_SCHEMA_VERSION,
-            root: defaultBase,
-          },
-          {
-            id: 'rep_white_e4',
-            title: 'Attaque 1.e4 Blancs',
-            color: 'white',
-            targetElo: 'club_mid',
-            createdAt: now,
-            updatedAt: now,
-            schemaVersion: LIBRARY_SCHEMA_VERSION,
-            root: defaultBase,
-          },
-        ];
-        setRepertoires(initialLib);
-        if (!saveLibrary(initialLib)) {
-          warn('library:init-save', STORE_INIT_SAVE_FAILED);
-        }
-      })
-      .catch((err: unknown) => {
-        if (isAbortError(err) || ctrl.signal.aborted) return;
-        warn('library:default-fetch', err);
-        setRepertoires(defaultLibrary());
-      });
-    return () => ctrl.abort();
+    const initialLibrary = createDefaultOpenings();
+    setRepertoires(initialLibrary);
+    if (loaded.status === 'empty' && !saveLibrary(initialLibrary)) {
+      warn('library:init-save', STORE_INIT_SAVE_FAILED);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

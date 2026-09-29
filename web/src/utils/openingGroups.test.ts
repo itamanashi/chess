@@ -11,16 +11,16 @@ const ROOT = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 function mv(partial: Partial<RepertoireMove> & { uci: string; san: string; fen: string }): RepertoireMove {
   return {
-    coup: partial.san,
+    ...partial,
+    coup: partial.coup ?? partial.san,
     san: partial.san,
     uci: partial.uci,
-    parties: 0,
-    victoires_blancs: 0,
-    nuls: 0,
-    victoires_noirs: 0,
+    parties: partial.parties ?? 0,
+    victoires_blancs: partial.victoires_blancs ?? 0,
+    nuls: partial.nuls ?? 0,
+    victoires_noirs: partial.victoires_noirs ?? 0,
     fen: partial.fen,
-    children: [],
-    ...partial,
+    children: partial.children ?? [],
   } as RepertoireMove;
 }
 
