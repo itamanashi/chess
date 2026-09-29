@@ -14,6 +14,14 @@ export interface RepertoireMove {
   eval?: string; // Évaluation de l'ordinateur (ex: "+0.27", "-0.10", "#M2")
   /** Mat (délivré ou mat-en-1) : fin forcée, priorité absolue de génération. Posé par le BFS auto, préservé par fusion/stockage. */
   isMate?: boolean;
+  /**
+   * Copie de transposition (clone du sous-arbre canonique) : même position
+   * déjà explorée ailleurs. Distinct de tout drapeau `transposition` du BFS
+   * (le nœud transposé d'origine garde son propre marquage ; ses
+   * descendants clonés portent `cloned`). Sert au comptage : un sous-arbre
+   * cloné ne doit pas être compté comme positions explorées.
+   */
+  cloned?: boolean;
   children?: RepertoireMove[];
 }
 

@@ -15,6 +15,7 @@ import {
   spreadPenalty,
   cloneSubtreeCycleSafe,
   isHigherHeapItem,
+  type AutoGenNode,
 } from './autoRepertoire';
 import { fetchLichessMoves, flushLichessPersist, hasLichessCache } from './lichess';
 import { Chess } from 'chess.js';
@@ -763,12 +764,12 @@ describe('Améliorations BFS : Quiescence, Transpositions, Cache Moteur', () => 
     const d4Branch = root.children.find((c) => c.san === 'd4');
     const c4Branch = root.children.find((c) => c.san === 'c4');
 
-    const d4Sub = d4Branch?.children[0]?.children[0]; // d4 -> Nf6 -> c4
-    const c4Sub = c4Branch?.children[0]?.children[0]; // c4 -> Nf6 -> d4
+    const d4Sub = d4Branch?.children?.[0]?.children?.[0]; // d4 -> Nf6 -> c4
+    const c4Sub = c4Branch?.children?.[0]?.children?.[0]; // c4 -> Nf6 -> d4
 
     // Le sous-arbre canonique e6 a été répliqué dans le nœud transposé
-    expect(d4Sub?.children.map((c) => c.san)).toEqual(['e6']);
-    expect(c4Sub?.children.map((c) => c.san)).toEqual(['e6']);
+    expect(d4Sub?.children?.map((c) => c.san)).toEqual(['e6']);
+    expect(c4Sub?.children?.map((c) => c.san)).toEqual(['e6']);
   });
 
   it('Cache moteur : réutilise les évaluations Stockfish de la session et skip si coup ultra-dominant', async () => {
@@ -820,6 +821,165 @@ describe('Améliorations BFS : Quiescence, Transpositions, Cache Moteur', () => 
     expect(res3.stats.engineCached).toBeGreaterThanOrEqual(1);
     // 100 % cache → zéro calcul : engineNodes ne compte que les vrais calculs.
     expect(res3.stats.engineNodes).toBe(0);
+  });
+});
+
+describe('correctifs audit — probabilité d’atteinte, transpositions, quiescence, cache', () => {
+  const START = INITIAL_FEN;
+  const empty = { white: 0, draws: 0, black: 0, moves: [] };
+
+  it('#1 : à notre tour le coup retenu vaut 100 % (facteur 1, pas la fréquence)', async () => {
+    const rootData = {
+      white: 5000, draws: 1000, black: 4000,
+      moves: [
+        { san: 'e4', uci: 'e2e4', white: 4000, draws: 800, black: 3200 },
+        { san: 'd4', uci: 'd2d4', white: 1000, draws: 200, black: 800 },
+      ],
+    };
+    mockFetch.mockImplementation(async (fen: string) => {
+      return normalizeFen(fen) === normalizeFen(START) ? rootData : empty;
+    });
+    const { root } = await generateAutoRepertoire(START, {
+      maxDepth: 1, maxBranching: 4, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'white' as const,
+      endpoint: 'masters' as const, pruneMinLineValue: 0,
+    });
+    // Contrat 1-coup : e4 seul (le plus populaire ici, pas de double lecture
+    // en endpoint Maîtres) avec une probabilité d'atteinte de 100.
+    expect(root.children.map((c) => c.san)).toEqual(['e4']);
+    expect((root.children[0] as AutoGenNode).popularity).toBe(100);
+  });
+
+  it('#1 : mat à notre tour → seul le mat est gardé (zéro budget perdu)', async () => {
+    // Après 1.f3 e5 2.g4??, trait noir : Qh4# mate, Nf6 populaire.
+    const FOOLS = 'rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2';
+    mockFetch.mockImplementation(async (fen: string) => {
+      if (normalizeFen(fen) === normalizeFen(FOOLS)) {
+        return {
+          white: 4500, draws: 500, black: 4000,
+          moves: [
+            { san: 'Nf6', uci: 'g8f6', white: 4000, draws: 450, black: 3550 },
+            { san: 'Qh4#', uci: 'd8h4', white: 0, draws: 0, black: 5 },
+          ],
+        };
+      }
+      return empty;
+    });
+    const { root, stats } = await generateAutoRepertoire(FOOLS, {
+      maxDepth: 2, maxBranching: 4, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'black' as const, pruneMinLineValue: 0,
+    });
+    expect(root.children.map((c) => c.san)).toEqual(['Qh4#']);
+    expect(stats.mates).toBe(1);
+  });
+
+  it('#2 + #3 : masse sommée sur les deux ordres, copie récursive flaggée cloned', async () => {
+    const via = (sans: string[]): string => {
+      const c = new Chess(INITIAL_FEN);
+      for (const s of sans) c.move(s);
+      return normalizeFen(c.fen());
+    };
+    const F_D4 = via(['d4']);
+    const F_C4 = via(['c4']);
+    const F_D4_NF6 = via(['d4', 'Nf6']);
+    const F_C4_NF6 = via(['c4', 'Nf6']);
+    const F_TRANSPO = via(['d4', 'Nf6', 'c4']);
+    // Sanity : les deux ordres mènent bien à la même position normalisée.
+    expect(via(['c4', 'Nf6', 'd4'])).toBe(F_TRANSPO);
+    const pos = (total: number, specs: [string, string, number][]) => ({
+      white: Math.round(total * 0.5),
+      draws: Math.round(total * 0.1),
+      black: total - Math.round(total * 0.5) - Math.round(total * 0.1),
+      moves: specs.map(([san, uci, games]) => ({
+        san, uci,
+        white: Math.round(games * 0.5),
+        draws: Math.round(games * 0.1),
+        black: games - Math.round(games * 0.5) - Math.round(games * 0.1),
+      })),
+    });
+    const table = new Map<string, ReturnType<typeof pos>>([
+      [normalizeFen(START), pos(10000, [['d4', 'd2d4', 6000], ['c4', 'c2c4', 4000]])],
+      [F_D4, pos(6000, [['Nf6', 'g8f6', 6000]])],
+      [F_C4, pos(4000, [['Nf6', 'g8f6', 4000]])],
+      [F_D4_NF6, pos(6000, [['c4', 'c2c4', 6000]])],
+      [F_C4_NF6, pos(4000, [['d4', 'd2d4', 4000]])],
+      [F_TRANSPO, pos(10000, [['e6', 'e7e6', 10000]])],
+    ]);
+    mockFetch.mockImplementation(async (fen: string) => table.get(normalizeFen(fen)) ?? empty);
+    const { root, stats } = await generateAutoRepertoire(START, {
+      maxDepth: 4, maxBranching: 2, minFreq: 0, coveragePercent: 100,
+      maxPositions: 20, gapMs: 0, repertoireColor: 'both' as const, pruneMinLineValue: 0,
+    });
+    expect(stats.transpositions).toBeGreaterThanOrEqual(1);
+    const d4Branch = root.children.find((c) => c.san === 'd4');
+    const c4Branch = root.children.find((c) => c.san === 'c4');
+    const canon = d4Branch?.children?.[0]?.children?.[0] as AutoGenNode | undefined; // d4 → Nf6 → c4 (canonique)
+    const copy = c4Branch?.children?.[0]?.children?.[0] as AutoGenNode | undefined; // c4 → Nf6 → d4 (transposition)
+    expect(canon?.transposition).toBe(false);
+    expect(copy?.transposition).toBe(true);
+    // Masse réelle 60 % + 40 % = 100 % (pas 60 % du premier chemin seul).
+    expect(canon?.popularity).toBe(100);
+    // Réplication complète des deux côtés, copie marquée cloned.
+    expect(canon?.children?.map((c) => c.san)).toEqual(['e6']);
+    expect(copy?.children?.map((c) => c.san)).toEqual(['e6']);
+    expect(canon?.children?.[0]?.cloned).toBeFalsy();
+    expect(copy?.children?.[0]?.cloned).toBe(true);
+  });
+
+  it('cloneSubtreeCycleSafe marque les copies cloned:true', () => {
+    const src: RepertoireMove[] = [{
+      coup: 'e4', san: 'e4', uci: 'e2e4', parties: 100,
+      victoires_blancs: 50, nuls: 25, victoires_noirs: 25,
+      fen: INITIAL_FEN, children: [],
+    }];
+    const out = cloneSubtreeCycleSafe(src, new Set());
+    expect(out).toHaveLength(1);
+    expect(out[0].san).toBe('e4');
+    expect(out[0].cloned).toBe(true);
+  });
+
+  it('#4 : ligne calme à la limite → coupée sans prolongement', async () => {
+    mockFetch.mockImplementation(async (fen: string) => {
+      if (normalizeFen(fen) === normalizeFen(START)) {
+        return {
+          white: 5000, draws: 1000, black: 4000,
+          moves: [{ san: 'e4', uci: 'e2e4', white: 4000, draws: 800, black: 3200 }],
+        };
+      }
+      return empty;
+    });
+    const { stats } = await generateAutoRepertoire(START, {
+      maxDepth: 1, maxBranching: 2, minFreq: 0, coveragePercent: 100,
+      maxPositions: 5, gapMs: 0, repertoireColor: 'both' as const, pruneMinLineValue: 0,
+    });
+    expect(stats.quiescenceExtended).toBe(0);
+    expect(stats.depthPruned).toBeGreaterThanOrEqual(1);
+  });
+
+  it('#5 : bonus cache neutre → arbre identique avec ou sans cache', async () => {
+    const rootData = {
+      white: 5000, draws: 1000, black: 4000,
+      moves: [
+        { san: 'e4', uci: 'e2e4', white: 4000, draws: 800, black: 3200 },
+        { san: 'd4', uci: 'd2d4', white: 1000, draws: 200, black: 800 },
+      ],
+    };
+    const impl = async (fen: string): Promise<typeof empty> =>
+      (normalizeFen(fen) === normalizeFen(START) ? rootData : empty) as typeof empty;
+    const cfg = {
+      maxDepth: 2, maxBranching: 2, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'both' as const, pruneMinLineValue: 0,
+    };
+    mockHasCache.mockReturnValue(false);
+    mockFetch.mockImplementation(impl);
+    const cold = await generateAutoRepertoire(START, cfg);
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(impl);
+    mockHasCache.mockReturnValue(true);
+    const warm = await generateAutoRepertoire(START, cfg);
+    expect(JSON.stringify(warm.root)).toBe(JSON.stringify(cold.root));
+    expect(cold.stats.api).toBeGreaterThan(0);
+    expect(warm.stats.cached).toBeGreaterThan(0);
   });
 });
 

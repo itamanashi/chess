@@ -2,9 +2,16 @@
  * Génération automatique de répertoire par BFS prioritaire.
  * Port TS de `auto_repertoire.py` (lui-même port de `répertoire/server/explorer.py`).
  *
- * File de priorité : les positions les plus populaires sont explorées en
- * premier. Sélection par couverture, profondeur adaptative (moyenne
- * géométrique), pénalités d'étalement / de livre, bonus cache, transpositions.
+ * File de priorité : les positions les plus probables d'atteinte sont
+ * explorées en premier (probabilité = produit des fréquences adverses ;
+ * à notre tour on suit le répertoire donc facteur 1, pas la fréquence).
+ * Sélection par couverture, profondeur adaptative (moyenne géométrique),
+ * transpositions en graphe (masse sommée sur tous les chemins, profondeur
+ * minimale, repriorisation des positions en attente), réplication récursive
+ * des sous-arbres (flag `cloned` distinct). Pénalités d'étalement / de livre
+ * conservées comme heuristiques d'ordre (gain non mesuré, désactivables via
+ * la config) ; bonus cache NEUTRE par défaut (1) pour un résultat
+ * indépendant du cache (le cache n'accélère que le réseau).
  */
 import { Chess } from 'chess.js';
 import type { EngineMove, LichessMove, RepertoireMove, RepertoireRoot } from '../types/chess';
@@ -24,19 +31,37 @@ export interface AutoGenConfig {
   adaptiveDepth?: boolean;
   adaptiveMinDepth?: number;
   adaptivePow?: number;
+  /**
+   * Bonus de priorité des enfants déjà en cache (défaut 1 = NEUTRE).
+   * À 1, le résultat est indépendant du cache (même ordre, mêmes positions ;
+   * le cache n'évite que le réseau). > 1 rend le résultat dépendant du
+   * contenu du cache (deux runs identiques divergent) : opt-in historique.
+   */
   cacheHitBonus?: number;
+  /** Pénalité d'étalement entre frères (heuristique d'ordre, gain non mesuré ; 0 = neutre). */
   siblingSpread?: number;
   contestsMin?: number;
   bookTopMin?: number;
   bookGapMin?: number;
+  /** Pénalité des positions de livre (heuristique d'ordre, gain non mesuré ; 1 = neutre). */
   bookPenalty?: number;
   /** Camp du répertoire : 'white' = 1 coup à nous, N à l'adversaire. */
   repertoireColor?: 'white' | 'black' | 'both';
+  /**
+   * Budget d'exploration : nombre de positions INTERROGÉES (cache + API,
+   * arrêt déterministe — même ensemble avec ou sans cache puisque l'ordre ne
+   * dépend plus du cache). Les lectures Maîtres de référence (gradient Elo)
+   * sont comptées à part (refCached/refApi) mais coûtent la même pause.
+   */
   maxPositions?: number;
   endpoint?: 'masters' | 'lichess';
   ratingsParam?: string;
   since?: number;
-  /** Pause entre requêtes réseau (ms). */
+  /**
+   * Pause entre requêtes réseau (ms, défaut 600 ≈ 100 req/min en pointe).
+   * Le vrai garde-fou cadence est le 429 + `Retry-After` de `lichess.ts`
+   * (fetchWithRetry) : la pause seule ne garantit pas 25 req/min.
+   */
   gapMs?: number;
   /** Tentatives supplémentaires par position après un échec transient (défaut 1). */
   extraFetchRetries?: number;
@@ -121,7 +146,7 @@ export interface AutoGenNode extends RepertoireMove {
   rank: number;
   depth: number;
   transposition: boolean;
-  // isMate hérité de RepertoireMove (fin forcée, priorité absolue).
+  // cloned + isMate hérités de RepertoireMove (copie de transposition / fin forcée).
 }
 
 const DEFAULTS: Required<Omit<AutoGenConfig, 'ratingsParam' | 'since' | 'engineJudge'>> = {
@@ -133,7 +158,7 @@ const DEFAULTS: Required<Omit<AutoGenConfig, 'ratingsParam' | 'since' | 'engineJ
   adaptiveDepth: true,
   adaptiveMinDepth: 6,
   adaptivePow: 1.0,
-  cacheHitBonus: 20,
+  cacheHitBonus: 1,
   siblingSpread: 1.0,
   contestsMin: 0.1,
   bookTopMin: 0.85,
@@ -693,6 +718,10 @@ export interface HeapItem {
   depth: number;
   order: number;
   fen: string;
+  /** FEN normalisé (clé graphe). Optionnel pour les tests unitaires existants. */
+  fenKey?: string;
+  /** Version de l'entrée (masse cumulée) : une entrée obsolète est ignorée au pop. */
+  seq?: number;
   pathSans: string[];
   pathUcis: string[];
   pathFens: string[];
@@ -709,6 +738,8 @@ export function isHigherHeapItem(a: HeapItem, b: HeapItem): boolean {
 /**
  * Clone récursivement un sous-arbre de répertoire en garantissant l'absence de cycles
  * (protection contre les répétitions triples / manœuvres de pièces).
+ * Chaque nœud produit est marqué `cloned: true` (copie, pas position explorée :
+ * distinct du drapeau `transposition` du nœud d'origine).
  */
 export function cloneSubtreeCycleSafe(
   moves: RepertoireMove[],
@@ -720,13 +751,14 @@ export function cloneSubtreeCycleSafe(
   for (const m of moves) {
     const norm = normalizeFen(m.fen);
     if (ancestorFens.has(norm)) {
-      result.push({ ...m, children: [] });
+      result.push({ ...m, children: [], cloned: true });
       continue;
     }
     const nextAncestors = new Set(ancestorFens);
     nextAncestors.add(norm);
     result.push({
       ...m,
+      cloned: true,
       children: m.children && m.children.length > 0
         ? cloneSubtreeCycleSafe(m.children, nextAncestors, maxDepth - 1)
         : [],
@@ -785,8 +817,22 @@ export async function generateAutoRepertoire(
 
   const initialFenKey = normalizeFen(rootFen);
   const heap = new PriorityQueue<HeapItem>(isHigherHeapItem);
+  // Graphe des probabilités d'atteinte : masse cumulée par FEN normalisé
+  // (somme sur tous les chemins d'arrivée). La file ordonne sur cette masse,
+  // pas sur la probabilité du premier chemin seul.
+  const reachMass = new Map<string, number>([[initialFenKey, 1]]);
+  // Versionnage des entrées en file : une arrivée tardive repriorise la
+  // position en attente (nouvelle entrée, même parent canonique) ; les
+  // entrées obsolètes sont ignorées au pop. Garde aussi la profondeur
+  // minimale (un chemin court donne un budget de profondeur plus large).
+  const latestSeq = new Map<string, number>([[initialFenKey, 0]]);
+  const pendingInfo = new Map<string, {
+    fen: string; parentId: string; pathSans: string[]; pathUcis: string[];
+    pathFens: string[]; order: number; depth: number; mult: number; mateBonus: number;
+  }>();
+  let seq = 0;
   heap.push({
-    priority: 1, depth: 0, order: 0, fen: rootFen,
+    priority: 1, depth: 0, order: 0, fen: rootFen, fenKey: initialFenKey, seq: 0,
     pathSans: [], pathUcis: [], pathFens: [initialFenKey],
     parentId: 'root', popularity: 1,
   });
@@ -809,6 +855,10 @@ export async function generateAutoRepertoire(
   while (heap.length > 0) {
     throwIfAborted(events.signal);
     const item = heap.pop()!;
+    // Entrée obsolète (masse repriorisée depuis) : ignorée, la version
+    // fraîche (même FEN, seq supérieur) sortira en priorité.
+    const itemKey = item.fenKey ?? normalizeFen(item.fen);
+    if (latestSeq.get(itemKey) !== (item.seq ?? -1)) continue;
     const { depth, fen, pathSans, pathUcis, pathFens, parentId, popularity } = item;
 
     try {
@@ -831,45 +881,12 @@ export async function generateAutoRepertoire(
           const inCheck = probe.inCheck();
           const lastSan = pathSans.length > 0 ? pathSans[pathSans.length - 1] : '';
           const wasCaptureOrCheck = lastSan.includes('x') || lastSan.includes('+');
-          
-          // Détection tactique avancée : recaptures et pièces pendantes
-          let hasRecapture = false;
-          let hasHangingPiece = false;
-          
-          if (wasCaptureOrCheck) {
-            // Recapture : si un pion/pièce vient d'être pris, la reprise est naturelle
-            if (lastSan.includes('x')) {
-              const moves = probe.moves({ verbose: true });
-              for (const m of moves) {
-                if (m.san.includes('x')) {
-                  hasRecapture = true;
-                  break;
-                }
-              }
-            }
-            
-            // Pièce pendante : une pièce adverse est attaquée sans défense
-            const board = probe.board();
-            for (const row of board) {
-              for (const square of row) {
-                if (!square || square.color === probe.turn()) continue;
-                // Pièce adverse : vérifier si elle est attaquée sans défense
-                const attacked = probe.moves({ square: square.square, verbose: true });
-                if (attacked.length > 0) {
-                  // Vérifier si la pièce est défendue (tous les coups qui arrivent sur cette case)
-                  const allMoves = probe.moves({ verbose: true });
-                  const defenders = allMoves.filter(m => m.to === square.square);
-                  if (defenders.length === 0) {
-                    hasHangingPiece = true;
-                    break;
-                  }
-                }
-              }
-              if (hasHangingPiece) break;
-            }
-          }
-          
-          isUnstable = inCheck || wasCaptureOrCheck || hasRecapture || hasHangingPiece;
+          // Quiescence volontairement simple : échec ou dernier coup
+          // capture/échec. (Les anciens blocs recapture/pièce pendante étaient
+          // du code mort : recapture n'était évalué que si le dernier coup
+          // était déjà une capture — `isUnstable` déjà vrai — et
+          // `moves({square})` ne renvoie rien pour le camp sans le trait.)
+          isUnstable = inCheck || wasCaptureOrCheck;
         } catch {
           isUnstable = false;
         }
@@ -935,8 +952,13 @@ export async function generateAutoRepertoire(
     }
 
     const moves = data.moves || [];
-    const total = moves.reduce((s, m) => s + gamesOf(m), 0);
-    if (!total) {
+    // Dénominateur = total réel de la position (white+draws+black), pas la
+    // somme des 12 coups renvoyés (queue de distribution manquante : la
+    // somme surestime les fréquences). Repli sur la somme si totaux absents.
+    const movesSum = moves.reduce((s, m) => s + gamesOf(m), 0);
+    const positionTotal = (data.white || 0) + (data.draws || 0) + (data.black || 0);
+    const total = positionTotal > 0 ? positionTotal : movesSum;
+    if (!total || movesSum <= 0) {
       stats.emptyPositions++;
       continue;
     }
@@ -1033,43 +1055,47 @@ export async function generateAutoRepertoire(
     // (choix utilisateur explicite : le meilleur selon Stockfish, départagé
     // en creusant si le top-2 est serré), sinon qualité gradient-Elo.
     // Dans les deux cas : UNE SEULE réplique (contrat 1-coup des modes
-    // blancs/noirs). Les mats restent inclus (fin forcée prioritaire) à côté
-    // du coup sain.
+    // blancs/noirs). Si un mat est disponible à notre tour, la partie s'y
+    // termine : on ne garde QUE les mats (le « meilleur » coup sain est
+    // inatteignable, son sous-arbre consommerait du budget pour rien).
     if (isOwnTurnNode && selected.length > 0) {
       const mates = selected.filter((s) => isMateMove(s.move));
       const others = selected.filter((s) => !isMateMove(s.move));
-      const judged = await judgeOwnReplies(
-        fen, others.map((s) => s.move), cfg.engineJudge as EngineJudgeSettings | undefined,
-        events.signal, stats, engineCache,
-        events.onEnginePartial ? (ranked) => events.onEnginePartial?.(fen, ranked) : undefined,
-      );
-      if (judged) {
-        // Le juge rend les équivalents classés (meilleur d'abord pour les
-        // flèches live) mais l'arbre ne garde que le MEILLEUR : en mode
-        // blancs/noirs, à notre tour, on choisit une ligne (e4 OU d4, pas
-        // les deux). `judged` suit l'ordre candidats (popularité), on trie
-        // donc par valeur moteur pour extraire l'argmax.
-        const ranked = [...judged].sort((a, b) => b.value - a.value);
-        // Flèche finale = le coup retenu seul (l'arbre ne garde que lui).
-        const best = ranked[0];
-        events.onEngineEval?.(
-          fen,
-          [{ uci: best.candidate.uci, san: best.candidate.san, value: best.value }],
-        );
-        const bestSel = others.find((s) => s.move === best.candidate) ?? others[0];
-        selected = [bestSel, ...mates.filter((s) => s !== bestSel)];
+      if (mates.length > 0) {
+        selected = [...mates];
       } else {
-        const pool = others.length > 0 ? others : mates;
-        let best = pool[0];
-        let bestQ = -Infinity;
-        for (const s of pool) {
-          const q = qualityOf(s.move);
-          if (q > bestQ) {
-            bestQ = q;
-            best = s;
+        const judged = await judgeOwnReplies(
+          fen, others.map((s) => s.move), cfg.engineJudge as EngineJudgeSettings | undefined,
+          events.signal, stats, engineCache,
+          events.onEnginePartial ? (ranked) => events.onEnginePartial?.(fen, ranked) : undefined,
+        );
+        if (judged) {
+          // Le juge rend les équivalents classés (meilleur d'abord pour les
+          // flèches live) mais l'arbre ne garde que le MEILLEUR : en mode
+          // blancs/noirs, à notre tour, on choisit une ligne (e4 OU d4, pas
+          // les deux). `judged` suit l'ordre candidats (popularité), on trie
+          // donc par valeur moteur pour extraire l'argmax.
+          const ranked = [...judged].sort((a, b) => b.value - a.value);
+          // Flèche finale = le coup retenu seul (l'arbre ne garde que lui).
+          const best = ranked[0];
+          events.onEngineEval?.(
+            fen,
+            [{ uci: best.candidate.uci, san: best.candidate.san, value: best.value }],
+          );
+          const bestSel = others.find((s) => s.move === best.candidate) ?? others[0];
+          selected = [bestSel];
+        } else {
+          let best = others[0];
+          let bestQ = -Infinity;
+          for (const s of others) {
+            const q = qualityOf(s.move);
+            if (q > bestQ) {
+              bestQ = q;
+              best = s;
+            }
           }
+          selected = [best];
         }
-        selected = [best, ...mates.filter((s) => s !== best)];
       }
     }
     if (selected.length === 0) {
@@ -1096,9 +1122,16 @@ export async function generateAutoRepertoire(
       const childKey = normalizeFen(childFen);
       const isTranspo = seen.has(childKey);
       seen.add(childKey);
+
+      // Probabilité d'atteinte : à notre tour on suit le répertoire (facteur
+      // 1 — le coup retenu est joué à 100 %), chez l'adversaire on suit la
+      // distribution des fréquences. La masse d'une transposition est la
+      // SOMME sur tous ses chemins d'arrivée, pas le premier chemin seul.
+      const childPopSingle = popularity * (isOwnTurnNode ? 1 : freq / 100);
+      const mass = (reachMass.get(childKey) ?? 0) + childPopSingle;
+      reachMass.set(childKey, mass);
       if (isTranspo) stats.transpositions++;
 
-      const childPop = popularity * (freq / 100);
       const sp = spreadPenalty(rank, contestedness, cfg);
       const bp = isBook ? (cfg.bookPenalty as number) : 1;
       const childCached = hasLichessCache(childFen, cfg.endpoint, cfg.ratingsParam, undefined, cfg.since);
@@ -1106,7 +1139,11 @@ export async function generateAutoRepertoire(
       if (childCached && (cfg.cacheHitBonus as number) > 1) stats.cacheBoostedChildren++;
       // Mat terminal (aucun sous-arbre) : priorité absolue d'exploration.
       const mate = isMateMove(move);
-      const priority = childPop * sp * bp * cb + (mate ? MATE_PRIORITY_BONUS : 0);
+      const mateBonus = mate ? MATE_PRIORITY_BONUS : 0;
+      const priority = childPopSingle * sp * bp * cb + mateBonus;
+      // Multiplicateur de l'arête canonique (repriorisation à masse sommée :
+      // priorité = mult × masse + bonus mat).
+      const edgeMult = childPopSingle > 0 ? (priority - mateBonus) / childPopSingle : 0;
 
       const games = gamesOf(move);
       const node: AutoGenNode = {
@@ -1124,7 +1161,7 @@ export async function generateAutoRepertoire(
         children: [],
         fenKey: childKey,
         freq: Math.round(freq * 10) / 10,
-        popularity: Math.round(childPop * 100 * 10000) / 10000,
+        popularity: Math.round(mass * 100 * 10000) / 10000,
         contestedness: Math.round(contestedness * 1000) / 1000,
         bookScore: Math.round(bookScore * 1000) / 1000,
         rank,
@@ -1147,18 +1184,48 @@ export async function generateAutoRepertoire(
           canonicalNodesByFen.set(childKey, node);
         }
         order++;
-        heap.push({
-          priority, depth: depth + 1, order, fen: childFen,
+        pendingInfo.set(childKey, {
+          fen: childFen, parentId: nodeId,
           pathSans: [...pathSans, move.san], pathUcis: [...pathUcis, stdUci],
           pathFens: [...pathFens, childKey],
-          parentId: nodeId, popularity: childPop,
+          order, depth: depth + 1, mult: edgeMult, mateBonus,
+        });
+        seq++;
+        latestSeq.set(childKey, seq);
+        heap.push({
+          priority, depth: depth + 1, order, fen: childFen, fenKey: childKey, seq,
+          pathSans: [...pathSans, move.san], pathUcis: [...pathUcis, stdUci],
+          pathFens: [...pathFens, childKey],
+          parentId: nodeId, popularity: mass,
         });
       } else {
+        // La position existe déjà : sa masse affichée devient la somme, et
+        // si elle attend encore en file, elle est repriorisée (même parent
+        // canonique, profondeur minimale, masse cumulée).
+        const canon = canonicalNodesByFen.get(childKey);
+        if (canon) canon.popularity = Math.round(mass * 100 * 10000) / 10000;
         transpositionNodes.push({
           node,
           fenKey: childKey,
           ancestorFens: new Set(pathFens),
         });
+        if (!visited.has(childKey)) {
+          const info = pendingInfo.get(childKey);
+          if (info) {
+            info.depth = Math.min(info.depth, depth + 1);
+            info.mateBonus = Math.max(info.mateBonus, mateBonus);
+            seq++;
+            latestSeq.set(childKey, seq);
+            heap.push({
+              priority: info.mult * mass + info.mateBonus,
+              depth: info.depth, order: info.order, fen: info.fen,
+              fenKey: childKey, seq,
+              pathSans: info.pathSans, pathUcis: info.pathUcis,
+              pathFens: info.pathFens,
+              parentId: info.parentId, popularity: mass,
+            });
+          }
+        }
       }
     }
   }
@@ -1171,12 +1238,58 @@ export async function generateAutoRepertoire(
     }
   }
 
-  // Réplication de sous-arbres pour les transpositions :
-  // Les transpositions reçoivent une copie cycle-safe des réponses calculées sur le nœud canonique.
-  for (const { node, fenKey, ancestorFens } of transpositionNodes) {
-    const canonical = canonicalNodesByFen.get(fenKey);
-    if (canonical && canonical.children && canonical.children.length > 0) {
-      node.children = cloneSubtreeCycleSafe(canonical.children, ancestorFens);
+  // Réplication des sous-arbres pour les transpositions : chaque copie reçoit
+  // une résolution RÉCURSIVE du sous-arbre canonique (les transpositions
+  // imbriquées sont résolues d'abord, quel que soit l'ordre d'émission — la
+  // passe unique d'avant laissait les copies vides quand le canonique
+  // n'était pas encore rempli). Budget borné par maxDepth, cycles coupés.
+  // Les nœuds produits portent `cloned: true` (copie, pas position explorée).
+  {
+    const maxCloneDepth = Math.max(1, Math.min(32, Math.round(cfg.maxDepth as number)));
+    const resolveClone = (
+      nodes: RepertoireMove[],
+      ancestorFens: Set<string>,
+      budget: number,
+    ): RepertoireMove[] => {
+      if (budget <= 0 || !nodes || nodes.length === 0) return [];
+      const out: RepertoireMove[] = [];
+      for (const m of nodes) {
+        const norm = normalizeFen(m.fen);
+        if (ancestorFens.has(norm)) {
+          out.push({ ...m, children: [], cloned: true });
+          continue;
+        }
+        const next = new Set(ancestorFens);
+        next.add(norm);
+        const key = (m as AutoGenNode).fenKey ?? norm;
+        if ((m as AutoGenNode).transposition) {
+          const canon = canonicalNodesByFen.get(key);
+          out.push({
+            ...m,
+            cloned: true,
+            children: canon?.children?.length
+              ? resolveClone(canon.children, next, budget - 1)
+              : [],
+          });
+        } else {
+          out.push({
+            ...m,
+            cloned: true,
+            children: m.children?.length
+              ? resolveClone(m.children, next, budget - 1)
+              : [],
+          });
+        }
+      }
+      return out;
+    };
+    for (const { node, fenKey, ancestorFens } of transpositionNodes) {
+      const canonical = canonicalNodesByFen.get(fenKey);
+      if (canonical?.children?.length) {
+        const roots = new Set(ancestorFens);
+        roots.add(fenKey);
+        node.children = resolveClone(canonical.children, roots, maxCloneDepth);
+      }
     }
   }
 
