@@ -82,7 +82,7 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
         {/* Barre de stats et streaks */}
         <div className="stats-dashboard-grid">
           <div className="stat-card">
-            <div className="stat-icon-wrapper text-emerald">
+            <div className="stat-icon-wrapper text-success">
               <CheckCircle size={18} />
             </div>
             <div className="stat-content">
@@ -128,7 +128,7 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
         {isLineFinished ? (
           autoRestartPending ? (
             <div className="trainer-banner banner-success">
-              <Loader2 size={24} className="banner-icon text-emerald spin" />
+              <Loader2 size={24} className="banner-icon text-accent spin" />
               <div className="banner-text">
                 <h4>Ligne réussie !</h4>
                 <p>Nouvelle variante…</p>
@@ -178,7 +178,7 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
           </div>
         ) : lastTrainedMoveSuccess === true ? (
           <div className="trainer-banner banner-success">
-            <CheckCircle size={24} className="banner-icon text-emerald" />
+            <CheckCircle size={24} className="banner-icon text-success" />
             <div className="banner-text">
               <h4>Coup correct</h4>
               <p>Coup théorique joué. L'adversaire réplique…</p>

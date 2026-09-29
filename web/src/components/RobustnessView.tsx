@@ -94,7 +94,7 @@ export const RobustnessView: React.FC<RobustnessViewProps> = ({
           >
             <div className="card-title-row">
               <h3 className="card-title">
-                <ShieldCheck size={15} className="text-emerald" />
+                <ShieldCheck size={15} className="text-accent" />
                 {idx + 1}. {r.candidateSan}
               </h3>
               <span className="robust-global" title="Théorie + Pratique + Robustesse (poids selon palier Elo)">

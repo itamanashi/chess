@@ -54,7 +54,7 @@ button.side-brand:hover { background: var(--bg-raised); }
   align-items: center;
   justify-content: center;
   background: var(--accent-tint);
-  border: 1px solid rgba(145, 182, 109, 0.24);
+  border: 1px solid var(--accent);
   border-radius: var(--r-control);
   font-size: 24px;
   line-height: 1;
@@ -319,7 +319,7 @@ button.side-brand:hover { background: var(--bg-raised); }
   flex: 1;
   border-radius: var(--r-control);
   overflow: hidden;
-  background: #100f0b;
+  background: var(--bg-app);
   border: 1px solid var(--border);
 }
 .evalbar-white {

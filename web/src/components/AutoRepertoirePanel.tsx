@@ -370,7 +370,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
     <div className="panel-card auto-gen-card">
       <div className="card-title-row">
         <h3 className="card-title">
-          <GitBranch size={16} className="text-emerald" />
+          <GitBranch size={16} className="text-accent" />
           Génération automatique (arbre BFS)
         </h3>
         {running && (

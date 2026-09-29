@@ -18,7 +18,7 @@ interface WeekdayPanelProps {
   me: string;
 }
 
-const OUTCOME_COLOR = { win: '#10b981', draw: '#9ca3af', loss: '#f43f5e' } as const;
+const OUTCOME_COLOR = { win: '#7d9a7e', draw: '#6f6a60', loss: '#c46b5a' } as const;
 
 /** Camembert des parties par jour (SVG pur, même technique que le roque). */
 const WeekdayDonut: React.FC<{ stats: WeekdayStats }> = ({ stats }) => {
@@ -118,7 +118,7 @@ const WeekdayAccuracyChart: React.FC<{ stats: WeekdayStats }> = ({ stats }) => {
                   y={y(r.avg)}
                   width={barWidth}
                   height={Math.max(0, base - y(r.avg))}
-                  fill="#10b981"
+                  fill="var(--accent)"
                 >
                   <title>{`${WEEKDAY_LABEL[r.day]} : ${r.avg.toFixed(1)} % (${r.n} partie(s) notée(s))`}</title>
                 </rect>

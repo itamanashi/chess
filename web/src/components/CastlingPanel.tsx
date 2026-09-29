@@ -27,10 +27,10 @@ const PHASE_TITLES: Record<CastlePhase, string> = {
   none: 'Pas de roque',
 };
 const PHASE_COLORS: Record<CastlePhase, string> = {
-  opening: '#60a5fa',
-  middlegame: '#a78bfa',
-  endgame: '#fbbf24',
-  none: '#64748b',
+  opening: '#ead9b5',
+  middlegame: '#b58863',
+  endgame: '#7d9a7e',
+  none: '#6f6a60',
 };
 
 const SIDE_GROUPS: Array<{ key: CastleStatus; title: string }> = [
@@ -49,9 +49,9 @@ const WndBar: React.FC<{ wld: Wld; label: string; compact?: boolean }> = ({ wld,
   const total = wldTotal(wld);
   if (total <= 0) return <div className="empty-state">Aucune partie.</div>;
   const segs = [
-    { key: 'V', name: 'Victoires', n: wld.wins, color: '#10b981' },
-    { key: 'N', name: 'Nulles', n: wld.draws, color: '#64748b' },
-    { key: 'D', name: 'Défaites', n: wld.losses, color: '#f43f5e' },
+    { key: 'V', name: 'Victoires', n: wld.wins, color: '#7d9a7e' },
+    { key: 'N', name: 'Nulles', n: wld.draws, color: '#6f6a60' },
+    { key: 'D', name: 'Défaites', n: wld.losses, color: '#c46b5a' },
   ];
   const pct = (n: number): string => {
     const p = (n / total) * 100;

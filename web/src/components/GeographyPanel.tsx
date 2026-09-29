@@ -55,7 +55,7 @@ const MAP_W = 1000;
 const MAP_H = worldViewHeight(MAP_W);
 
 /** Pays sans partie : fond neutre du thème (lisible en clair comme en sombre). */
-const MAP_EMPTY = '#262c38';
+const MAP_EMPTY = 'var(--bg-surface)';
 
 let worldPromise: Promise<WorldFeature[] | null> | null = null;
 function getWorld(): Promise<WorldFeature[] | null> {
@@ -71,7 +71,7 @@ function getWorld(): Promise<WorldFeature[] | null> {
   return worldPromise;
 }
 
-/** Mélange hexadécimal (intensité de vert = volume de parties, échelle log). */
+/** Mélange hexadécimal (intensité de caramel = volume de parties, échelle log). */
 function mixHex(from: string, to: string, t: number): string {
   const c = (hex: string): [number, number, number] => [
     parseInt(hex.slice(1, 3), 16),
@@ -335,7 +335,7 @@ export const GeographyPanel: React.FC<GeographyPanelProps> = ({ games, me }) => 
                   const row = code ? byCode.get(code) : undefined;
                   const n = row?.games ?? 0;
                   const fill = n > 0
-                    ? mixHex('#1d3a2f', '#10b981', Math.log1p(n) / Math.log1p(maxGames))
+                    ? mixHex('#1e1c18', '#b58863', Math.log1p(n) / Math.log1p(maxGames))
                     : MAP_EMPTY;
                   return (
                     <path
