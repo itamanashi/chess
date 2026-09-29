@@ -1,0 +1,2927 @@
+{
+  "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  "children": [
+    {
+      "coup": "e4",
+      "uci": "e2e4",
+      "san": "e4",
+      "parties": 1309466,
+      "victoires_blancs": 419328,
+      "nuls": 573290,
+      "victoires_noirs": 316848,
+      "score_moyen": 2396,
+      "ouverture": "King's Pawn Game",
+      "eco": "B00",
+      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      "children": [
+        {
+          "coup": "c5",
+          "uci": "c7c5",
+          "san": "c5",
+          "parties": 601092,
+          "victoires_blancs": 188770,
+          "nuls": 257675,
+          "victoires_noirs": 154647,
+          "score_moyen": 2401,
+          "ouverture": "Sicilian Defense",
+          "eco": "B20",
+          "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+          "children": [
+            {
+              "coup": "Nf3",
+              "uci": "g1f3",
+              "san": "Nf3",
+              "parties": 497049,
+              "victoires_blancs": 157501,
+              "nuls": 215246,
+              "victoires_noirs": 124302,
+              "score_moyen": 2394,
+              "ouverture": "Sicilian Defense",
+              "eco": "B27",
+              "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+              "children": [
+                {
+                  "coup": "d6",
+                  "uci": "d7d6",
+                  "san": "d6",
+                  "parties": 231081,
+                  "victoires_blancs": 69069,
+                  "nuls": 106699,
+                  "victoires_noirs": 55313,
+                  "score_moyen": 2405,
+                  "ouverture": "Sicilian Defense: Modern Variations",
+                  "eco": "B50",
+                  "fen": "rnbqkbnr/pp2pppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
+                  "children": [
+                    {
+                      "coup": "d4",
+                      "uci": "d2d4",
+                      "san": "d4",
+                      "parties": 186433,
+                      "victoires_blancs": 55981,
+                      "nuls": 86877,
+                      "victoires_noirs": 43575,
+                      "score_moyen": 2395,
+                      "ouverture": "Sicilian Defense",
+                      "eco": "B50",
+                      "fen": "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+                      "children": [
+                        {
+                          "coup": "cxd4",
+                          "uci": "c5d4",
+                          "san": "cxd4",
+                          "parties": 179304,
+                          "victoires_blancs": 53605,
+                          "nuls": 84234,
+                          "victoires_noirs": 41465,
+                          "score_moyen": 2402,
+                          "ouverture": "Sicilian Defense",
+                          "eco": "B50",
+                          "fen": "rnbqkbnr/pp2pppp/3p4/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "Nxd4",
+                              "uci": "f3d4",
+                              "san": "Nxd4",
+                              "parties": 172373,
+                              "victoires_blancs": 51251,
+                              "nuls": 81616,
+                              "victoires_noirs": 39506,
+                              "score_moyen": 2395,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "Nf6",
+                                  "uci": "g8f6",
+                                  "san": "Nf6",
+                                  "parties": 171574,
+                                  "victoires_blancs": 50948,
+                                  "nuls": 81314,
+                                  "victoires_noirs": 39312,
+                                  "score_moyen": 2403,
+                                  "ouverture": "Sicilian Defense: Modern Variations, Main Line",
+                                  "eco": "B54",
+                                  "fen": "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 1 5",
+                                  "children": [
+                                    {
+                                      "coup": "Nc3",
+                                      "uci": "b1c3",
+                                      "san": "Nc3",
+                                      "parties": 167807,
+                                      "victoires_blancs": 49729,
+                                      "nuls": 79660,
+                                      "victoires_noirs": 38418,
+                                      "score_moyen": 2395,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5",
+                                      "children": [
+                                        {
+                                          "coup": "a6",
+                                          "uci": "a7a6",
+                                          "san": "a6",
+                                          "parties": 125648,
+                                          "victoires_blancs": 33820,
+                                          "nuls": 64546,
+                                          "victoires_noirs": 27282,
+                                          "score_moyen": 2404,
+                                          "ouverture": "Sicilian Defense: Najdorf Variation",
+                                          "eco": "B90",
+                                          "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 42080,
+                                              "victoires_blancs": 10335,
+                                              "nuls": 24626,
+                                              "victoires_noirs": 7119,
+                                              "score_moyen": 2398,
+                                              "ouverture": "Sicilian Defense: Najdorf Variation, English Attack",
+                                              "eco": "B90",
+                                              "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e5",
+                                                  "uci": "e7e5",
+                                                  "san": "e5",
+                                                  "parties": 30469,
+                                                  "victoires_blancs": 6644,
+                                                  "nuls": 19208,
+                                                  "victoires_noirs": 4617,
+                                                  "score_moyen": 2394,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 7951,
+                                                  "victoires_blancs": 2697,
+                                                  "nuls": 3404,
+                                                  "victoires_noirs": 1850,
+                                                  "score_moyen": 2424,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "rnbqkb1r/1p3ppp/p2ppn2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "coup": "Bg5",
+                                              "uci": "c1g5",
+                                              "san": "Bg5",
+                                              "parties": 25517,
+                                              "victoires_blancs": 7028,
+                                              "nuls": 12666,
+                                              "victoires_noirs": 5823,
+                                              "score_moyen": 2378,
+                                              "ouverture": "Sicilian Defense: Najdorf Variation",
+                                              "eco": "B94",
+                                              "fen": "rnbqkb1r/1p2pppp/p2p1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 19950,
+                                                  "victoires_blancs": 5588,
+                                                  "nuls": 10022,
+                                                  "victoires_noirs": 4340,
+                                                  "score_moyen": 2391,
+                                                  "ouverture": "Sicilian Defense: Najdorf Variation",
+                                                  "eco": "B95",
+                                                  "fen": "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Nbd7",
+                                                  "uci": "b8d7",
+                                                  "san": "Nbd7",
+                                                  "parties": 4913,
+                                                  "victoires_blancs": 1248,
+                                                  "nuls": 2378,
+                                                  "victoires_noirs": 1287,
+                                                  "score_moyen": 2413,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/1p1npppp/p2p1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 2 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "Nc6",
+                                          "uci": "b8c6",
+                                          "san": "Nc6",
+                                          "parties": 24485,
+                                          "victoires_blancs": 8469,
+                                          "nuls": 8977,
+                                          "victoires_noirs": 7039,
+                                          "score_moyen": 2421,
+                                          "ouverture": "Sicilian Defense: Classical Variation",
+                                          "eco": "B56",
+                                          "fen": "r1bqkb1r/pp2pppp/2np1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 3 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bg5",
+                                              "uci": "c1g5",
+                                              "san": "Bg5",
+                                              "parties": 24983,
+                                              "victoires_blancs": 9055,
+                                              "nuls": 9419,
+                                              "victoires_noirs": 6509,
+                                              "score_moyen": 2410,
+                                              "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                              "eco": "B60",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R b KQkq - 4 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 20274,
+                                                  "victoires_blancs": 7273,
+                                                  "nuls": 7756,
+                                                  "victoires_noirs": 5245,
+                                                  "score_moyen": 2420,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                                  "eco": "B62",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Bd7",
+                                                  "uci": "c8d7",
+                                                  "san": "Bd7",
+                                                  "parties": 2964,
+                                                  "victoires_blancs": 1129,
+                                                  "nuls": 1062,
+                                                  "victoires_noirs": 773,
+                                                  "score_moyen": 2410,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation, Modern Variation",
+                                                  "eco": "B60",
+                                                  "fen": "r2qkb1r/pp1bpppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 5 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "coup": "Bc4",
+                                              "uci": "f1c4",
+                                              "san": "Bc4",
+                                              "parties": 8291,
+                                              "victoires_blancs": 2719,
+                                              "nuls": 2764,
+                                              "victoires_noirs": 2808,
+                                              "score_moyen": 2382,
+                                              "ouverture": "Sicilian Defense: Classical Variation, Sozin Attack",
+                                              "eco": "B57",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R b KQkq - 4 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 3988,
+                                                  "victoires_blancs": 1370,
+                                                  "nuls": 1277,
+                                                  "victoires_noirs": 1341,
+                                                  "score_moyen": 2404,
+                                                  "ouverture": "Sicilian Defense: Sozin Attack, Leonhardt Variation",
+                                                  "eco": "B88",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Qb6",
+                                                  "uci": "d8b6",
+                                                  "san": "Qb6",
+                                                  "parties": 3289,
+                                                  "victoires_blancs": 1055,
+                                                  "nuls": 1113,
+                                                  "victoires_noirs": 1121,
+                                                  "score_moyen": 2416,
+                                                  "ouverture": "Sicilian Defense: Classical Variation, Anti-Sozin Variation",
+                                                  "eco": "B57",
+                                                  "fen": "r1b1kb1r/pp2pppp/1qnp1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 5 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "coup": "f3",
+                                      "uci": "f2f3",
+                                      "san": "f3",
+                                      "parties": 3298,
+                                      "victoires_blancs": 1085,
+                                      "nuls": 1467,
+                                      "victoires_noirs": 746,
+                                      "score_moyen": 2391,
+                                      "ouverture": "Sicilian Defense: Prins Variation",
+                                      "eco": "B54",
+                                      "fen": "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/5P2/PPP3PP/RNBQKB1R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "e5",
+                                          "uci": "e7e5",
+                                          "san": "e5",
+                                          "parties": 1910,
+                                          "victoires_blancs": 597,
+                                          "nuls": 873,
+                                          "victoires_noirs": 440,
+                                          "score_moyen": 2394,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "rnbqkb1r/pp3ppp/3p1n2/4p3/3NP3/5P2/PPP3PP/RNBQKB1R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Nb3",
+                                              "uci": "d4b3",
+                                              "san": "Nb3",
+                                              "parties": 1516,
+                                              "victoires_blancs": 452,
+                                              "nuls": 731,
+                                              "victoires_noirs": 333,
+                                              "score_moyen": 2388,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "rnbqkb1r/pp3ppp/3p1n2/4p3/4P3/1N3P2/PPP3PP/RNBQKB1R b KQkq - 1 6",
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "Qxd4",
+                              "uci": "d1d4",
+                              "san": "Qxd4",
+                              "parties": 6956,
+                              "victoires_blancs": 2365,
+                              "nuls": 2652,
+                              "victoires_noirs": 1939,
+                              "score_moyen": 2394,
+                              "ouverture": "Sicilian Defense: Chekhover Variation",
+                              "eco": "B53",
+                              "fen": "rnbqkbnr/pp2pppp/3p4/8/3QP3/5N2/PPP2PPP/RNB1KB1R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "Nc6",
+                                  "uci": "b8c6",
+                                  "san": "Nc6",
+                                  "parties": 3672,
+                                  "victoires_blancs": 1304,
+                                  "nuls": 1391,
+                                  "victoires_noirs": 977,
+                                  "score_moyen": 2383,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/pp2pppp/2np4/8/3QP3/5N2/PPP2PPP/RNB1KB1R w KQkq - 1 5",
+                                  "children": [
+                                    {
+                                      "coup": "Bb5",
+                                      "uci": "f1b5",
+                                      "san": "Bb5",
+                                      "parties": 3198,
+                                      "victoires_blancs": 1126,
+                                      "nuls": 1204,
+                                      "victoires_noirs": 868,
+                                      "score_moyen": 2384,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/pp2pppp/2np4/1B6/3QP3/5N2/PPP2PPP/RNB1K2R b KQkq - 2 5",
+                                      "children": [
+                                        {
+                                          "coup": "Bd7",
+                                          "uci": "c8d7",
+                                          "san": "Bd7",
+                                          "parties": 3252,
+                                          "victoires_blancs": 1150,
+                                          "nuls": 1224,
+                                          "victoires_noirs": 878,
+                                          "score_moyen": 2386,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r2qkbnr/pp1bpppp/2np4/1B6/3QP3/5N2/PPP2PPP/RNB1K2R w KQkq - 3 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bxc6",
+                                              "uci": "b5c6",
+                                              "san": "Bxc6",
+                                              "parties": 2699,
+                                              "victoires_blancs": 922,
+                                              "nuls": 986,
+                                              "victoires_noirs": 791,
+                                              "score_moyen": 2375,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r2qkbnr/pp1bpppp/2Bp4/8/3QP3/5N2/PPP2PPP/RNB1K2R b KQkq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Bxc6",
+                                                  "uci": "d7c6",
+                                                  "san": "Bxc6",
+                                                  "parties": 2524,
+                                                  "victoires_blancs": 853,
+                                                  "nuls": 932,
+                                                  "victoires_noirs": 739,
+                                                  "score_moyen": 2385,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r2qkbnr/pp2pppp/2bp4/8/3QP3/5N2/PPP2PPP/RNB1K2R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "a6",
+                                  "uci": "a7a6",
+                                  "san": "a6",
+                                  "parties": 1821,
+                                  "victoires_blancs": 611,
+                                  "nuls": 678,
+                                  "victoires_noirs": 532,
+                                  "score_moyen": 2402,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "rnbqkbnr/1p2pppp/p2p4/8/3QP3/5N2/PPP2PPP/RNB1KB1R w KQkq - 0 5",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "coup": "Nf6",
+                          "uci": "g8f6",
+                          "san": "Nf6",
+                          "parties": 7130,
+                          "victoires_blancs": 2375,
+                          "nuls": 2645,
+                          "victoires_noirs": 2110,
+                          "score_moyen": 2417,
+                          "ouverture": "Sicilian Defense: Modern Variations, Anti-Qxd4 Move Order",
+                          "eco": "B50",
+                          "fen": "rnbqkb1r/pp2pppp/3p1n2/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4",
+                          "children": [
+                            {
+                              "coup": "Nc3",
+                              "uci": "b1c3",
+                              "san": "Nc3",
+                              "parties": 6635,
+                              "victoires_blancs": 2215,
+                              "nuls": 2422,
+                              "victoires_noirs": 1998,
+                              "score_moyen": 2400,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "rnbqkb1r/pp2pppp/3p1n2/2p5/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 2 4",
+                              "children": [
+                                {
+                                  "coup": "cxd4",
+                                  "uci": "c5d4",
+                                  "san": "cxd4",
+                                  "parties": 8896,
+                                  "victoires_blancs": 2858,
+                                  "nuls": 3577,
+                                  "victoires_noirs": 2461,
+                                  "score_moyen": 2412,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "rnbqkb1r/pp2pppp/3p1n2/8/3pP3/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "Nxd4",
+                                      "uci": "f3d4",
+                                      "san": "Nxd4",
+                                      "parties": 8325,
+                                      "victoires_blancs": 2641,
+                                      "nuls": 3376,
+                                      "victoires_noirs": 2308,
+                                      "score_moyen": 2400,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "a6",
+                                          "uci": "a7a6",
+                                          "san": "a6",
+                                          "parties": 125648,
+                                          "victoires_blancs": 33820,
+                                          "nuls": 64546,
+                                          "victoires_noirs": 27282,
+                                          "score_moyen": 2404,
+                                          "ouverture": "Sicilian Defense: Najdorf Variation",
+                                          "eco": "B90",
+                                          "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 42080,
+                                              "victoires_blancs": 10335,
+                                              "nuls": 24626,
+                                              "victoires_noirs": 7119,
+                                              "score_moyen": 2398,
+                                              "ouverture": "Sicilian Defense: Najdorf Variation, English Attack",
+                                              "eco": "B90",
+                                              "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e5",
+                                                  "uci": "e7e5",
+                                                  "san": "e5",
+                                                  "parties": 30469,
+                                                  "victoires_blancs": 6644,
+                                                  "nuls": 19208,
+                                                  "victoires_noirs": 4617,
+                                                  "score_moyen": 2394,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 7951,
+                                                  "victoires_blancs": 2697,
+                                                  "nuls": 3404,
+                                                  "victoires_noirs": 1850,
+                                                  "score_moyen": 2424,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "rnbqkb1r/1p3ppp/p2ppn2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "coup": "Bg5",
+                                              "uci": "c1g5",
+                                              "san": "Bg5",
+                                              "parties": 25517,
+                                              "victoires_blancs": 7028,
+                                              "nuls": 12666,
+                                              "victoires_noirs": 5823,
+                                              "score_moyen": 2378,
+                                              "ouverture": "Sicilian Defense: Najdorf Variation",
+                                              "eco": "B94",
+                                              "fen": "rnbqkb1r/1p2pppp/p2p1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 19950,
+                                                  "victoires_blancs": 5588,
+                                                  "nuls": 10022,
+                                                  "victoires_noirs": 4340,
+                                                  "score_moyen": 2391,
+                                                  "ouverture": "Sicilian Defense: Najdorf Variation",
+                                                  "eco": "B95",
+                                                  "fen": "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Nbd7",
+                                                  "uci": "b8d7",
+                                                  "san": "Nbd7",
+                                                  "parties": 4913,
+                                                  "victoires_blancs": 1248,
+                                                  "nuls": 2378,
+                                                  "victoires_noirs": 1287,
+                                                  "score_moyen": 2413,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/1p1npppp/p2p1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 2 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "Nc6",
+                                          "uci": "b8c6",
+                                          "san": "Nc6",
+                                          "parties": 24485,
+                                          "victoires_blancs": 8469,
+                                          "nuls": 8977,
+                                          "victoires_noirs": 7039,
+                                          "score_moyen": 2421,
+                                          "ouverture": "Sicilian Defense: Classical Variation",
+                                          "eco": "B56",
+                                          "fen": "r1bqkb1r/pp2pppp/2np1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bg5",
+                                              "uci": "c1g5",
+                                              "san": "Bg5",
+                                              "parties": 24983,
+                                              "victoires_blancs": 9055,
+                                              "nuls": 9419,
+                                              "victoires_noirs": 6509,
+                                              "score_moyen": 2410,
+                                              "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                              "eco": "B60",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R b KQkq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 20274,
+                                                  "victoires_blancs": 7273,
+                                                  "nuls": 7756,
+                                                  "victoires_noirs": 5245,
+                                                  "score_moyen": 2420,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                                  "eco": "B62",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Bd7",
+                                                  "uci": "c8d7",
+                                                  "san": "Bd7",
+                                                  "parties": 2964,
+                                                  "victoires_blancs": 1129,
+                                                  "nuls": 1062,
+                                                  "victoires_noirs": 773,
+                                                  "score_moyen": 2410,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation, Modern Variation",
+                                                  "eco": "B60",
+                                                  "fen": "r2qkb1r/pp1bpppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 3 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "coup": "Bc4",
+                                              "uci": "f1c4",
+                                              "san": "Bc4",
+                                              "parties": 8291,
+                                              "victoires_blancs": 2719,
+                                              "nuls": 2764,
+                                              "victoires_noirs": 2808,
+                                              "score_moyen": 2382,
+                                              "ouverture": "Sicilian Defense: Classical Variation, Sozin Attack",
+                                              "eco": "B57",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R b KQkq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 3988,
+                                                  "victoires_blancs": 1370,
+                                                  "nuls": 1277,
+                                                  "victoires_noirs": 1341,
+                                                  "score_moyen": 2404,
+                                                  "ouverture": "Sicilian Defense: Sozin Attack, Leonhardt Variation",
+                                                  "eco": "B88",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Qb6",
+                                                  "uci": "d8b6",
+                                                  "san": "Qb6",
+                                                  "parties": 3289,
+                                                  "victoires_blancs": 1055,
+                                                  "nuls": 1113,
+                                                  "victoires_noirs": 1121,
+                                                  "score_moyen": 2416,
+                                                  "ouverture": "Sicilian Defense: Classical Variation, Anti-Sozin Variation",
+                                                  "eco": "B57",
+                                                  "fen": "r1b1kb1r/pp2pppp/1qnp1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 3 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "coup": "Bb5+",
+                      "uci": "f1b5",
+                      "san": "Bb5+",
+                      "parties": 28424,
+                      "victoires_blancs": 7798,
+                      "nuls": 13407,
+                      "victoires_noirs": 7219,
+                      "score_moyen": 2403,
+                      "ouverture": "Sicilian Defense: Moscow Variation",
+                      "eco": "B51",
+                      "fen": "rnbqkbnr/pp2pppp/3p4/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3",
+                      "children": [
+                        {
+                          "coup": "Bd7",
+                          "uci": "c8d7",
+                          "san": "Bd7",
+                          "parties": 13062,
+                          "victoires_blancs": 3435,
+                          "nuls": 7010,
+                          "victoires_noirs": 2617,
+                          "score_moyen": 2406,
+                          "ouverture": "Sicilian Defense: Moscow Variation, Main Line",
+                          "eco": "B52",
+                          "fen": "rn1qkbnr/pp1bpppp/3p4/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
+                          "children": [
+                            {
+                              "coup": "Bxd7+",
+                              "uci": "b5d7",
+                              "san": "Bxd7+",
+                              "parties": 11584,
+                              "victoires_blancs": 2975,
+                              "nuls": 6299,
+                              "victoires_noirs": 2310,
+                              "score_moyen": 2407,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "rn1qkbnr/pp1Bpppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "Qxd7",
+                                  "uci": "d8d7",
+                                  "san": "Qxd7",
+                                  "parties": 8858,
+                                  "victoires_blancs": 2289,
+                                  "nuls": 4966,
+                                  "victoires_noirs": 1603,
+                                  "score_moyen": 2402,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "rn2kbnr/pp1qpppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "O-O",
+                                      "uci": "e1h1",
+                                      "san": "O-O",
+                                      "parties": 4585,
+                                      "victoires_blancs": 1163,
+                                      "nuls": 2480,
+                                      "victoires_noirs": 942,
+                                      "score_moyen": 2399,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "rn2kbnr/pp1qpppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 5",
+                                      "children": [
+                                        {
+                                          "coup": "Nc6",
+                                          "uci": "b8c6",
+                                          "san": "Nc6",
+                                          "parties": 2711,
+                                          "victoires_blancs": 714,
+                                          "nuls": 1461,
+                                          "victoires_noirs": 536,
+                                          "score_moyen": 2386,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r3kbnr/pp1qpppp/2np4/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 6",
+                                          "children": [
+                                            {
+                                              "coup": "c3",
+                                              "uci": "c2c3",
+                                              "san": "c3",
+                                              "parties": 1762,
+                                              "victoires_blancs": 487,
+                                              "nuls": 928,
+                                              "victoires_noirs": 347,
+                                              "score_moyen": 2388,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r3kbnr/pp1qpppp/2np4/2p5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nf6",
+                                                  "uci": "g8f6",
+                                                  "san": "Nf6",
+                                                  "parties": 1542,
+                                                  "victoires_blancs": 416,
+                                                  "nuls": 816,
+                                                  "victoires_noirs": 310,
+                                                  "score_moyen": 2381,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r3kb1r/pp1qpppp/2np1n2/2p5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 1 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "Nf6",
+                                          "uci": "g8f6",
+                                          "san": "Nf6",
+                                          "parties": 1642,
+                                          "victoires_blancs": 399,
+                                          "nuls": 897,
+                                          "victoires_noirs": 346,
+                                          "score_moyen": 2422,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "rn2kb1r/pp1qpppp/3p1n2/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 6",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "coup": "c4",
+                                      "uci": "c2c4",
+                                      "san": "c4",
+                                      "parties": 4133,
+                                      "victoires_blancs": 1092,
+                                      "nuls": 2411,
+                                      "victoires_noirs": 630,
+                                      "score_moyen": 2420,
+                                      "ouverture": "Sicilian Defense: Moscow Variation, Sokolsky Variation",
+                                      "eco": "B52",
+                                      "fen": "rn2kbnr/pp1qpppp/3p4/2p5/2P1P3/5N2/PP1P1PPP/RNBQK2R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "Nc6",
+                                          "uci": "b8c6",
+                                          "san": "Nc6",
+                                          "parties": 1931,
+                                          "victoires_blancs": 515,
+                                          "nuls": 1133,
+                                          "victoires_noirs": 283,
+                                          "score_moyen": 2390,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r3kbnr/pp1qpppp/2np4/2p5/2P1P3/5N2/PP1P1PPP/RNBQK2R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Nc3",
+                                              "uci": "b1c3",
+                                              "san": "Nc3",
+                                              "parties": 1041,
+                                              "victoires_blancs": 276,
+                                              "nuls": 621,
+                                              "victoires_noirs": 144,
+                                              "score_moyen": 2419,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r3kbnr/pp1qpppp/2np4/2p5/2P1P3/2N2N2/PP1P1PPP/R1BQK2R b KQkq - 2 6",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "Nf6",
+                                          "uci": "g8f6",
+                                          "san": "Nf6",
+                                          "parties": 1621,
+                                          "victoires_blancs": 392,
+                                          "nuls": 983,
+                                          "victoires_noirs": 246,
+                                          "score_moyen": 2428,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "rn2kb1r/pp1qpppp/3p1n2/2p5/2P1P3/5N2/PP1P1PPP/RNBQK2R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Nc3",
+                                              "uci": "b1c3",
+                                              "san": "Nc3",
+                                              "parties": 1613,
+                                              "victoires_blancs": 388,
+                                              "nuls": 981,
+                                              "victoires_noirs": 244,
+                                              "score_moyen": 2440,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "rn2kb1r/pp1qpppp/3p1n2/2p5/2P1P3/2N2N2/PP1P1PPP/R1BQK2R b KQkq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "g6",
+                                                  "uci": "g7g6",
+                                                  "san": "g6",
+                                                  "parties": 1076,
+                                                  "victoires_blancs": 245,
+                                                  "nuls": 673,
+                                                  "victoires_noirs": 158,
+                                                  "score_moyen": 2439,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "rn2kb1r/pp1qpp1p/3p1np1/2p5/2P1P3/2N2N2/PP1P1PPP/R1BQK2R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "Nxd7",
+                                  "uci": "b8d7",
+                                  "san": "Nxd7",
+                                  "parties": 2726,
+                                  "victoires_blancs": 686,
+                                  "nuls": 1333,
+                                  "victoires_noirs": 707,
+                                  "score_moyen": 2428,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r2qkbnr/pp1npppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "O-O",
+                                      "uci": "e1h1",
+                                      "san": "O-O",
+                                      "parties": 2293,
+                                      "victoires_blancs": 592,
+                                      "nuls": 1131,
+                                      "victoires_noirs": 570,
+                                      "score_moyen": 2406,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r2qkbnr/pp1npppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 5",
+                                      "children": [
+                                        {
+                                          "coup": "Ngf6",
+                                          "uci": "g8f6",
+                                          "san": "Ngf6",
+                                          "parties": 2029,
+                                          "victoires_blancs": 532,
+                                          "nuls": 990,
+                                          "victoires_noirs": 507,
+                                          "score_moyen": 2429,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r2qkb1r/pp1npppp/3p1n2/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 6",
+                                          "children": [
+                                            {
+                                              "coup": "Qe2",
+                                              "uci": "d1e2",
+                                              "san": "Qe2",
+                                              "parties": 1293,
+                                              "victoires_blancs": 350,
+                                              "nuls": 647,
+                                              "victoires_noirs": 296,
+                                              "score_moyen": 2421,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r2qkb1r/pp1npppp/3p1n2/2p5/4P3/5N2/PPPPQPPP/RNB2RK1 b kq - 3 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 1048,
+                                                  "victoires_blancs": 270,
+                                                  "nuls": 539,
+                                                  "victoires_noirs": 239,
+                                                  "score_moyen": 2431,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r2qkb1r/pp1n1ppp/3ppn2/2p5/4P3/5N2/PPPPQPPP/RNB2RK1 w kq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "coup": "Nd7",
+                          "uci": "b8d7",
+                          "san": "Nd7",
+                          "parties": 12159,
+                          "victoires_blancs": 3382,
+                          "nuls": 5161,
+                          "victoires_noirs": 3616,
+                          "score_moyen": 2435,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "r1bqkbnr/pp1npppp/3p4/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
+                          "children": [
+                            {
+                              "coup": "d4",
+                              "uci": "d2d4",
+                              "san": "d4",
+                              "parties": 4312,
+                              "victoires_blancs": 1177,
+                              "nuls": 1951,
+                              "victoires_noirs": 1184,
+                              "score_moyen": 2405,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1npppp/3p4/1Bp5/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "cxd4",
+                                  "uci": "c5d4",
+                                  "san": "cxd4",
+                                  "parties": 2796,
+                                  "victoires_blancs": 714,
+                                  "nuls": 1330,
+                                  "victoires_noirs": 752,
+                                  "score_moyen": 2445,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/pp1npppp/3p4/1B6/3pP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "Qxd4",
+                                      "uci": "d1d4",
+                                      "san": "Qxd4",
+                                      "parties": 2467,
+                                      "victoires_blancs": 608,
+                                      "nuls": 1177,
+                                      "victoires_noirs": 682,
+                                      "score_moyen": 2403,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/pp1npppp/3p4/1B6/3QP3/5N2/PPP2PPP/RNB1K2R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "a6",
+                                          "uci": "a7a6",
+                                          "san": "a6",
+                                          "parties": 2072,
+                                          "victoires_blancs": 450,
+                                          "nuls": 1035,
+                                          "victoires_noirs": 587,
+                                          "score_moyen": 2453,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkbnr/1p1npppp/p2p4/1B6/3QP3/5N2/PPP2PPP/RNB1K2R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bxd7+",
+                                              "uci": "b5d7",
+                                              "san": "Bxd7+",
+                                              "parties": 1673,
+                                              "victoires_blancs": 357,
+                                              "nuls": 805,
+                                              "victoires_noirs": 511,
+                                              "score_moyen": 2406,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqkbnr/1p1Bpppp/p2p4/8/3QP3/5N2/PPP2PPP/RNB1K2R b KQkq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Bxd7",
+                                                  "uci": "c8d7",
+                                                  "san": "Bxd7",
+                                                  "parties": 1592,
+                                                  "victoires_blancs": 340,
+                                                  "nuls": 777,
+                                                  "victoires_noirs": 475,
+                                                  "score_moyen": 2458,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r2qkbnr/1p1bpppp/p2p4/8/3QP3/5N2/PPP2PPP/RNB1K2R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "Nf6",
+                                  "uci": "g8f6",
+                                  "san": "Nf6",
+                                  "parties": 1378,
+                                  "victoires_blancs": 414,
+                                  "nuls": 568,
+                                  "victoires_noirs": 396,
+                                  "score_moyen": 2440,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkb1r/pp1npppp/3p1n2/1Bp5/3PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 1 5",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "O-O",
+                              "uci": "e1h1",
+                              "san": "O-O",
+                              "parties": 4064,
+                              "victoires_blancs": 1142,
+                              "nuls": 1638,
+                              "victoires_noirs": 1284,
+                              "score_moyen": 2397,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1npppp/3p4/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 3 4",
+                              "children": [
+                                {
+                                  "coup": "a6",
+                                  "uci": "a7a6",
+                                  "san": "a6",
+                                  "parties": 2822,
+                                  "victoires_blancs": 753,
+                                  "nuls": 1194,
+                                  "victoires_noirs": 875,
+                                  "score_moyen": 2444,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/1p1npppp/p2p4/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "Bd3",
+                                      "uci": "b5d3",
+                                      "san": "Bd3",
+                                      "parties": 1796,
+                                      "victoires_blancs": 475,
+                                      "nuls": 790,
+                                      "victoires_noirs": 531,
+                                      "score_moyen": 2409,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/1p1npppp/p2p4/2p5/4P3/3B1N2/PPPP1PPP/RNBQ1RK1 b kq - 1 5",
+                                      "children": [
+                                        {
+                                          "coup": "Ngf6",
+                                          "uci": "g8f6",
+                                          "san": "Ngf6",
+                                          "parties": 1602,
+                                          "victoires_blancs": 403,
+                                          "nuls": 724,
+                                          "victoires_noirs": 475,
+                                          "score_moyen": 2451,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkb1r/1p1npppp/p2p1n2/2p5/4P3/3B1N2/PPPP1PPP/RNBQ1RK1 w kq - 2 6",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "Nf6",
+                                  "uci": "g8f6",
+                                  "san": "Nf6",
+                                  "parties": 1217,
+                                  "victoires_blancs": 378,
+                                  "nuls": 437,
+                                  "victoires_noirs": 402,
+                                  "score_moyen": 2417,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkb1r/pp1npppp/3p1n2/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 4 5",
+                                  "children": [
+                                    {
+                                      "coup": "Re1",
+                                      "uci": "f1e1",
+                                      "san": "Re1",
+                                      "parties": 1063,
+                                      "victoires_blancs": 335,
+                                      "nuls": 379,
+                                      "victoires_noirs": 349,
+                                      "score_moyen": 2387,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkb1r/pp1npppp/3p1n2/1Bp5/4P3/5N2/PPPP1PPP/RNBQR1K1 b kq - 5 5",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "coup": "Nc6",
+                  "uci": "b8c6",
+                  "san": "Nc6",
+                  "parties": 134924,
+                  "victoires_blancs": 42891,
+                  "nuls": 59912,
+                  "victoires_noirs": 32121,
+                  "score_moyen": 2397,
+                  "ouverture": "Sicilian Defense: Old Sicilian",
+                  "eco": "B30",
+                  "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+                  "children": [
+                    {
+                      "coup": "d4",
+                      "uci": "d2d4",
+                      "san": "d4",
+                      "parties": 78186,
+                      "victoires_blancs": 23598,
+                      "nuls": 35521,
+                      "victoires_noirs": 19067,
+                      "score_moyen": 2383,
+                      "ouverture": "Sicilian Defense: Open",
+                      "eco": "B32",
+                      "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+                      "children": [
+                        {
+                          "coup": "cxd4",
+                          "uci": "c5d4",
+                          "san": "cxd4",
+                          "parties": 78174,
+                          "victoires_blancs": 23591,
+                          "nuls": 35517,
+                          "victoires_noirs": 19066,
+                          "score_moyen": 2395,
+                          "ouverture": "Sicilian Defense: Open",
+                          "eco": "B32",
+                          "fen": "r1bqkbnr/pp1ppppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "Nxd4",
+                              "uci": "f3d4",
+                              "san": "Nxd4",
+                              "parties": 78137,
+                              "victoires_blancs": 23580,
+                              "nuls": 35537,
+                              "victoires_noirs": 19020,
+                              "score_moyen": 2383,
+                              "ouverture": "Sicilian Defense: Open",
+                              "eco": "B32",
+                              "fen": "r1bqkbnr/pp1ppppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "Nf6",
+                                  "uci": "g8f6",
+                                  "san": "Nf6",
+                                  "parties": 45287,
+                                  "victoires_blancs": 12805,
+                                  "nuls": 22334,
+                                  "victoires_noirs": 10148,
+                                  "score_moyen": 2392,
+                                  "ouverture": "Sicilian Defense: Open",
+                                  "eco": "B33",
+                                  "fen": "r1bqkb1r/pp1ppppp/2n2n2/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 1 5",
+                                  "children": [
+                                    {
+                                      "coup": "Nc3",
+                                      "uci": "b1c3",
+                                      "san": "Nc3",
+                                      "parties": 45212,
+                                      "victoires_blancs": 12789,
+                                      "nuls": 22307,
+                                      "victoires_noirs": 10116,
+                                      "score_moyen": 2384,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkb1r/pp1ppppp/2n2n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5",
+                                      "children": [
+                                        {
+                                          "coup": "e5",
+                                          "uci": "e7e5",
+                                          "san": "e5",
+                                          "parties": 27969,
+                                          "victoires_blancs": 6845,
+                                          "nuls": 16199,
+                                          "victoires_noirs": 4925,
+                                          "score_moyen": 2385,
+                                          "ouverture": "Sicilian Defense: Lasker-Pelikan Variation",
+                                          "eco": "B33",
+                                          "fen": "r1bqkb1r/pp1p1ppp/2n2n2/4p3/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Ndb5",
+                                              "uci": "d4b5",
+                                              "san": "Ndb5",
+                                              "parties": 27431,
+                                              "victoires_blancs": 6733,
+                                              "nuls": 15940,
+                                              "victoires_noirs": 4758,
+                                              "score_moyen": 2386,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqkb1r/pp1p1ppp/2n2n2/1N2p3/4P3/2N5/PPP2PPP/R1BQKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "d6",
+                                                  "uci": "d7d6",
+                                                  "san": "d6",
+                                                  "parties": 27320,
+                                                  "victoires_blancs": 6682,
+                                                  "nuls": 15894,
+                                                  "victoires_noirs": 4744,
+                                                  "score_moyen": 2385,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/pp3ppp/2np1n2/1N2p3/4P3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "d6",
+                                          "uci": "d7d6",
+                                          "san": "d6",
+                                          "parties": 15817,
+                                          "victoires_blancs": 5290,
+                                          "nuls": 5741,
+                                          "victoires_noirs": 4786,
+                                          "score_moyen": 2410,
+                                          "ouverture": "Sicilian Defense: Classical Variation",
+                                          "eco": "B56",
+                                          "fen": "r1bqkb1r/pp2pppp/2np1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bg5",
+                                              "uci": "c1g5",
+                                              "san": "Bg5",
+                                              "parties": 24983,
+                                              "victoires_blancs": 9055,
+                                              "nuls": 9419,
+                                              "victoires_noirs": 6509,
+                                              "score_moyen": 2410,
+                                              "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                              "eco": "B60",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 20274,
+                                                  "victoires_blancs": 7273,
+                                                  "nuls": 7756,
+                                                  "victoires_noirs": 5245,
+                                                  "score_moyen": 2420,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation",
+                                                  "eco": "B62",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Bd7",
+                                                  "uci": "c8d7",
+                                                  "san": "Bd7",
+                                                  "parties": 2964,
+                                                  "victoires_blancs": 1129,
+                                                  "nuls": 1062,
+                                                  "victoires_noirs": 773,
+                                                  "score_moyen": 2410,
+                                                  "ouverture": "Sicilian Defense: Richter-Rauzer Variation, Modern Variation",
+                                                  "eco": "B60",
+                                                  "fen": "r2qkb1r/pp1bpppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 2 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "coup": "Bc4",
+                                              "uci": "f1c4",
+                                              "san": "Bc4",
+                                              "parties": 8291,
+                                              "victoires_blancs": 2719,
+                                              "nuls": 2764,
+                                              "victoires_noirs": 2808,
+                                              "score_moyen": 2382,
+                                              "ouverture": "Sicilian Defense: Classical Variation, Sozin Attack",
+                                              "eco": "B57",
+                                              "fen": "r1bqkb1r/pp2pppp/2np1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R b KQkq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 3988,
+                                                  "victoires_blancs": 1370,
+                                                  "nuls": 1277,
+                                                  "victoires_noirs": 1341,
+                                                  "score_moyen": 2404,
+                                                  "ouverture": "Sicilian Defense: Sozin Attack, Leonhardt Variation",
+                                                  "eco": "B88",
+                                                  "fen": "r1bqkb1r/pp3ppp/2nppn2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Qb6",
+                                                  "uci": "d8b6",
+                                                  "san": "Qb6",
+                                                  "parties": 3289,
+                                                  "victoires_blancs": 1055,
+                                                  "nuls": 1113,
+                                                  "victoires_noirs": 1121,
+                                                  "score_moyen": 2416,
+                                                  "ouverture": "Sicilian Defense: Classical Variation, Anti-Sozin Variation",
+                                                  "eco": "B57",
+                                                  "fen": "r1b1kb1r/pp2pppp/1qnp1n2/8/2BNP3/2N5/PPP2PPP/R1BQK2R w KQkq - 2 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "g6",
+                                  "uci": "g7g6",
+                                  "san": "g6",
+                                  "parties": 11992,
+                                  "victoires_blancs": 4085,
+                                  "nuls": 5040,
+                                  "victoires_noirs": 2867,
+                                  "score_moyen": 2379,
+                                  "ouverture": "Sicilian Defense: Accelerated Dragon",
+                                  "eco": "B32",
+                                  "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "c4",
+                                      "uci": "c2c4",
+                                      "san": "c4",
+                                      "parties": 7801,
+                                      "victoires_blancs": 2747,
+                                      "nuls": 3595,
+                                      "victoires_noirs": 1459,
+                                      "score_moyen": 2400,
+                                      "ouverture": "Sicilian Defense: Accelerated Dragon, Maróczy Bind",
+                                      "eco": "B36",
+                                      "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/2PNP3/8/PP3PPP/RNBQKB1R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "Nf6",
+                                          "uci": "g8f6",
+                                          "san": "Nf6",
+                                          "parties": 5051,
+                                          "victoires_blancs": 1663,
+                                          "nuls": 2559,
+                                          "victoires_noirs": 829,
+                                          "score_moyen": 2395,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkb1r/pp1ppp1p/2n2np1/8/2PNP3/8/PP3PPP/RNBQKB1R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Nc3",
+                                              "uci": "b1c3",
+                                              "san": "Nc3",
+                                              "parties": 5046,
+                                              "victoires_blancs": 1662,
+                                              "nuls": 2558,
+                                              "victoires_noirs": 826,
+                                              "score_moyen": 2423,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqkb1r/pp1ppp1p/2n2np1/8/2PNP3/2N5/PP3PPP/R1BQKB1R b KQkq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "d6",
+                                                  "uci": "d7d6",
+                                                  "san": "d6",
+                                                  "parties": 4411,
+                                                  "victoires_blancs": 1494,
+                                                  "nuls": 2219,
+                                                  "victoires_noirs": 698,
+                                                  "score_moyen": 2395,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/pp2pp1p/2np1np1/8/2PNP3/2N5/PP3PPP/R1BQKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "coup": "Nxd4",
+                                                  "uci": "c6d4",
+                                                  "san": "Nxd4",
+                                                  "parties": 1646,
+                                                  "victoires_blancs": 589,
+                                                  "nuls": 797,
+                                                  "victoires_noirs": 260,
+                                                  "score_moyen": 2381,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/pp1ppp1p/5np1/8/2PnP3/2N5/PP3PPP/R1BQKB1R w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "Bg7",
+                                          "uci": "f8g7",
+                                          "san": "Bg7",
+                                          "parties": 4931,
+                                          "victoires_blancs": 1930,
+                                          "nuls": 2005,
+                                          "victoires_noirs": 996,
+                                          "score_moyen": 2367,
+                                          "ouverture": "Sicilian Defense: Accelerated Dragon, Maróczy Bind",
+                                          "eco": "B37",
+                                          "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/2PNP3/8/PP3PPP/RNBQKB1R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 6835,
+                                              "victoires_blancs": 2747,
+                                              "nuls": 2821,
+                                              "victoires_noirs": 1267,
+                                              "score_moyen": 2402,
+                                              "ouverture": "Sicilian Defense: Accelerated Dragon, Maróczy Bind",
+                                              "eco": "B38",
+                                              "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/2PNP3/4B3/PP3PPP/RN1QKB1R b KQkq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nf6",
+                                                  "uci": "g8f6",
+                                                  "san": "Nf6",
+                                                  "parties": 5819,
+                                                  "victoires_blancs": 2337,
+                                                  "nuls": 2421,
+                                                  "victoires_noirs": 1061,
+                                                  "score_moyen": 2369,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk2r/pp1pppbp/2n2np1/8/2PNP3/4B3/PP3PPP/RN1QKB1R w KQkq - 3 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "coup": "Nc3",
+                                      "uci": "b1c3",
+                                      "san": "Nc3",
+                                      "parties": 5255,
+                                      "victoires_blancs": 1766,
+                                      "nuls": 2044,
+                                      "victoires_noirs": 1445,
+                                      "score_moyen": 2369,
+                                      "ouverture": "Sicilian Defense: Accelerated Dragon, Modern Variation",
+                                      "eco": "B34",
+                                      "fen": "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 1 5",
+                                      "children": [
+                                        {
+                                          "coup": "Bg7",
+                                          "uci": "f8g7",
+                                          "san": "Bg7",
+                                          "parties": 9320,
+                                          "victoires_blancs": 3060,
+                                          "nuls": 4040,
+                                          "victoires_noirs": 2220,
+                                          "score_moyen": 2387,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 2 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 9397,
+                                              "victoires_blancs": 3069,
+                                              "nuls": 4086,
+                                              "victoires_noirs": 2242,
+                                              "score_moyen": 2383,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk1nr/pp1pppbp/2n3p1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 3 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nf6",
+                                                  "uci": "g8f6",
+                                                  "san": "Nf6",
+                                                  "parties": 9083,
+                                                  "victoires_blancs": 2917,
+                                                  "nuls": 3980,
+                                                  "victoires_noirs": 2186,
+                                                  "score_moyen": 2387,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk2r/pp1pppbp/2n2np1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 4 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "coup": "Bb5",
+                      "uci": "f1b5",
+                      "san": "Bb5",
+                      "parties": 38641,
+                      "victoires_blancs": 13267,
+                      "nuls": 16742,
+                      "victoires_noirs": 8632,
+                      "score_moyen": 2409,
+                      "ouverture": "Sicilian Defense: Nyezhmetdinov-Rossolimo Attack",
+                      "eco": "B30",
+                      "fen": "r1bqkbnr/pp1ppppp/2n5/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+                      "children": [
+                        {
+                          "coup": "g6",
+                          "uci": "g7g6",
+                          "san": "g6",
+                          "parties": 19331,
+                          "victoires_blancs": 6635,
+                          "nuls": 8772,
+                          "victoires_noirs": 3924,
+                          "score_moyen": 2387,
+                          "ouverture": "Sicilian Defense: Nyezhmetdinov-Rossolimo Attack, Fianchetto Variation",
+                          "eco": "B31",
+                          "fen": "r1bqkbnr/pp1ppp1p/2n3p1/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "O-O",
+                              "uci": "e1h1",
+                              "san": "O-O",
+                              "parties": 10479,
+                              "victoires_blancs": 3452,
+                              "nuls": 4800,
+                              "victoires_noirs": 2227,
+                              "score_moyen": 2392,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1ppp1p/2n3p1/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 4",
+                              "children": [
+                                {
+                                  "coup": "Bg7",
+                                  "uci": "f8g7",
+                                  "san": "Bg7",
+                                  "parties": 10389,
+                                  "victoires_blancs": 3415,
+                                  "nuls": 4770,
+                                  "victoires_noirs": 2204,
+                                  "score_moyen": 2383,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqk1nr/pp1pppbp/2n3p1/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 5",
+                                  "children": [
+                                    {
+                                      "coup": "Re1",
+                                      "uci": "f1e1",
+                                      "san": "Re1",
+                                      "parties": 4344,
+                                      "victoires_blancs": 1374,
+                                      "nuls": 2088,
+                                      "victoires_noirs": 882,
+                                      "score_moyen": 2390,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqk1nr/pp1pppbp/2n3p1/1Bp5/4P3/5N2/PPPP1PPP/RNBQR1K1 b kq - 3 5",
+                                      "children": [
+                                        {
+                                          "coup": "Nf6",
+                                          "uci": "g8f6",
+                                          "san": "Nf6",
+                                          "parties": 2173,
+                                          "victoires_blancs": 724,
+                                          "nuls": 1011,
+                                          "victoires_noirs": 438,
+                                          "score_moyen": 2381,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk2r/pp1pppbp/2n2np1/1Bp5/4P3/5N2/PPPP1PPP/RNBQR1K1 w kq - 4 6",
+                                          "children": [
+                                            {
+                                              "coup": "e5",
+                                              "uci": "e4e5",
+                                              "san": "e5",
+                                              "parties": 1052,
+                                              "victoires_blancs": 347,
+                                              "nuls": 518,
+                                              "victoires_noirs": 187,
+                                              "score_moyen": 2394,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk2r/pp1pppbp/2n2np1/1Bp1P3/8/5N2/PPPP1PPP/RNBQR1K1 b kq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nd5",
+                                                  "uci": "f6d5",
+                                                  "san": "Nd5",
+                                                  "parties": 1023,
+                                                  "victoires_blancs": 336,
+                                                  "nuls": 506,
+                                                  "victoires_noirs": 181,
+                                                  "score_moyen": 2389,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk2r/pp1pppbp/2n3p1/1BpnP3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 1 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "e5",
+                                          "uci": "e7e5",
+                                          "san": "e5",
+                                          "parties": 1959,
+                                          "victoires_blancs": 541,
+                                          "nuls": 1016,
+                                          "victoires_noirs": 402,
+                                          "score_moyen": 2392,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk1nr/pp1p1pbp/2n3p1/1Bp1p3/4P3/5N2/PPPP1PPP/RNBQR1K1 w kq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bxc6",
+                                              "uci": "b5c6",
+                                              "san": "Bxc6",
+                                              "parties": 1314,
+                                              "victoires_blancs": 343,
+                                              "nuls": 760,
+                                              "victoires_noirs": 211,
+                                              "score_moyen": 2404,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk1nr/pp1p1pbp/2B3p1/2p1p3/4P3/5N2/PPPP1PPP/RNBQR1K1 b kq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "dxc6",
+                                                  "uci": "d7c6",
+                                                  "san": "dxc6",
+                                                  "parties": 1223,
+                                                  "victoires_blancs": 304,
+                                                  "nuls": 724,
+                                                  "victoires_noirs": 195,
+                                                  "score_moyen": 2398,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk1nr/pp3pbp/2p3p1/2p1p3/4P3/5N2/PPPP1PPP/RNBQR1K1 w kq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "coup": "c3",
+                                      "uci": "c2c3",
+                                      "san": "c3",
+                                      "parties": 4112,
+                                      "victoires_blancs": 1448,
+                                      "nuls": 1695,
+                                      "victoires_noirs": 969,
+                                      "score_moyen": 2392,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqk1nr/pp1pppbp/2n3p1/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "Nf6",
+                                          "uci": "g8f6",
+                                          "san": "Nf6",
+                                          "parties": 3191,
+                                          "victoires_blancs": 1050,
+                                          "nuls": 1391,
+                                          "victoires_noirs": 750,
+                                          "score_moyen": 2388,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk2r/pp1pppbp/2n2np1/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "Re1",
+                                              "uci": "f1e1",
+                                              "san": "Re1",
+                                              "parties": 2364,
+                                              "victoires_blancs": 780,
+                                              "nuls": 1060,
+                                              "victoires_noirs": 524,
+                                              "score_moyen": 2394,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk2r/pp1pppbp/2n2np1/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQR1K1 b kq - 2 6",
+                                              "children": [
+                                                {
+                                                  "coup": "O-O",
+                                                  "uci": "e8h8",
+                                                  "san": "O-O",
+                                                  "parties": 2881,
+                                                  "victoires_blancs": 950,
+                                                  "nuls": 1276,
+                                                  "victoires_noirs": 655,
+                                                  "score_moyen": 2380,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bq1rk1/pp1pppbp/2n2np1/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQR1K1 w - - 3 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "Bxc6",
+                              "uci": "b5c6",
+                              "san": "Bxc6",
+                              "parties": 8073,
+                              "victoires_blancs": 2900,
+                              "nuls": 3662,
+                              "victoires_noirs": 1511,
+                              "score_moyen": 2419,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1ppp1p/2B3p1/2p5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "dxc6",
+                                  "uci": "d7c6",
+                                  "san": "dxc6",
+                                  "parties": 5245,
+                                  "victoires_blancs": 1967,
+                                  "nuls": 2342,
+                                  "victoires_noirs": 936,
+                                  "score_moyen": 2385,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/pp2pp1p/2p3p1/2p5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "d3",
+                                      "uci": "d2d3",
+                                      "san": "d3",
+                                      "parties": 4275,
+                                      "victoires_blancs": 1609,
+                                      "nuls": 1943,
+                                      "victoires_noirs": 723,
+                                      "score_moyen": 2428,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/pp2pp1p/2p3p1/2p5/4P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "Bg7",
+                                          "uci": "f8g7",
+                                          "san": "Bg7",
+                                          "parties": 4032,
+                                          "victoires_blancs": 1503,
+                                          "nuls": 1862,
+                                          "victoires_noirs": 667,
+                                          "score_moyen": 2387,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk1nr/pp2ppbp/2p3p1/2p5/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 1 6",
+                                          "children": [
+                                            {
+                                              "coup": "h3",
+                                              "uci": "h2h3",
+                                              "san": "h3",
+                                              "parties": 3369,
+                                              "victoires_blancs": 1232,
+                                              "nuls": 1595,
+                                              "victoires_noirs": 542,
+                                              "score_moyen": 2429,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk1nr/pp2ppbp/2p3p1/2p5/4P3/3P1N1P/PPP2PP1/RNBQK2R b KQkq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nf6",
+                                                  "uci": "g8f6",
+                                                  "san": "Nf6",
+                                                  "parties": 2493,
+                                                  "victoires_blancs": 880,
+                                                  "nuls": 1230,
+                                                  "victoires_noirs": 383,
+                                                  "score_moyen": 2386,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk2r/pp2ppbp/2p2np1/2p5/4P3/3P1N1P/PPP2PP1/RNBQK2R w KQkq - 1 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "bxc6",
+                                  "uci": "b7c6",
+                                  "san": "bxc6",
+                                  "parties": 2828,
+                                  "victoires_blancs": 933,
+                                  "nuls": 1320,
+                                  "victoires_noirs": 575,
+                                  "score_moyen": 2414,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/p2ppp1p/2p3p1/2p5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "O-O",
+                                      "uci": "e1h1",
+                                      "san": "O-O",
+                                      "parties": 2475,
+                                      "victoires_blancs": 808,
+                                      "nuls": 1178,
+                                      "victoires_noirs": 489,
+                                      "score_moyen": 2422,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/p2ppp1p/2p3p1/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 5",
+                                      "children": [
+                                        {
+                                          "coup": "Bg7",
+                                          "uci": "f8g7",
+                                          "san": "Bg7",
+                                          "parties": 2444,
+                                          "victoires_blancs": 788,
+                                          "nuls": 1168,
+                                          "victoires_noirs": 488,
+                                          "score_moyen": 2416,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk1nr/p2pppbp/2p3p1/2p5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 6",
+                                          "children": [
+                                            {
+                                              "coup": "Re1",
+                                              "uci": "f1e1",
+                                              "san": "Re1",
+                                              "parties": 2429,
+                                              "victoires_blancs": 729,
+                                              "nuls": 1266,
+                                              "victoires_noirs": 434,
+                                              "score_moyen": 2421,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk1nr/p2pppbp/2p3p1/2p5/4P3/5N2/PPPP1PPP/RNBQR1K1 b kq - 3 6",
+                                              "children": [
+                                                {
+                                                  "coup": "Nh6",
+                                                  "uci": "g8h6",
+                                                  "san": "Nh6",
+                                                  "parties": 1299,
+                                                  "victoires_blancs": 352,
+                                                  "nuls": 711,
+                                                  "victoires_noirs": 236,
+                                                  "score_moyen": 2424,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk2r/p2pppbp/2p3pn/2p5/4P3/5N2/PPPP1PPP/RNBQR1K1 w kq - 4 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "coup": "e6",
+                          "uci": "e7e6",
+                          "san": "e6",
+                          "parties": 9671,
+                          "victoires_blancs": 3082,
+                          "nuls": 4149,
+                          "victoires_noirs": 2440,
+                          "score_moyen": 2421,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "r1bqkbnr/pp1p1ppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "O-O",
+                              "uci": "e1h1",
+                              "san": "O-O",
+                              "parties": 6441,
+                              "victoires_blancs": 1967,
+                              "nuls": 2991,
+                              "victoires_noirs": 1483,
+                              "score_moyen": 2413,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1p1ppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 4",
+                              "children": [
+                                {
+                                  "coup": "Nge7",
+                                  "uci": "g8e7",
+                                  "san": "Nge7",
+                                  "parties": 6323,
+                                  "victoires_blancs": 1913,
+                                  "nuls": 2954,
+                                  "victoires_noirs": 1456,
+                                  "score_moyen": 2421,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkb1r/pp1pnppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 5",
+                                  "children": [
+                                    {
+                                      "coup": "Re1",
+                                      "uci": "f1e1",
+                                      "san": "Re1",
+                                      "parties": 2717,
+                                      "victoires_blancs": 771,
+                                      "nuls": 1347,
+                                      "victoires_noirs": 599,
+                                      "score_moyen": 2409,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkb1r/pp1pnppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQR1K1 b kq - 3 5",
+                                      "children": [
+                                        {
+                                          "coup": "a6",
+                                          "uci": "a7a6",
+                                          "san": "a6",
+                                          "parties": 1669,
+                                          "victoires_blancs": 504,
+                                          "nuls": 814,
+                                          "victoires_noirs": 351,
+                                          "score_moyen": 2413,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkb1r/1p1pnppp/p1n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQR1K1 w kq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Bf1",
+                                              "uci": "b5f1",
+                                              "san": "Bf1",
+                                              "parties": 1281,
+                                              "victoires_blancs": 377,
+                                              "nuls": 641,
+                                              "victoires_noirs": 263,
+                                              "score_moyen": 2405,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqkb1r/1p1pnppp/p1n1p3/2p5/4P3/5N2/PPPP1PPP/RNBQRBK1 b kq - 1 6",
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "coup": "c3",
+                                      "uci": "c2c3",
+                                      "san": "c3",
+                                      "parties": 1631,
+                                      "victoires_blancs": 529,
+                                      "nuls": 722,
+                                      "victoires_noirs": 380,
+                                      "score_moyen": 2417,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkb1r/pp1pnppp/2n1p3/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "a6",
+                                          "uci": "a7a6",
+                                          "san": "a6",
+                                          "parties": 1443,
+                                          "victoires_blancs": 463,
+                                          "nuls": 639,
+                                          "victoires_noirs": 341,
+                                          "score_moyen": 2423,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkb1r/1p1pnppp/p1n1p3/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Ba4",
+                                              "uci": "b5a4",
+                                              "san": "Ba4",
+                                              "parties": 1224,
+                                              "victoires_blancs": 399,
+                                              "nuls": 543,
+                                              "victoires_noirs": 282,
+                                              "score_moyen": 2416,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqkb1r/1p1pnppp/p1n1p3/2p5/B3P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 1 6",
+                                              "children": [
+                                                {
+                                                  "coup": "b5",
+                                                  "uci": "b7b5",
+                                                  "san": "b5",
+                                                  "parties": 1108,
+                                                  "victoires_blancs": 350,
+                                                  "nuls": 510,
+                                                  "victoires_noirs": 248,
+                                                  "score_moyen": 2420,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqkb1r/3pnppp/p1n1p3/1pp5/B3P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "Bxc6",
+                              "uci": "b5c6",
+                              "san": "Bxc6",
+                              "parties": 2857,
+                              "victoires_blancs": 993,
+                              "nuls": 1026,
+                              "victoires_noirs": 838,
+                              "score_moyen": 2418,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1p1ppp/2B1p3/2p5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
+                              "children": [
+                                {
+                                  "coup": "bxc6",
+                                  "uci": "b7c6",
+                                  "san": "bxc6",
+                                  "parties": 2800,
+                                  "victoires_blancs": 961,
+                                  "nuls": 1016,
+                                  "victoires_noirs": 823,
+                                  "score_moyen": 2422,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/p2p1ppp/2p1p3/2p5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": [
+                                    {
+                                      "coup": "d3",
+                                      "uci": "d2d3",
+                                      "san": "d3",
+                                      "parties": 1591,
+                                      "victoires_blancs": 575,
+                                      "nuls": 596,
+                                      "victoires_noirs": 420,
+                                      "score_moyen": 2428,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqkbnr/p2p1ppp/2p1p3/2p5/4P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "Ne7",
+                                          "uci": "g8e7",
+                                          "san": "Ne7",
+                                          "parties": 1092,
+                                          "victoires_blancs": 393,
+                                          "nuls": 398,
+                                          "victoires_noirs": 301,
+                                          "score_moyen": 2434,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqkb1r/p2pnppp/2p1p3/2p5/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 1 6",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "coup": "Nc3",
+              "uci": "b1c3",
+              "san": "Nc3",
+              "parties": 45195,
+              "victoires_blancs": 14142,
+              "nuls": 18021,
+              "victoires_noirs": 13032,
+              "score_moyen": 2374,
+              "ouverture": "Sicilian Defense: Closed",
+              "eco": "B23",
+              "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2",
+              "children": [
+                {
+                  "coup": "Nc6",
+                  "uci": "b8c6",
+                  "san": "Nc6",
+                  "parties": 26229,
+                  "victoires_blancs": 8082,
+                  "nuls": 10760,
+                  "victoires_noirs": 7387,
+                  "score_moyen": 2379,
+                  "ouverture": "Sicilian Defense: Closed, Traditional",
+                  "eco": "B23",
+                  "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 2 3",
+                  "children": [
+                    {
+                      "coup": "g3",
+                      "uci": "g2g3",
+                      "san": "g3",
+                      "parties": 7820,
+                      "victoires_blancs": 2087,
+                      "nuls": 2982,
+                      "victoires_noirs": 2751,
+                      "score_moyen": 2332,
+                      "ouverture": "Sicilian Defense: Closed, Fianchetto Variation",
+                      "eco": "B24",
+                      "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N3P1/PPPP1P1P/R1BQKBNR b KQkq - 0 3",
+                      "children": [
+                        {
+                          "coup": "g6",
+                          "uci": "g7g6",
+                          "san": "g6",
+                          "parties": 7313,
+                          "victoires_blancs": 1924,
+                          "nuls": 2821,
+                          "victoires_noirs": 2568,
+                          "score_moyen": 2378,
+                          "ouverture": "Sicilian Defense: Closed",
+                          "eco": "B24",
+                          "fen": "r1bqkbnr/pp1ppp1p/2n3p1/2p5/4P3/2N3P1/PPPP1P1P/R1BQKBNR w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "Bg2",
+                              "uci": "f1g2",
+                              "san": "Bg2",
+                              "parties": 6956,
+                              "victoires_blancs": 1818,
+                              "nuls": 2702,
+                              "victoires_noirs": 2436,
+                              "score_moyen": 2332,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1ppp1p/2n3p1/2p5/4P3/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 1 4",
+                              "children": [
+                                {
+                                  "coup": "Bg7",
+                                  "uci": "f8g7",
+                                  "san": "Bg7",
+                                  "parties": 6949,
+                                  "victoires_blancs": 1817,
+                                  "nuls": 2687,
+                                  "victoires_noirs": 2445,
+                                  "score_moyen": 2378,
+                                  "ouverture": "Sicilian Defense: Closed",
+                                  "eco": "B24",
+                                  "fen": "r1bqk1nr/pp1pppbp/2n3p1/2p5/4P3/2N3P1/PPPP1PBP/R1BQK1NR w KQkq - 2 5",
+                                  "children": [
+                                    {
+                                      "coup": "d3",
+                                      "uci": "d2d3",
+                                      "san": "d3",
+                                      "parties": 6690,
+                                      "victoires_blancs": 1767,
+                                      "nuls": 2629,
+                                      "victoires_noirs": 2294,
+                                      "score_moyen": 2334,
+                                      "ouverture": null,
+                                      "eco": null,
+                                      "fen": "r1bqk1nr/pp1pppbp/2n3p1/2p5/4P3/2NP2P1/PPP2PBP/R1BQK1NR b KQkq - 0 5",
+                                      "children": [
+                                        {
+                                          "coup": "d6",
+                                          "uci": "d7d6",
+                                          "san": "d6",
+                                          "parties": 5194,
+                                          "victoires_blancs": 1318,
+                                          "nuls": 2129,
+                                          "victoires_noirs": 1747,
+                                          "score_moyen": 2384,
+                                          "ouverture": "Sicilian Defense: Closed",
+                                          "eco": "B25",
+                                          "fen": "r1bqk1nr/pp2ppbp/2np2p1/2p5/4P3/2NP2P1/PPP2PBP/R1BQK1NR w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 2864,
+                                              "victoires_blancs": 759,
+                                              "nuls": 1119,
+                                              "victoires_noirs": 986,
+                                              "score_moyen": 2335,
+                                              "ouverture": "Sicilian Defense: Closed",
+                                              "eco": "B26",
+                                              "fen": "r1bqk1nr/pp2ppbp/2np2p1/2p5/4P3/2NPB1P1/PPP2PBP/R2QK1NR b KQkq - 1 6",
+                                              "children": []
+                                            },
+                                            {
+                                              "coup": "f4",
+                                              "uci": "f2f4",
+                                              "san": "f4",
+                                              "parties": 2531,
+                                              "victoires_blancs": 656,
+                                              "nuls": 1021,
+                                              "victoires_noirs": 854,
+                                              "score_moyen": 2338,
+                                              "ouverture": "Sicilian Defense: Closed",
+                                              "eco": "B25",
+                                              "fen": "r1bqk1nr/pp2ppbp/2np2p1/2p5/4PP2/2NP2P1/PPP3BP/R1BQK1NR b KQkq - 0 6",
+                                              "children": [
+                                                {
+                                                  "coup": "e6",
+                                                  "uci": "e7e6",
+                                                  "san": "e6",
+                                                  "parties": 1781,
+                                                  "victoires_blancs": 462,
+                                                  "nuls": 732,
+                                                  "victoires_noirs": 587,
+                                                  "score_moyen": 2381,
+                                                  "ouverture": null,
+                                                  "eco": null,
+                                                  "fen": "r1bqk1nr/pp3pbp/2npp1p1/2p5/4PP2/2NP2P1/PPP3BP/R1BQK1NR w KQkq - 0 7",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "coup": "e6",
+                                          "uci": "e7e6",
+                                          "san": "e6",
+                                          "parties": 1107,
+                                          "victoires_blancs": 343,
+                                          "nuls": 377,
+                                          "victoires_noirs": 387,
+                                          "score_moyen": 2352,
+                                          "ouverture": null,
+                                          "eco": null,
+                                          "fen": "r1bqk1nr/pp1p1pbp/2n1p1p1/2p5/4P3/2NP2P1/PPP2PBP/R1BQK1NR w KQkq - 0 6",
+                                          "children": [
+                                            {
+                                              "coup": "Be3",
+                                              "uci": "c1e3",
+                                              "san": "Be3",
+                                              "parties": 1107,
+                                              "victoires_blancs": 378,
+                                              "nuls": 368,
+                                              "victoires_noirs": 361,
+                                              "score_moyen": 2334,
+                                              "ouverture": null,
+                                              "eco": null,
+                                              "fen": "r1bqk1nr/pp1p1pbp/2n1p1p1/2p5/4P3/2NPB1P1/PPP2PBP/R2QK1NR b KQkq - 1 6",
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "coup": "Bb5",
+                      "uci": "f1b5",
+                      "san": "Bb5",
+                      "parties": 5704,
+                      "victoires_blancs": 2225,
+                      "nuls": 2081,
+                      "victoires_noirs": 1398,
+                      "score_moyen": 2390,
+                      "ouverture": null,
+                      "eco": null,
+                      "fen": "r1bqkbnr/pp1ppppp/2n5/1Bp5/4P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 3 3",
+                      "children": [
+                        {
+                          "coup": "Nd4",
+                          "uci": "c6d4",
+                          "san": "Nd4",
+                          "parties": 4185,
+                          "victoires_blancs": 1472,
+                          "nuls": 1632,
+                          "victoires_noirs": 1081,
+                          "score_moyen": 2388,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "r1bqkbnr/pp1ppppp/8/1Bp5/3nP3/2N5/PPPP1PPP/R1BQK1NR w KQkq - 4 4",
+                          "children": [
+                            {
+                              "coup": "Bc4",
+                              "uci": "b5c4",
+                              "san": "Bc4",
+                              "parties": 2355,
+                              "victoires_blancs": 830,
+                              "nuls": 929,
+                              "victoires_noirs": 596,
+                              "score_moyen": 2382,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1ppppp/8/2p5/2BnP3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 5 4",
+                              "children": [
+                                {
+                                  "coup": "e6",
+                                  "uci": "e7e6",
+                                  "san": "e6",
+                                  "parties": 1537,
+                                  "victoires_blancs": 482,
+                                  "nuls": 666,
+                                  "victoires_noirs": 389,
+                                  "score_moyen": 2396,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkbnr/pp1p1ppp/4p3/2p5/2BnP3/2N5/PPPP1PPP/R1BQK1NR w KQkq - 0 5",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "Nf3",
+                              "uci": "g1f3",
+                              "san": "Nf3",
+                              "parties": 1601,
+                              "victoires_blancs": 560,
+                              "nuls": 622,
+                              "victoires_noirs": 419,
+                              "score_moyen": 2394,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp1ppppp/8/1Bp5/3nP3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 5 4",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "coup": "d6",
+                  "uci": "d7d6",
+                  "san": "d6",
+                  "parties": 8138,
+                  "victoires_blancs": 2535,
+                  "nuls": 3405,
+                  "victoires_noirs": 2198,
+                  "score_moyen": 2411,
+                  "ouverture": null,
+                  "eco": null,
+                  "fen": "rnbqkbnr/pp2pppp/3p4/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3",
+                  "children": [
+                    {
+                      "coup": "f4",
+                      "uci": "f2f4",
+                      "san": "f4",
+                      "parties": 2874,
+                      "victoires_blancs": 962,
+                      "nuls": 1067,
+                      "victoires_noirs": 845,
+                      "score_moyen": 2405,
+                      "ouverture": null,
+                      "eco": null,
+                      "fen": "rnbqkbnr/pp2pppp/3p4/2p5/4PP2/2N5/PPPP2PP/R1BQKBNR b KQkq - 0 3",
+                      "children": [
+                        {
+                          "coup": "g6",
+                          "uci": "g7g6",
+                          "san": "g6",
+                          "parties": 1463,
+                          "victoires_blancs": 437,
+                          "nuls": 564,
+                          "victoires_noirs": 462,
+                          "score_moyen": 2417,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "rnbqkbnr/pp2pp1p/3p2p1/2p5/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "Nf3",
+                              "uci": "g1f3",
+                              "san": "Nf3",
+                              "parties": 1324,
+                              "victoires_blancs": 380,
+                              "nuls": 520,
+                              "victoires_noirs": 424,
+                              "score_moyen": 2402,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "rnbqkbnr/pp2pp1p/3p2p1/2p5/4PP2/2N2N2/PPPP2PP/R1BQKB1R b KQkq - 1 4",
+                              "children": [
+                                {
+                                  "coup": "Bg7",
+                                  "uci": "f8g7",
+                                  "san": "Bg7",
+                                  "parties": 1309,
+                                  "victoires_blancs": 377,
+                                  "nuls": 510,
+                                  "victoires_noirs": 422,
+                                  "score_moyen": 2417,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "rnbqk1nr/pp2ppbp/3p2p1/2p5/4PP2/2N2N2/PPPP2PP/R1BQKB1R w KQkq - 2 5",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "coup": "Nc6",
+                          "uci": "b8c6",
+                          "san": "Nc6",
+                          "parties": 1220,
+                          "victoires_blancs": 445,
+                          "nuls": 437,
+                          "victoires_noirs": 338,
+                          "score_moyen": 2398,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "r1bqkbnr/pp2pppp/2np4/2p5/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 1 4",
+                          "children": [
+                            {
+                              "coup": "Nf3",
+                              "uci": "g1f3",
+                              "san": "Nf3",
+                              "parties": 1223,
+                              "victoires_blancs": 454,
+                              "nuls": 435,
+                              "victoires_noirs": 334,
+                              "score_moyen": 2394,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/pp2pppp/2np4/2p5/4PP2/2N2N2/PPPP2PP/R1BQKB1R b KQkq - 2 4",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "coup": "Nge2",
+                      "uci": "g1e2",
+                      "san": "Nge2",
+                      "parties": 1586,
+                      "victoires_blancs": 446,
+                      "nuls": 865,
+                      "victoires_noirs": 275,
+                      "score_moyen": 2447,
+                      "ouverture": null,
+                      "eco": null,
+                      "fen": "rnbqkbnr/pp2pppp/3p4/2p5/4P3/2N5/PPPPNPPP/R1BQKB1R b KQkq - 1 3",
+                      "children": [
+                        {
+                          "coup": "Nf6",
+                          "uci": "g8f6",
+                          "san": "Nf6",
+                          "parties": 1309,
+                          "victoires_blancs": 346,
+                          "nuls": 728,
+                          "victoires_noirs": 235,
+                          "score_moyen": 2427,
+                          "ouverture": null,
+                          "eco": null,
+                          "fen": "rnbqkb1r/pp2pppp/3p1n2/2p5/4P3/2N5/PPPPNPPP/R1BQKB1R w KQkq - 2 4",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "coup": "e5",
+          "uci": "e7e5",
+          "san": "e5",
+          "parties": 314452,
+          "victoires_blancs": 91760,
+          "nuls": 159451,
+          "victoires_noirs": 63241,
+          "score_moyen": 2410,
+          "ouverture": "King's Pawn Game",
+          "eco": "C20",
+          "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+          "children": [
+            {
+              "coup": "Nf3",
+              "uci": "g1f3",
+              "san": "Nf3",
+              "parties": 289894,
+              "victoires_blancs": 83974,
+              "nuls": 149330,
+              "victoires_noirs": 56590,
+              "score_moyen": 2417,
+              "ouverture": "King's Knight Opening",
+              "eco": "C40",
+              "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+              "children": [
+                {
+                  "coup": "Nc6",
+                  "uci": "b8c6",
+                  "san": "Nc6",
+                  "parties": 248258,
+                  "victoires_blancs": 71602,
+                  "nuls": 126010,
+                  "victoires_noirs": 50646,
+                  "score_moyen": 2416,
+                  "ouverture": "King's Knight Opening: Normal Variation",
+                  "eco": "C44",
+                  "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+                  "children": [
+                    {
+                      "coup": "Bb5",
+                      "uci": "f1b5",
+                      "san": "Bb5",
+                      "parties": 162021,
+                      "victoires_blancs": 46413,
+                      "nuls": 85709,
+                      "victoires_noirs": 29899,
+                      "score_moyen": 2422,
+                      "ouverture": "Ruy Lopez",
+                      "eco": "C60",
+                      "fen": "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+                      "children": [
+                        {
+                          "coup": "a6",
+                          "uci": "a7a6",
+                          "san": "a6",
+                          "parties": 115754,
+                          "victoires_blancs": 34458,
+                          "nuls": 58961,
+                          "victoires_noirs": 22335,
+                          "score_moyen": 2413,
+                          "ouverture": "Ruy Lopez: Morphy Defense",
+                          "eco": "C70",
+                          "fen": "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+                          "children": [
+                            {
+                              "coup": "Ba4",
+                              "uci": "b5a4",
+                              "san": "Ba4",
+                              "parties": 105566,
+                              "victoires_blancs": 31775,
+                              "nuls": 53572,
+                              "victoires_noirs": 20219,
+                              "score_moyen": 2419,
+                              "ouverture": null,
+                              "eco": null,
+                              "fen": "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4",
+                              "children": [
+                                {
+                                  "coup": "Nf6",
+                                  "uci": "g8f6",
+                                  "san": "Nf6",
+                                  "parties": 94185,
+                                  "victoires_blancs": 27815,
+                                  "nuls": 49104,
+                                  "victoires_noirs": 17266,
+                                  "score_moyen": 2414,
+                                  "ouverture": null,
+                                  "eco": null,
+                                  "fen": "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 5",
+                                  "children": [
+                                    {
+                                      "coup": "O-O",
+                                      "uci": "e1h1",
+                                      "san": "O-O",
+                                      "parties": 82405,
+                                      "victoires_blancs": 23933,
+                                      "nuls": 44195,
+                                      "victoires_noirs": 14277,
+                                      "score_moyen": 2423,
+                                      "ouverture": "Ruy Lopez: Morphy Defense",
+                                      "eco": "C78",
+                                      "fen": "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 3 5",
+                                      "children": []
+                                    },
+                                    {
+                                      "coup": "d3",
+                                      "uci": "d2d3",
+                                      "san": "d3",
+                                      "parties": 6426,
+                                      "victoires_blancs": 2137,
+                                      "nuls": 2729,
+                                      "victoires_noirs": 1560,
+                                      "score_moyen": 2421,
+                                      "ouverture": "Ruy Lopez: Morphy Defense, Anderssen Variation",
+                                      "eco": "C77",
+                                      "fen": "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - 0 5",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "coup": "d6",
+                                  "uci": "d7d6",
+                                  "san": "d6",
+                                  "parties": 6364,
+                                  "victoires_blancs": 2311,
+                                  "nuls": 2481,
+                                  "victoires_noirs": 1572,
+                                  "score_moyen": 2406,
+                                  "ouverture": "Ruy Lopez: Morphy Defense, Modern Steinitz Defense",
+                                  "eco": "C71",
+                                  "fen": "r1bqkbnr/1pp2ppp/p1np4/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "coup": "Bxc6",
+                              "uci": "b5c6",
+                              "san": "Bxc6",
+                              "parties": 10137,
+                              "victoires_blancs": 2674,
+                              "nuls": 5362,
+                              "victoires_noirs": 2101,
+                              "score_moyen": 2396,
+                              "ouverture": "Ruy Lopez: Exchange Variation",
+                              "eco": "C68",
+                              "fen": "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "coup": "Nf6",
+                          "uci": "g8f6",
+                          "san": "Nf6",
+                          "parties": 32765,
+                          "victoires_blancs": 6866,
+                          "nuls": 21419,
+                          "victoires_noirs": 4480,
+                          "score_moyen": 2442,
+                          "ouverture": "Ruy Lopez: Berlin Defense",
+                          "eco": "C65",
+                          "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "coup": "Bc4",
+                      "uci": "f1c4",
+                      "san": "Bc4",
+                      "parties": 48160,
+                      "victoires_blancs": 14233,
+                      "nuls": 22642,
+                      "victoires_noirs": 11285,
+                      "score_moyen": 2415,
+                      "ouverture": "Italian Game",
+                      "eco": "C50",
+                      "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "coup": "Nf6",
+                  "uci": "g8f6",
+                  "san": "Nf6",
+                  "parties": 34242,
+                  "victoires_blancs": 9244,
+                  "nuls": 20874,
+                  "victoires_noirs": 4124,
+                  "score_moyen": 2404,
+                  "ouverture": "Petrov's Defense",
+                  "eco": "C42",
+                  "fen": "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+                  "children": [
+                    {
+                      "coup": "Nxe5",
+                      "uci": "f3e5",
+                      "san": "Nxe5",
+                      "parties": 23310,
+                      "victoires_blancs": 5871,
+                      "nuls": 14890,
+                      "victoires_noirs": 2549,
+                      "score_moyen": 2436,
+                      "ouverture": "Petrov's Defense",
+                      "eco": "C42",
+                      "fen": "rnbqkb1r/pppp1ppp/5n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R b KQkq - 0 3",
+                      "children": []
+                    },
+                    {
+                      "coup": "d4",
+                      "uci": "d2d4",
+                      "san": "d4",
+                      "parties": 6416,
+                      "victoires_blancs": 1925,
+                      "nuls": 3749,
+                      "victoires_noirs": 742,
+                      "score_moyen": 2440,
+                      "ouverture": "Petrov's Defense: Modern Attack",
+                      "eco": "C43",
+                      "fen": "rnbqkb1r/pppp1ppp/5n2/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "coup": "Bc4",
+              "uci": "f1c4",
+              "san": "Bc4",
+              "parties": 9323,
+              "victoires_blancs": 3196,
+              "nuls": 4036,
+              "victoires_noirs": 2091,
+              "score_moyen": 2404,
+              "ouverture": "Bishop's Opening",
+              "eco": "C23",
+              "fen": "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coup": "d4",
+      "uci": "d2d4",
+      "san": "d4",
+      "parties": 1029878,
+      "victoires_blancs": 334470,
+      "nuls": 461840,
+      "victoires_noirs": 233568,
+      "score_moyen": 2409,
+      "ouverture": "Queen's Pawn Game",
+      "eco": "A40",
+      "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
+      "children": []
+    }
+  ]
+}

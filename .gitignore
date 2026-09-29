@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# Cache and database
+repertoire_cache.db
+*.db
+lichess_cache.json
+lichess_repertoire/.cache/
+
+# Pytest
+.pytest_cache/
+
+# Build artifacts
+repertoire.pgn
+repertoire.json
+
+# Streamlit
+.streamlit/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swn
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Vite (frontend web/)
+node_modules/
+web/dist/
+dist/
+
+# Graphify
+graphify-out/

@@ -1,0 +1,680 @@
+/* ------------------------------------------------------------------
+ * Studio : explorateur, constructeur, entraînement, live, graphe,
+ * mes parties. Listes et tableaux plutôt que des cartes dans des cartes ;
+ * une carte = un bloc fonctionnel autonome.
+ * ------------------------------------------------------------------ */
+
+/* --- Explorateur : historique + suites --- */
+.explorer-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
+.moves-history-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  align-items: center;
+  font-family: var(--font-mono);
+}
+.move-number { color: var(--text-3); font-size: var(--fs-small); margin-left: var(--sp-1); }
+.move-number:first-child { margin-left: 0; }
+.move-pill {
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  color: var(--text);
+  cursor: pointer;
+  padding: 1px 6px;
+  font-size: var(--fs-body);
+}
+.move-pill:hover { background: var(--bg-raised); }
+.move-pill.active { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-text); }
+
+.candidates-list { display: flex; flex-direction: column; gap: var(--sp-1); }
+.candidate-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text);
+  cursor: pointer;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-ui);
+}
+.candidate-item:hover { border-color: var(--border-strong); background: var(--bg-raised); }
+.candidate-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.candidate-san-group { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
+.candidate-rank { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-3); }
+.candidate-san { font-family: var(--font-mono); font-weight: 600; font-size: var(--fs-emph); }
+.candidate-stats-meta { display: flex; gap: var(--sp-1); font-size: var(--fs-small); color: var(--text-3); white-space: nowrap; }
+.parties-count, .parties-small { font-variant-numeric: tabular-nums; }
+.share-pct { font-family: var(--font-mono); }
+.candidate-opening, .candidate-op-name { font-size: var(--fs-small); color: var(--text-2); margin-top: 2px; }
+
+/* --- Constructeur : contexte, trait, priorités, listes --- */
+.builder-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
+.builder-header-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); flex-wrap: wrap; }
+.builder-tag-group { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.header-toggle-actions { display: flex; gap: var(--sp-1); align-items: center; flex-wrap: wrap; }
+
+.turn-indicator-box { border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-2) var(--sp-3); }
+.turn-content { display: flex; gap: var(--sp-2); align-items: flex-start; }
+.turn-content > div { flex: 1; min-width: 0; }
+.turn-content p { color: var(--text-2); margin-top: var(--sp-1); }
+.turn-content.opponent-turn { border-left: 3px solid var(--warn); padding-left: var(--sp-2); }
+.turn-content.player-turn { border-left: 3px solid var(--accent); padding-left: var(--sp-2); }
+.gameover-lost { border-left-color: var(--danger); }
+.gameover-won { border-left-color: var(--accent); }
+.gameover-draw { border-left-color: var(--text-3); }
+.gameover-card { border-left-width: 3px; }
+.gameover-card.gameover-lost { border-left-color: var(--danger); }
+.gameover-card.gameover-won { border-left-color: var(--accent); }
+.gameover-card.gameover-draw { border-left-color: var(--text-3); }
+.gameover-title { display: flex; align-items: center; gap: var(--sp-2); }
+.arrow-icon { color: var(--text-3); flex: none; }
+.score-badge { font-family: var(--font-mono); font-weight: 600; }
+.nav-btn.active-pulse { border-color: var(--accent); color: var(--accent-text); background: var(--accent-tint); }
+.game-report { display: flex; flex-direction: column; gap: var(--sp-2); }
+.game-report-phases td:nth-child(2),
+.game-report-phases td:nth-child(3) {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.priority-opponent-banner {
+  border: 1px solid var(--warn);
+  background: var(--warn-tint);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.priority-banner-top { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.priority-san { font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
+.priority-stats { font-size: var(--fs-small); color: var(--text-2); }
+.priority-details { font-size: var(--fs-small); color: var(--text-2); }
+.priority-action-buttons { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.auto-vary-note, .auto-depth-note { font-size: var(--fs-small); color: var(--text-3); }
+
+.opponent-moves-list { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: 0; }
+.sub-section-label { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); font-weight: 700; }
+.opponent-move-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text);
+  cursor: pointer;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-ui);
+}
+.opponent-move-btn:hover { border-color: var(--border-strong); background: var(--bg-raised); }
+.opponent-move-btn.is-top { border-color: var(--accent); }
+.move-main-info { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; flex: 1; }
+.move-rank-num { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-3); }
+.move-san-text { font-family: var(--font-mono); font-weight: 600; }
+.move-opening-subname { font-size: var(--fs-small); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.move-stats-num { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-2); white-space: nowrap; }
+.move-action-buttons { display: flex; gap: var(--sp-1); }
+
+.registered-header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.registered-hint { font-size: var(--fs-small); color: var(--text-3); }
+.registered-move-banner {
+  border: 1px solid var(--accent);
+  background: var(--accent-tint);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+.registered-moves-chips { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.unregistered-prompt { font-size: var(--fs-small); color: var(--text-3); }
+
+/* Suggestions moteur / utilisateurs / conseil. */
+.player-candidate-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+}
+.player-candidate-card.is-best { border-color: var(--accent); }
+.engine-pv-line, .candidate-suggestions-list, .engine-suggestions, .users-suggestions { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-2); }
+.engine-source-label { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); }
+.engine-card-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); flex-wrap: wrap; }
+.engine-depth-row { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-small); color: var(--text-3); }
+.engine-depth-options { display: flex; gap: var(--sp-1); }
+.engine-depth-label { font-size: var(--fs-small); color: var(--text-3); }
+.engine-depth { font-family: var(--font-mono); }
+.engine-choice-tag { font-size: var(--fs-small); color: var(--text-3); }
+.candidate-san-bold { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-emph); }
+.candidate-score { font-family: var(--font-mono); color: var(--accent-text); }
+.candidate-info { font-size: var(--fs-small); color: var(--text-3); }
+.candidate-rank-small { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-3); }
+.freq-pct { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-2); }
+
+/* Conseil (RepertoireAdvisor) : verdict #1 mis en avant, autres en lignes sobres. */
+.advice-list { display: flex; flex-direction: column; }
+.advice-card { border-top: 1px solid var(--border); padding: var(--sp-2) 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.advice-card:first-child { border-top: none; }
+.advice-card.is-recommended {
+  border: 1px solid var(--accent);
+  background: var(--accent-tint);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+}
+.advice-card.is-recommended .candidate-san-bold { color: var(--accent-text); }
+.advice-top { display: flex; align-items: baseline; gap: var(--sp-2); }
+.advice-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.advice-score { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-emph); color: var(--accent-text); margin-left: auto; font-variant-numeric: tabular-nums; }
+.advice-score-den { font-size: var(--fs-small); font-weight: 400; color: var(--text-3); margin-left: 1px; }
+.advice-meta { font-size: var(--fs-small); color: var(--text-3); display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+/* Mini-barre V/N/D inline : la répartition se lit d'un coup d'œil. */
+.advice-vnd { display: inline-flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.advice-vnd-bar { display: flex; width: 90px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg-app); border: 1px solid var(--border); flex: none; }
+.advice-vnd-bar > i { display: block; height: 100%; }
+.advice-why { font-size: var(--fs-body); color: var(--text-2); margin: 0; }
+.advice-warning { font-size: var(--fs-small); color: var(--warn-text); margin: 0; }
+.advice-divergence { font-size: var(--fs-small); color: var(--text-3); }
+.advice-suggestions { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.conf-high { border-color: var(--accent); color: var(--accent-text); }
+.conf-mid { border-color: var(--warn); color: var(--warn-text); }
+.conf-low { border-color: var(--border-strong); color: var(--text-3); }
+.stability-line { font-family: var(--font-mono); font-size: var(--fs-small); }
+.st-ok { color: var(--accent-text); }
+.st-watch { color: var(--warn-text); }
+.st-bad, .st-flip { color: var(--danger-text); }
+
+/* Piège : chiffres tabulaires, verdict lisible. */
+.trap-section { border-top: 1px solid var(--border); margin-top: 0; padding-top: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-1); }
+.trap-line { display: flex; gap: var(--sp-2); align-items: baseline; flex-wrap: wrap; font-size: var(--fs-small); }
+.trap-solid { border-color: var(--accent); color: var(--accent-text); }
+.trap-practical { border-color: var(--info); color: var(--info-text); }
+.trap-dangerous { border-color: var(--danger); color: var(--danger-text); }
+.trap-trap { border-color: var(--warn); color: var(--warn-text); }
+.trap-unknown { border-color: var(--border-strong); color: var(--text-3); }
+.trap-numbers { display: flex; gap: var(--sp-3); font-family: var(--font-mono); }
+.trap-kv { display: flex; gap: var(--sp-1); }
+.trap-key { color: var(--text-3); }
+.trap-note { color: var(--text-3); }
+.trap-replies { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.trap-reply { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-2); }
+
+/* Robustesse : tableau de couvertures + triptyque. */
+.robust-section { border-top: 1px solid var(--border); margin-top: 0; padding-top: var(--sp-2); }
+.robust-global { font-size: var(--fs-small); color: var(--text-2); }
+.robust-list { display: flex; flex-direction: column; }
+.robust-reply-row { border-top: 1px solid var(--border); padding: var(--sp-1) 0; }
+.robust-reply-san { font-family: var(--font-mono); font-weight: 600; }
+.robust-reply-detail { font-size: var(--fs-small); color: var(--text-3); }
+.robust-replies { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.robust-progress-row { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-small); color: var(--text-3); }
+.robust-coverage-note, .robust-weights-note { font-size: var(--fs-small); color: var(--text-3); }
+.robust-triptic { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); margin-top: var(--sp-2); }
+.triptic-num { font-family: var(--font-mono); font-size: var(--fs-h3); }
+.source-toggle-group { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.suggestion-source-toggle { font-size: var(--fs-small); color: var(--text-3); }
+
+/* --- Entraînement : chiffres, bannière d'état, aide repliée --- */
+.trainer-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
+.color-selector-row { margin-top: 0; }
+.selector-label { color: var(--text-2); }
+.selector-label strong { color: var(--text); }
+.stats-dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin-top: 0; }
+.stat-card { display: flex; gap: var(--sp-2); align-items: center; border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-2); }
+.stat-icon-wrapper { display: inline-flex; flex: none; }
+.stat-content { display: flex; flex-direction: column; }
+.stat-value { font-family: var(--font-mono); font-size: var(--fs-h3); font-weight: 600; }
+.stat-label { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+
+.trainer-banner {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+}
+.trainer-banner .banner-text { flex: 1; min-width: 0; }
+.trainer-banner .banner-text p { color: var(--text-2); font-size: var(--fs-body); }
+.banner-my-turn { border-left-color: var(--accent); }
+.banner-waiting { border-left-color: var(--border-strong); }
+.banner-success { border-left-color: var(--accent); background: var(--accent-tint); }
+.banner-error { border-left-color: var(--danger); background: var(--danger-tint); animation: shake 0.4s ease; }
+.banner-finished { border-left-color: var(--warn); background: var(--warn-tint); }
+.banner-icon { flex: none; margin-top: 2px; }
+.banner-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); flex-wrap: wrap; }
+.revealed-solution { margin-top: var(--sp-1); }
+.hint-prompt { color: var(--text-3); font-size: var(--fs-small); }
+.trainer-instructions { margin: var(--sp-1) 0 0; padding-left: 18px; color: var(--text-2); display: flex; flex-direction: column; gap: var(--sp-1); }
+
+/* --- Lichess Live : formulaire, résultats --- */
+.lichess-live-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
+.db-toggle-row { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.db-toggle-row .db-toggle-btn { flex: 1; }
+.results-header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); margin-bottom: 0; }
+.lichess-moves-list { display: flex; flex-direction: column; gap: var(--sp-1); }
+.lichess-move-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+}
+.move-btn-left { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; flex: 1; }
+.move-btn-right { display: flex; gap: var(--sp-1); flex: none; }
+
+/* --- Graphe d'arbre --- */
+.graph-viewer { display: flex; flex-direction: column; gap: var(--sp-2); }
+.graph-viewer-title { font-weight: 600; }
+.graph-viewer-info { font-size: var(--fs-small); color: var(--text-3); }
+.graph-viewer-line { font-family: var(--font-mono); font-size: var(--fs-small); }
+/* Onglet Ouverture du visualiseur : liste des ouvertures du répertoire. */
+.graph-openings { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 0; }
+/* Groupe parent : gras, cliquable (filtre l'arbre) ; variantes indentées. */
+.opening-parent-row { font-weight: 600; cursor: pointer; }
+.opening-variant-row { cursor: pointer; }
+.opening-parent-row:hover td, .opening-variant-row:hover td { color: var(--accent-text); }
+.opening-parent-row.is-active td, .opening-variant-row.is-active td {
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+.opening-variant-row td:first-child { padding-left: 24px; }
+/* Chevron de repliage : discret, n'intercepte que son propre clic/clavier. */
+.opening-chevron-btn { padding: 1px 4px; margin-right: 2px; vertical-align: -1px; }
+.graph-controls { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+.graph-zoom-group { display: flex; gap: var(--sp-1); align-items: center; }
+.graph-zoom-label { font-size: var(--fs-small); color: var(--text-3); }
+.graph-main { min-width: 0; }
+/* Pas de carte autour de l'arbre : graphe + visualiseur à même la page. */
+.graph-wrap { background: transparent; }
+.graph-scroll { overflow: auto; max-height: 560px; }
+.graph-note, .graph-pinned-note { font-size: var(--fs-small); color: var(--text-3); }
+.gnode { font-family: var(--font-mono); font-size: var(--fs-small); }
+.gnode.groot { font-weight: 700; }
+.gnode.play-w { color: var(--text); }
+.gnode.play-b { color: var(--text-2); }
+.gnode.pinned { outline: 1px solid var(--accent); }
+.gshare { font-family: var(--font-mono); font-size: var(--fs-kicker); color: var(--text-3); }
+.glv { font-family: var(--font-mono); font-size: var(--fs-kicker); fill: var(--text-3); }
+.gtranspo { font-size: var(--fs-kicker); fill: var(--warning, #b45309); }
+.graph-mode-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); }
+.graph-reward-opts { display: inline-flex; gap: 8px; align-items: center; font-size: var(--fs-small); }
+.graph-reward-opts label { display: inline-flex; gap: 4px; align-items: center; }
+
+/* --- Arbre façon projet `répertoire` : cartes + caméra libre --- */
+.graph-wrap {
+  --tree-bg: #0f172a;
+  --freq-1: #64748b;
+  --freq-2: #a78bfa;
+  --freq-3: #60a5fa;
+  --freq-4: #34d399;
+  --freq-5: #fbbf24;
+  --eval-pos: #34d399;
+  --eval-neg: #ef4444;
+  --promising: #fbbf24;
+}
+.graph-main { display: flex; flex-direction: column; gap: var(--sp-3); align-items: stretch; min-width: 0; }
+.graph-main .freecam-viewport { flex: none; width: 100%; }
+.graph-main .graph-viewer { flex: none; width: 100%; max-width: 560px; margin: 0 auto; }
+/* Onglet arbre (desktop) : graphe à gauche, visualiseur + échiquier à
+   droite — fini l'échiquier sous le graphe. Mobile garde l'empilement. */
+@media (min-width: 1025px) {
+  .graph-main { flex-direction: row; align-items: start; }
+  .graph-main .freecam-viewport { flex: 1 1 auto; width: auto; min-width: 0; }
+  .graph-main .graph-viewer {
+    flex: none;
+    width: 300px;
+    max-width: none;
+    margin: 0;
+    max-height: 62vh;
+    overflow-y: auto;
+  }
+  /* Onglet arbre pleine hauteur : le graphe remplit la fenêtre (pas de
+     scroll de page, le visualiseur défile en interne si besoin). */
+  .main-content-container.no-board.tree-tab { height: 100vh; max-height: 100vh; overflow: hidden; }
+  .main-content-container.no-board.tree-tab .panel-column { flex: 1; min-height: 0; }
+  .tree-tab .graph-wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .tree-tab .graph-main { flex: 1; min-height: 0; align-items: stretch; }
+  .tree-tab .freecam-viewport { height: auto; min-height: 0; align-self: stretch; }
+  .tree-tab .graph-viewer { max-height: 100%; }
+}
+.freecam-viewport {
+  position: relative;
+  overflow: hidden;
+  background: var(--tree-bg);
+  background-image: radial-gradient(circle, rgba(148,163,184,0.10) 1px, transparent 1px);
+  background-size: 26px 26px;
+  cursor: grab;
+  touch-action: none;
+  height: 62vh;
+  min-height: 420px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--border);
+}
+.freecam-layer { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+.freecam-ui {
+  position: absolute; right: 1rem; bottom: 1rem;
+  display: flex; flex-direction: column; gap: .35rem; z-index: 20;
+}
+.freecam-ui button {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(15,23,42,.85); border: 1px solid #334155; color: #cbd5e1;
+  font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.freecam-ui button:hover { color: #fbbf24; border-color: rgba(251,191,36,.45); }
+.freecam-hint, .freecam-status {
+  position: absolute; background: rgba(15,23,42,.75); border: 1px solid #1e293b;
+  color: #64748b; padding: .35rem .7rem; border-radius: 8px; font-size: 11px;
+  pointer-events: none; z-index: 15;
+}
+.freecam-hint { left: 1rem; bottom: 1rem; }
+.freecam-status { right: 1rem; top: 1rem; font-family: var(--font-mono); font-size: 10px; color: #94a3b8; }
+.move-node {
+  position: absolute; background: #1e293b; border: 1px solid #334155;
+  border-left: 4px solid var(--accent, #475569); border-radius: 8px;
+  padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;
+  cursor: pointer; font-family: ui-monospace, Menlo, monospace; color: #e2e8f0;
+  user-select: none; box-sizing: border-box;
+}
+.move-node:hover { border-color: #475569; box-shadow: 0 8px 20px rgba(0,0,0,0.5); z-index: 10; }
+.move-node.selected { outline: 2px solid #fbbf24; outline-offset: 2px; box-shadow: 0 0 16px rgba(251,191,36,0.35); }
+.move-node.is-root { background: #0b1220; border-left-color: #fbbf24; }
+.move-node.is-promising { box-shadow: 0 0 12px rgba(251,191,36,0.35); }
+.move-node.is-promising::before {
+  content: "★"; position: absolute; top: -10px; right: -8px;
+  color: #fbbf24; font-size: 14px; pointer-events: none; z-index: 20;
+}
+.move-node.is-transposition { border-style: dashed; }
+.move-label { font-size: 13px; font-weight: 700; line-height: 1.1; }
+.move-node.is-root .move-label { color: #fbbf24; font-size: 16px; text-align: center; }
+.move-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 10px; color: #94a3b8; margin-top: 2px; }
+.move-freq { font-weight: 700; color: var(--accent, #94a3b8); }
+.move-practical, .move-lv { font-weight: 700; }
+.freq-tooltip {
+  z-index: 1000; background: rgba(15, 23, 42, 0.98); border: 1px solid #334155;
+  border-radius: 10px; padding: 8px 10px; font-size: 11px; color: #cbd5e1;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 180px; pointer-events: none;
+}
+.freq-tooltip .tt-move { font-weight: 700; font-family: ui-monospace, monospace; color: #fbbf24; font-size: 13px; margin-bottom: 5px; }
+.freq-tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; line-height: 1.5; }
+.freq-tooltip .tt-row span:last-child { font-family: ui-monospace, monospace; color: #e2e8f0; }
+.freq-tooltip .tt-transpo { margin-top: 6px; padding-top: 6px; border-top: 1px solid #334155; color: #60a5fa; font-size: 10px; }
+
+/* --- Génération automatique (BFS) --- */
+.auto-gen-card { border-style: dashed; }
+.auto-gen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--sp-2); margin-top: var(--sp-2); }
+.auto-gen-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-small); }
+.auto-gen-field input { max-width: 140px; }
+.auto-gen-result { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--text-3); }
+.auto-gen-warn { display: block; margin-top: 4px; color: var(--warning, #b45309); }
+/* Note neutre (pas un avertissement) : détail des coupes par seuils. */
+.auto-gen-note { display: block; margin-top: 4px; }
+
+/* --- Flèches tactiques du dernier coup (légende filtrable) --- */
+.tac-legend {
+  display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap;
+  margin-top: var(--sp-1);
+}
+.tac-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-small); padding: 3px 10px; border-radius: 999px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  color: var(--text-2); cursor: pointer;
+}
+.tac-pill.off { opacity: 0.45; }
+.tac-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.tac-dot-attack { background: #ef4444; }
+.tac-dot-defense { background: #60a5fa; }
+.tac-dot-pin { background: #fbbf24; }
+.tac-dot-fork { background: #ef4444; }
+.tac-count { font-family: var(--font-mono); color: var(--text-3); }
+.tac-side-note { font-size: var(--fs-small); color: var(--text-3); margin-left: auto; }
+.icon-btn.active-toggle { border-color: var(--accent); color: var(--accent); }
+
+/* --- Mes parties : liste, stats, visionneuse, rapport --- */
+.chesscom-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
+/* Onglet Mes parties : liste centrée — plus de colonnes côte à côte. */
+.chesscom-top-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+.chesscom-left-column { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.chesscom-right-column { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+/* Colonne Activité + stats : panneaux compacts (la liste reste prioritaire). */
+.chesscom-right-column .panel-card { padding: var(--sp-3); gap: var(--sp-2); }
+.chesscom-summary { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: 0; }
+.chesscom-filters { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: 0; }
+.chesscom-filter-group { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.chesscom-games-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+.chesscom-games-table th, .chesscom-games-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.chesscom-games-table thead th { color: var(--text-3); font-size: var(--fs-small); font-weight: 600; }
+.chesscom-games-table tbody tr { cursor: pointer; }
+.chesscom-games-table tbody tr:hover { background: var(--bg-raised); }
+.chesscom-games-table tbody tr:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.chesscom-result-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: var(--fs-kicker);
+  font-weight: 700;
+  color: #fff;
+}
+.chesscom-accuracy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.chesscom-analyze-status { font-size: var(--fs-small); margin-top: var(--sp-1); }
+.chesscom-wdl { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.activity-cal-wrap { display: flex; flex-direction: column; gap: var(--sp-1); }
+/* Le calendrier remplit la largeur du panneau : chaque semaine prend une
+   part égale, les cases restent carrées — la hauteur en découle.
+   Compact : la colonne droite est étroite, pas de cases caricaturales. */
+.activity-cal { display: flex; gap: 3px; max-width: 320px; }
+.activity-week { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.activity-cell { width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 3px; background: var(--bg-raised); border: 1px solid var(--border); }
+.activity-cell.is-future { background: transparent; border-color: transparent; }
+.activity-cal-caption { font-size: var(--fs-small); }
+.activity-legend { display: flex; gap: var(--sp-2); font-size: var(--fs-small); }
+.activity-legend-item { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.activity-legend-item > i { width: 8px; height: 8px; border-radius: 2px; }
+.activity-subtitle { font-size: var(--fs-small); margin: 0; }
+/* Fourchettes : icône + libellé + barre horizontale + compte. */
+.forks-hbars { display: flex; flex-direction: column; gap: var(--sp-2); }
+.forks-hbar-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 84px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.forks-piece-icon { font-size: 20px; line-height: 1; text-align: center; color: var(--text); }
+.forks-hbar-label { font-size: var(--fs-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.forks-hbar-row .chesscom-wdl-bar { margin-top: 0; }
+.forks-hbar-value { font-family: var(--font-mono); font-size: var(--fs-small); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Survol d'une ouverture : mini-planche contextuelle (suit le curseur). */
+.opening-preview-pop {
+  position: fixed;
+  z-index: 60;
+  width: 216px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-panel);
+  padding: var(--sp-2);
+  box-shadow: var(--shadow-layer);
+  pointer-events: none;
+}
+.opening-preview-caption {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.miniboard {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  overflow: hidden;
+}
+.miniboard-sq { display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1; }
+.miniboard-sq.is-light { background: #ddd6c4; }
+.miniboard-sq.is-dark { background: #7a6f5d; }
+.miniboard-sq .is-piece-w { color: #fafafa; text-shadow: 1px 0 0 #222, -1px 0 0 #222, 0 1px 0 #222, 0 -1px 0 #222; }
+.miniboard-sq .is-piece-b { color: #141414; }
+/* Performance par ouverture (nom + ECO + total, coups, barre V/N/D). */
+.perf-rows { display: flex; flex-direction: column; gap: var(--sp-3); }
+.perf-row { display: flex; flex-direction: column; gap: var(--sp-1); }
+.perf-row-head { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
+.perf-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.perf-total { margin-left: auto; font-size: var(--fs-small); white-space: nowrap; }
+.perf-moves { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--text-2); }
+.perf-row .chesscom-wdl-bar { margin-top: 0; }
+.perf-row:hover .perf-name { color: var(--accent-text); }
+.rating-title { text-transform: uppercase; margin: 0; }
+.rating-chart { width: 100%; height: auto; display: block; }
+.rating-grid { stroke: var(--border); stroke-dasharray: 3 3; }
+.rating-axis { font-size: 10px; fill: var(--text-3); }
+.rating-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: var(--fs-small); color: var(--text-2); }
+.rating-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.rating-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+.chesscom-viewer-meta { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-1); }
+.viewer-meta-ico { color: var(--text-3); }
+.chesscom-viewer-hint { font-size: var(--fs-small); margin-bottom: var(--sp-1); }
+.chesscom-moves-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-1); max-height: 220px; overflow-y: auto; }
+.chesscom-move-btn {
+  background: var(--bg-raised);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  padding: var(--sp-1) var(--sp-2);
+  text-align: left;
+  cursor: pointer;
+}
+.chesscom-move-btn:hover { border-color: var(--border-strong); }
+.chesscom-move-btn.is-current { background: var(--accent-tint); border-color: var(--accent); }
+.chesscom-move-btn .move-annotation { font-weight: 700; margin-left: 4px; }
+.chesscom-move-btn.annotation-qq .move-annotation { color: var(--danger-text); }
+.chesscom-move-btn.annotation-q .move-annotation { color: #e89a55; }
+.chesscom-move-btn.annotation-qb .move-annotation { color: var(--warn-text); }
+.chesscom-move-btn.annotation-bq .move-annotation { color: var(--info-text); }
+.chesscom-move-btn.annotation-b .move-annotation,
+.chesscom-move-btn.annotation-bb .move-annotation { color: var(--accent-text); }
+
+/* Rapport de précision : chiffres, pastilles, phases. */
+.chesscom-report-block { border-top: 1px solid var(--border); margin-top: var(--sp-2); padding-top: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-2); }
+.game-report-head { display: flex; gap: var(--sp-4); }
+.game-report-acc { display: flex; flex-direction: column; }
+.game-report-acc strong { font-family: var(--font-mono); font-size: 20px; }
+.game-report-side { font-size: var(--fs-small); font-weight: 600; }
+.game-report-sub { font-size: var(--fs-small); }
+.game-report-annotations { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.annotation-chip { font-family: var(--font-mono); font-weight: 600; }
+/* Qualité du coup : symboles façon Chess.com (!!, ★, pouce, ✓, livre, ?!, ?, ??, −). */
+.quality-symbol { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; margin-right: 6px; font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-emph); }
+/* Pièces : glyphes, camemberts, colonnes de précision. */
+.piece-glyph { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; margin-right: 6px; font-size: 18px; line-height: 1; }
+.piece-donuts { display: flex; gap: var(--sp-3); flex-wrap: wrap; justify-content: space-around; }
+.piece-donut { display: flex; justify-content: center; }
+.piece-donut-total { font-family: var(--font-mono); font-weight: 700; font-size: 16px; fill: var(--text-2); }
+.piece-donut-caption { font-size: 11px; fill: var(--text-3); }
+.piece-glyph-tick { font-size: 17px; fill: var(--text-2); }
+/* Géographie : carte du monde (survol = infobulle) + drapeaux du tableau. */
+.geo-map-wrap { position: relative; }
+.geo-map { width: 100%; height: auto; display: block; }
+.geo-map path { stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.5; }
+.geo-map path:hover { stroke: #e5e0d2; stroke-width: 1; }
+.geo-tooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 200px;
+  max-width: 248px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  padding: var(--sp-2);
+  box-shadow: var(--shadow-layer);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.geo-tooltip-head { display: flex; align-items: center; gap: var(--sp-2); }
+.geo-tooltip .chesscom-wdl-bar { margin-top: 2px; }
+.geo-flag { border-radius: 2px; display: block; }
+.geo-flag-inline { display: inline-block; vertical-align: -3px; margin-right: 6px; }
+/* Tableau triable : en-têtes cliquables (tri + sens, accessibles au clavier). */
+.geo-sort-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.geo-sort-btn:hover { color: var(--text); text-decoration: underline; }
+.geo-sort-arrow { font-size: 10px; color: var(--accent-text); }
+/* Roque : camembert des phases, barres verticales V/N/D, matrice mon-roque × roque-adverse. */
+.stat-donut { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); }
+.stat-donut-total { font-family: var(--font-mono); font-weight: 700; font-size: 16px; fill: var(--text-2); }
+.stat-donut-caption { font-size: 11px; fill: var(--text-3); }
+.castle-matrix-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.castle-matrix-cell { border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-2); }
+.castle-matrix-row .chesscom-wdl-bar { margin-top: var(--sp-1); }
+.castle-matrix-label { font-size: var(--fs-small); color: var(--text-2); text-align: center; min-height: 2.2em; }
+/* Mes parties : barre d'onglets en haut + grille des stats. */
+.chesscom-top-row.chesscom-top-row-full { grid-template-columns: minmax(0, 1fr); }
+.chesscom-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.chesscom-tabs .db-toggle-btn { display: inline-flex; align-items: center; gap: 6px; }
+.chesscom-stats-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); align-items: start; }
+.annotation-qq { border-color: var(--danger); color: var(--danger-text); }
+.annotation-q { border-color: #e89a55; color: #e89a55; }
+.annotation-qb { border-color: var(--warn); color: var(--warn-text); }
+.annotation-bq { border-color: var(--info); color: var(--info-text); }
+.annotation-b { border-color: var(--accent); color: var(--accent-text); }
+.annotation-bb { border-color: var(--accent); color: var(--accent-text); background: var(--accent-tint); }
+
+/* (Colonnes Mes parties supprimées : liste centrée unique.) */
+
+@media (max-width: 760px) {
+  .stats-dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+  .castle-matrix-row { grid-template-columns: minmax(0, 1fr); }
+  .robust-triptic { grid-template-columns: minmax(0, 1fr); }
+  .promotion-pieces { grid-template-columns: repeat(2, 1fr); }
+}

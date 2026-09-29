@@ -1,0 +1,459 @@
+/* ------------------------------------------------------------------
+ * Structure : coquille applicative, barre latérale, colonnes studio.
+ * Le responsive corrige les causes (grilles, tableaux), il ne masque rien.
+ * ------------------------------------------------------------------ */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre latérale : navigation, contexte, compte. 232px, jamais de labels
+   masqués sans équivalent accessible (title + aria-label conservés). */
+.app-sidebar {
+  width: 232px;
+  flex: none;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-ui);
+  padding: var(--sp-1);
+  border-radius: var(--r-control);
+  text-align: left;
+  width: 100%;
+}
+button.side-brand { cursor: pointer; }
+button.side-brand:hover { background: var(--bg-raised); }
+.brand-logo {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent-text);
+  flex: none;
+}
+.side-brand-text { display: flex; flex-direction: column; min-width: 0; }
+.side-brand-name { font-family: var(--font-display); font-size: 17px; }
+.side-brand-sub { font-size: var(--fs-kicker); color: var(--text-3); }
+
+.side-nav { display: flex; flex-direction: column; gap: 2px; }
+.side-nav-label {
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+}
+.side-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: flex-start;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  width: 100%;
+  padding: var(--sp-2);
+}
+.side-nav-btn:hover:not(:disabled) { background: var(--bg-raised); color: var(--text); }
+.side-nav-btn.active {
+  background: var(--accent-tint);
+  border-color: transparent;
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.side-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Pastille de compteur (Mes parties) : à droite, discrète, tronquée si longue. */
+.side-nav-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-kicker);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 7px;
+  line-height: 1.6;
+  white-space: nowrap;
+  flex: none;
+}
+.side-nav-btn.active .side-nav-badge { color: var(--accent-text); border-color: transparent; }
+/* Point de synchro (compte) : pulse existant, coupé en reduced-motion global. */
+.side-sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-dot 1.5s ease infinite;
+  flex: none;
+  margin-left: auto;
+}
+
+.side-context-card {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.side-context-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.side-context-badges { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.side-context-stats { font-size: var(--fs-small); color: var(--text-3); display: flex; gap: var(--sp-1); }
+
+.side-spacer { flex: 1; min-height: var(--sp-2); }
+.side-actions { display: flex; gap: var(--sp-1); }
+.side-actions .side-action-btn { flex: 1; }
+
+.side-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text);
+  cursor: pointer;
+  padding: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+}
+.side-profile-chip:hover { border-color: var(--border-strong); }
+.side-profile-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex: none;
+}
+.side-profile-photo {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}
+.side-profile-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.side-account-card {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  background: var(--bg-raised);
+}
+.side-account-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.side-account-head .side-nav-label { padding: 0; }
+.side-account-photo { width: 100%; border-radius: var(--r-control); object-fit: cover; }
+.side-account-progress { display: flex; flex-direction: column; gap: var(--sp-1); }
+.side-account-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-small);
+}
+
+/* Contenu : colonne(s) centrée(s) — côte à côte sur desktop quand il y a
+   un échiquier, empilé en dessous sur tablette/mobile. */
+.main-content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+}
+.main-content-container.no-board { max-width: 1000px; }
+/* Onglet arbre : pleine largeur hors sidebar (le graphe remplit, zoom auto). */
+.main-content-container.no-board.tree-tab { max-width: none; }
+
+/* Visionneuse Mes parties : inchangée, côte à côte (grand plateau +
+   colonne Rejouer étroite, grille des coups à défilement interne). */
+.main-content-container.game-viewer {
+  display: grid;
+  grid-template-columns: minmax(0, min(860px, 100%)) minmax(280px, 340px);
+  align-items: stretch;
+  justify-content: center;
+  max-width: 1440px;
+}
+.main-content-container.game-viewer .board-column {
+  position: sticky;
+  top: var(--sp-4);
+  max-width: none;
+}
+.main-content-container.game-viewer .chesscom-panel { flex: 1; min-height: 0; }
+.main-content-container.game-viewer .chesscom-panel > .panel-card { flex: 1; min-height: 0; }
+.main-content-container.game-viewer .chesscom-moves-grid {
+  flex: 1;
+  min-height: 120px;
+  max-height: none;
+}
+
+/* Visionneuse Mes parties (desktop) : grand échiquier + colonne Rejouer
+   étroite pleine hauteur (la grille des coups défile en interne). */
+@media (min-width: 1025px) {
+  .main-content-container.game-viewer {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: stretch;
+  }
+  .game-viewer .board-column {
+    width: 100%;
+    max-width: calc(100vh - 160px);
+    justify-self: center;
+  }
+  .game-viewer .panel-column { min-height: 0; }
+  .game-viewer .panel-column .panel-card { flex: 1; min-height: 0; }
+  .game-viewer .chesscom-moves-grid {
+    flex: 1;
+    min-height: 140px;
+    max-height: none;
+  }
+}
+
+/* Studio desktop (onglets avec échiquier : Constructeur, Explorateur,
+   Entraînement, Lichess Live ; visionneuse Mes parties exclue) : plateau
+   sticky à gauche, panneau à droite — fini le « tout en dessous de
+   l'échiquier ». Tablette et mobile gardent l'empilement. */
+@media (min-width: 1025px) {
+  .main-content-container:not(.no-board):not(.game-viewer) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 520px);
+    align-items: start;
+    justify-content: center;
+    max-width: 1440px;
+  }
+  .main-content-container:not(.no-board):not(.game-viewer) .board-column {
+    position: sticky;
+    top: var(--sp-4);
+    width: 100%;
+    max-width: 720px;
+    justify-self: center;
+  }
+}
+.board-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  max-width: 680px;
+  min-width: 0;
+}
+.main-content-container.game-viewer .board-column { max-width: 860px; }
+.chessboard-wrapper { width: 100%; min-width: 0; position: relative; }
+.chessboard-container { width: 100%; aspect-ratio: 1; overflow: hidden; }
+/* Calque des flèches coudées (cavaliers) : superposé au plateau, passif. */
+.knight-arrows-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Échiquier + barre d'évaluation (visionneuse Mes parties). */
+.board-with-eval { display: flex; gap: var(--sp-2); align-items: stretch; }
+.board-with-eval-main { flex: 1; min-width: 0; }
+.evalbar { display: flex; flex-direction: column; gap: var(--sp-1); width: 30px; flex: none; }
+.evalbar-track {
+  position: relative;
+  flex: 1;
+  border-radius: var(--r-control);
+  overflow: hidden;
+  background: #100f0b;
+  border: 1px solid var(--border);
+}
+.evalbar-white {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #e8e4d8;
+  transition: height 200ms;
+}
+.evalbar-score {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.panel-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Panneau : fond + bordure + titre de section. La séparation par défaut ;
+   on n'empile pas des cartes dans des cartes. Colonne flex : l'espacement
+   vertical vient du gap, pas des marges des enfants. */
+.panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: 0;
+}
+.card-title {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.card-title-sm {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* Barre d'outils de navigation (explorateur, visionneuse). */
+.navigation-toolbar,
+.game-viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: var(--sp-2);
+  flex-wrap: wrap;
+}
+.game-viewer-bar { margin-top: var(--sp-2); }
+.chesscom-ply-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--text-3);
+  min-width: 56px;
+  text-align: center;
+}
+
+/* Bandeau de statut sous l'échiquier : une ligne, pas une carte. */
+.board-status-strip { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
+
+.fen-footer-display {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-small);
+  color: var(--text-3);
+}
+.fen-label {
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Tablette et en dessous : la liste centrée convient déjà, on resserre. */
+@media (max-width: 1024px) {
+  .main-content-container { padding: var(--sp-3); }
+}
+
+/* Grands écrans : la liste s'élargit un peu, sans s'étaler. */
+@media (min-width: 1600px) {
+  .main-content-container {
+    max-width: 860px;
+  }
+  .main-content-container.no-board { max-width: 1000px; }
+}
+
+/* 2K (2560px) : mesure gardée, pas de panneaux géants. */
+@media (min-width: 2100px) {
+  .main-content-container {
+    max-width: 900px;
+  }
+  .main-content-container.no-board { max-width: 1000px; }
+}
+
+/* Mobile : la barre latérale devient une barre haute horizontale. */
+@media (max-width: 760px) {
+  .app-layout { flex-direction: column; }
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: var(--sp-2);
+  }
+  .side-brand { width: auto; flex: none; }
+  .side-brand-sub, .side-brand-text { display: none; }
+  .side-nav { flex-direction: row; align-items: center; }
+  .side-nav-label { display: none; }
+  .side-nav-btn { width: auto; }
+  .side-nav-btn span { display: none; }
+  .side-context-card, .side-spacer, .side-actions { display: none; }
+  .side-profile-chip { width: auto; flex: none; margin-left: auto; max-width: 44px; justify-content: center; }
+  .side-profile-chip .side-profile-name { display: none; }
+  .side-account-card {
+    position: absolute;
+    top: 60px;
+    right: var(--sp-2);
+    width: min(320px, calc(100vw - 16px));
+    z-index: 50;
+    box-shadow: var(--shadow-layer);
+  }
+  .main-content-container { padding: var(--sp-2); gap: var(--sp-3); }
+  .panel-card { padding: var(--sp-3); }
+}

@@ -1,0 +1,126 @@
+/* ------------------------------------------------------------------
+ * Bibliothèque : page d'accueil. Titre serif aligné à gauche, actions
+ * groupées, cartes de répertoires (séparation justifiée : une carte =
+ * un répertoire avec ses actions propres).
+ * ------------------------------------------------------------------ */
+
+.library-view-container {
+  max-width: 1024px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* En-tête : surtitre factuel, titre, une phrase, actions. Rien de plus. */
+.library-hero-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.hero-content { max-width: 62ch; display: flex; flex-direction: column; gap: var(--sp-2); }
+.hero-kicker {
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.hero-description { color: var(--text-2); max-width: 62ch; }
+.hero-description strong { color: var(--text); }
+.hero-action-buttons { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+.repertoires-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--sp-3);
+}
+
+/* Carte répertoire : bordure latérale = camp joué (info, pas décor). */
+.repertoire-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  border-left-width: 3px;
+}
+.repertoire-card.card-white { border-left-color: #ddd6c4; }
+.repertoire-card.card-black { border-left-color: var(--border-strong); }
+
+.rep-card-top { display: flex; flex-direction: column; gap: var(--sp-1); }
+.rep-badges-row { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.rep-title-wrap { margin: 0; font-size: inherit; }
+.rep-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+}
+button.rep-title:hover { color: var(--accent-text); }
+.rep-elo-desc { font-size: var(--fs-small); color: var(--text-3); }
+
+.rep-metrics-row {
+  display: flex;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.metric-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2) 0;
+}
+.metric-box + .metric-box { border-left: 1px solid var(--border); padding-left: var(--sp-3); }
+.metric-val { font-family: var(--font-mono); font-size: var(--fs-emph); font-weight: 600; }
+.metric-lbl { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); }
+
+.rep-date-row { display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-small); color: var(--text-3); }
+.rep-actions-footer { display: flex; gap: var(--sp-2); }
+.rep-actions-footer .primary-btn { flex: 1; }
+.rep-actions-footer .action-pill-btn { flex: 1; }
+.sub-actions { display: flex; gap: var(--sp-1); }
+
+/* Vide : explication + une seule action. */
+.empty-library-card {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-panel);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.empty-library-card h3 { font-family: var(--font-display); font-weight: 400; font-size: 20px; }
+.empty-library-card p { color: var(--text-2); max-width: 52ch; }
+.empty-icon-wrap { font-size: 28px; color: var(--text-3); line-height: 1; }
+
+/* Astuce sous le graphe (conservée : utilisée par RepertoireGraphTree). */
+.tree-hint { font-size: var(--fs-small); color: var(--text-3); font-family: var(--font-ui); }
+
+@media (max-width: 760px) {
+  .library-view-container { padding: var(--sp-4) var(--sp-2); }
+  .repertoires-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Grands écrans / 2K : la bibliothèque ne reste pas en bande étroite. */
+@media (min-width: 1600px) {
+  .library-view-container { max-width: 1280px; }
+  .repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}
+@media (min-width: 2100px) {
+  .library-view-container { max-width: 1440px; }
+}

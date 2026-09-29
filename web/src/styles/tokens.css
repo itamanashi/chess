@@ -1,0 +1,150 @@
+/* ------------------------------------------------------------------
+ * Carnet d'étude — fondations.
+ * Outil d'étude d'ouvertures : dark chaud, un seul accent fonctionnel
+ * (vert échiquier = actions, sélection, succès), typographie système
+ * (aucune dépendance réseau), densité d'outil, pas de décor.
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* Fonds : 4 niveaux suffisent (app < section < surélevé < overlay). */
+  --bg-app: #161511;
+  --bg-surface: #1e1c18;
+  --bg-raised: #262320;
+  --bg-overlay: #2c2822;
+
+  /* Bordures : séparation par défaut, forte pour l'emphase. */
+  --border: #34312a;
+  --border-strong: #4c463a;
+
+  /* Textes : principal / secondaire / discret (contraste ≥ 4.5:1). */
+  --text: #ece8dd;
+  --text-2: #b7b1a3;
+  --text-3: #98917f;
+
+  /* Accent unique : vert échiquier. Remplissage + encre + teinte + texte. */
+  --accent: #79a736;
+  --accent-hover: #88b844;
+  --accent-ink: #141a06;
+  --accent-tint: rgba(121, 167, 54, 0.14);
+  --accent-text: #a4cf5e;
+
+  /* Sémantiques : une couleur = un sens. */
+  --warn: #d9a13b;
+  --warn-text: #e2b968;
+  --warn-tint: rgba(217, 161, 59, 0.12);
+  --danger: #cf6257;
+  --danger-text: #e58a7e;
+  --danger-tint: rgba(207, 98, 87, 0.12);
+  --danger-fill: #a83a2c;
+  --info: #7fa6c4;
+  --info-text: #93bad6;
+  --info-tint: rgba(127, 166, 196, 0.12);
+
+  /* Typographie système : lisible hors-ligne, identité par le serif
+     des titres de vue (manuel d'ouvertures), mono pour coups et codes. */
+  --font-display: Georgia, "Charter", "Bitstream Charter", "Sitka Text", serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* Échelle resserrée : 11px réservé aux surtitres capitales. */
+  --fs-kicker: 11px;
+  --fs-small: 12px;
+  --fs-body: 13px;
+  --fs-emph: 14px;
+  --fs-h3: 15px;
+  --fs-h2: 18px;
+  --fs-h1: 26px;
+
+  /* Espacements : pas de 4/6/8/12/14/16/24. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+
+  /* Deux rayons : contrôles / panneaux. Pastilles = pilles, rien d'autre. */
+  --r-control: 6px;
+  --r-panel: 10px;
+
+  /* Une seule ombre, réservée aux couches (modales, menus). */
+  --shadow-layer: 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  --focus: var(--accent-text);
+  --dur: 120ms;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Titres de vue : serif, alignés à gauche, taille contenue. */
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+h2, h3, h4 {
+  font-family: var(--font-ui);
+  margin: 0;
+  line-height: 1.35;
+}
+
+h2 { font-size: var(--fs-h2); font-weight: 600; }
+h3 { font-size: var(--fs-h3); font-weight: 600; }
+h4 { font-size: var(--fs-emph); font-weight: 600; }
+
+p { margin: 0; }
+
+/* Focus visible partout : bordure seule ne suffit pas. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Utilitaires de texte (seuls !important du système). */
+.text-muted { color: var(--text-3) !important; }
+.text-emerald { color: var(--accent-text) !important; }
+.text-amber { color: var(--warn-text) !important; }
+.text-rose { color: var(--danger-text) !important; }
+.text-info { color: var(--info-text) !important; }
+
+/* Barres de défilement discrètes. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Mouvement : uniquement des fondus de couleur ; tout s'arrête si demandé. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

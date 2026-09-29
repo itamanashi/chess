@@ -1,0 +1,443 @@
+/* ------------------------------------------------------------------
+ * Contrôles : un seul système de boutons, champs, pastilles, tableaux,
+ * barres de répartition, modales, toasts. Même comportement partout.
+ * ------------------------------------------------------------------ */
+
+/* Boutons — base commune. Jamais de translateY, jamais de glow :
+   le survol change le fond / la bordure, rien d'autre. */
+.primary-btn,
+.secondary-btn,
+.action-btn,
+.side-action-btn,
+.nav-btn,
+.icon-btn,
+.mini-icon-btn,
+.action-pill-btn,
+.promo-btn,
+.promo-cancel-btn,
+.db-toggle-btn,
+.source-toggle-btn,
+.depth-btn,
+.auto-toggle-btn,
+.adopt-btn,
+.modal-close-btn,
+.toast-close {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  line-height: 1.4;
+  transition: background-color var(--dur) ease, border-color var(--dur) ease, color var(--dur) ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.primary-btn {
+  background: var(--accent);
+  border-color: #5d8227;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
+
+.secondary-btn,
+.action-btn,
+.side-action-btn,
+.action-pill-btn,
+.promo-cancel-btn {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.secondary-btn:hover:not(:disabled),
+.action-btn:hover:not(:disabled),
+.side-action-btn:hover:not(:disabled),
+.action-pill-btn:hover:not(:disabled),
+.promo-cancel-btn:hover:not(:disabled) {
+  background: var(--bg-raised);
+  border-color: var(--text-3);
+}
+
+.promo-btn {
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+}
+.promo-btn:hover:not(:disabled) { border-color: var(--accent); }
+
+/* Fantômes : navigation, icônes, fermeture. */
+.icon-btn,
+.mini-icon-btn,
+.nav-btn,
+.modal-close-btn,
+.toast-close,
+.tree-del-btn,
+.tree-open-btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-2);
+  padding: var(--sp-1) var(--sp-2);
+}
+.icon-btn:hover:not(:disabled),
+.mini-icon-btn:hover:not(:disabled),
+.nav-btn:hover:not(:disabled),
+.modal-close-btn:hover:not(:disabled),
+.toast-close:hover:not(:disabled) {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+.icon-btn:disabled,
+.nav-btn:disabled,
+.mini-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+}
+.mini-icon-btn.danger { color: var(--text-3); }
+.mini-icon-btn.danger:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-tint); }
+
+/* États désactivés : identiques pour tous. */
+.primary-btn:disabled,
+.secondary-btn:disabled,
+.action-btn:disabled,
+.side-action-btn:disabled,
+.action-pill-btn:disabled,
+.promo-btn:disabled,
+.db-toggle-btn:disabled,
+.source-toggle-btn:disabled,
+.depth-btn:disabled,
+.auto-toggle-btn:disabled,
+.adopt-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Modificateurs. */
+.btn-sm { font-size: var(--fs-small); padding: var(--sp-1) var(--sp-2); }
+.full-width { width: 100%; }
+.btn-danger {
+  background: var(--danger-fill);
+  border-color: #7e2a20;
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: #b8442f; }
+.btn-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* Lien sobre (pas un bouton déguisé). */
+.link-btn,
+.glink {
+  color: var(--info-text);
+  font-size: var(--fs-small);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.link-btn:hover, .glink:hover { color: var(--text); }
+
+/* Contrôles segmentés (bases, profondeurs, sources, auto) : un seul style. */
+.db-toggle-btn,
+.source-toggle-btn,
+.depth-btn,
+.auto-toggle-btn,
+.adopt-btn {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-2);
+  font-size: var(--fs-small);
+}
+.db-toggle-btn:hover:not(:disabled),
+.source-toggle-btn:hover:not(:disabled),
+.depth-btn:hover:not(:disabled),
+.auto-toggle-btn:hover:not(:disabled),
+.adopt-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.db-toggle-btn.active,
+.source-toggle-btn.active,
+.depth-btn.active,
+.auto-toggle-btn.enabled,
+.adopt-btn.already-adopted,
+.action-btn.add-action.added {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.auto-toggle-btn.disabled { color: var(--text-3); }
+
+/* Champs. */
+.text-input {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text);
+  padding: var(--sp-2) var(--sp-3);
+  width: 100%;
+}
+.text-input::placeholder { color: var(--text-3); }
+.text-input:focus { outline: none; border-color: var(--accent); }
+.text-input:disabled { opacity: 0.55; }
+
+.form-group { display: flex; flex-direction: column; gap: var(--sp-2); }
+.form-label {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-2);
+}
+.token-input-row { display: flex; gap: var(--sp-2); }
+.input-with-icon { position: relative; flex: 1; display: flex; align-items: center; }
+.input-with-icon .text-input { padding-left: 32px; }
+.input-icon { position: absolute; left: 10px; color: var(--text-3); pointer-events: none; }
+.token-hint { font-size: var(--fs-small); color: var(--text-3); }
+
+/* Pastilles et étiquettes : pilule réservée à ces éléments, jamais aux boutons. */
+.badge,
+.eco-badge, .eco-tag, .eco-pill, .opening-badge,
+.best-move-tag, .majority-tag, .confidence-chip,
+.adopted-chip, .loading-badge, .auto-playing-pill,
+.rank-badge, .priority-badge, .trap-badge,
+.danger-tag, .rep-color-tag, .rep-color-tag-sm,
+.mate-tag,
+.rep-elo-tag, .rep-elo-tag-sm, .eval-badge,
+.san-badge-group, .chip-label, .frequency-progress-bar,
+.result-bar-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-small);
+  border-radius: 999px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.badge-success { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-text); }
+.badge-warning { background: var(--warn-tint); border-color: var(--warn); color: var(--warn-text); }
+.badge-preview { background: var(--info-tint); border-color: var(--info); color: var(--info-text); }
+.eval-badge { font-family: var(--font-mono); }
+.eval-badge.eval-mate { border-color: var(--warn); color: var(--warn-text); }
+/* Mat de répertoire (fin forcée, pas un avis moteur) : même signal que eval-mate. */
+.mate-tag { background: var(--warn-tint); border-color: var(--warn); color: var(--warn-text); font-weight: 700; }
+.eco-badge, .eco-tag, .eco-pill { font-family: var(--font-mono); font-size: var(--fs-kicker); }
+.rep-color-tag, .rep-color-tag-sm { font-weight: 600; }
+.tag-white { background: #e8e4d8; border-color: #e8e4d8; color: #1c1a14; }
+.tag-black { background: #111008; border-color: var(--border-strong); color: var(--text); }
+.san-text, .chip-san, .highlight-san, .gsan-in { font-family: var(--font-mono); }
+.highlight-san {
+  background: var(--accent-tint);
+  border: 1px solid var(--accent);
+  border-radius: var(--sp-1);
+  padding: 0 4px;
+  color: var(--accent-text);
+}
+
+/* Tableaux de statistiques. */
+.table-scroll { overflow-x: auto; }
+table.stats-table,
+.chesscom-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+table.stats-table th, table.stats-table td,
+.chesscom-stats-table th, .chesscom-stats-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+table.stats-table th:first-child, table.stats-table td:first-child,
+.chesscom-stats-table th:first-child, .chesscom-stats-table td:first-child {
+  text-align: left;
+}
+table.stats-table thead th,
+.chesscom-stats-table thead th {
+  color: var(--text-3);
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+.chesscom-stats-table-wrap { overflow-x: auto; }
+
+/* Barres de répartition Blancs / Nuls / Noirs (une seule implémentation). */
+.result-bar,
+.advice-scorebar,
+.frequency-progress-bar,
+.chesscom-wdl-bar {
+  display: flex;
+  height: 18px;
+  border-radius: var(--sp-1);
+  overflow: hidden;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  font-size: var(--fs-kicker);
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+.result-bar { margin-top: var(--sp-2); }
+.bar-white { background: #ddd6c4; color: #1c1a14; }
+.bar-draw { background: #6e6a60; color: #fff; }
+.bar-black { background: #100f0b; color: var(--text-2); }
+.advice-scorebar-fill,
+.frequency-progress-fill {
+  background: var(--accent);
+  min-width: 2px;
+}
+.chesscom-wdl-bar { height: 18px; line-height: 16px; margin-top: var(--sp-2); color: #fff; }
+.chesscom-stats-table .chesscom-wdl-bar { margin-top: 0; min-width: 100px; height: 14px; line-height: 12px; font-size: 10px; }
+.chesscom-wdl-segment { display: flex; align-items: center; justify-content: center; }
+.chesscom-wdl-win { background: var(--accent); }
+.chesscom-wdl-draw { background: #6e6a60; }
+.chesscom-wdl-loss { background: var(--danger-fill); }
+
+/* Modales : une seule langue visuelle (backdrop + dialogue + actions). */
+.modal-backdrop,
+.confirm-backdrop,
+.promotion-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  z-index: 60;
+}
+.modal-dialog,
+.promotion-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-layer);
+  width: min(560px, 100%);
+  max-height: min(86vh, 900px);
+  overflow-y: auto;
+  padding: var(--sp-4);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.modal-actions,
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+.modal-form { display: flex; flex-direction: column; gap: var(--sp-4); }
+.modal-close-btn { font-size: 18px; line-height: 1; padding: var(--sp-1) var(--sp-2); }
+.confirm-title { display: flex; align-items: center; gap: var(--sp-2); color: var(--danger-text); }
+.confirm-message { color: var(--text-2); margin-top: var(--sp-2); }
+.promotion-pieces { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin: var(--sp-3) 0; }
+.promo-symbol { font-size: 30px; line-height: 1; }
+
+/* Formulaires : cartes couleur et options Elo. */
+.color-cards-selector { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.color-card-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text);
+  cursor: pointer;
+  padding: var(--sp-3);
+  font-family: var(--font-ui);
+  text-align: center;
+}
+.color-card-pick:hover { border-color: var(--border-strong); }
+.color-card-pick.selected { border-color: var(--accent); background: var(--accent-tint); }
+.color-card-icon { font-size: 26px; line-height: 1; }
+.color-card-title { font-weight: 600; }
+.color-card-sub { font-size: var(--fs-small); color: var(--text-3); }
+.elo-options-list { display: flex; flex-direction: column; gap: var(--sp-1); max-height: 240px; overflow-y: auto; }
+.elo-option-item {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+}
+.elo-option-item:hover { border-color: var(--border-strong); }
+.elo-option-item.selected { border-color: var(--accent); background: var(--accent-tint); }
+.elo-option-item input { margin-top: 3px; accent-color: var(--accent); }
+.elo-option-info { display: flex; flex-direction: column; }
+.elo-option-title { font-weight: 600; }
+.elo-option-desc { font-size: var(--fs-small); color: var(--text-3); }
+
+/* États : chargement, vide, erreur. */
+.empty-state,
+.empty-history,
+.empty-candidates {
+  color: var(--text-3);
+  font-size: var(--fs-body);
+  padding: var(--sp-3) 0;
+}
+.mini-error-box {
+  border: 1px solid var(--danger);
+  background: var(--danger-tint);
+  color: var(--danger-text);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-small);
+}
+.error-header { display: flex; align-items: center; gap: var(--sp-2); color: var(--danger-text); }
+.error-text { color: var(--text-2); margin-top: var(--sp-1); }
+.loading-badge { border-color: var(--border-strong); }
+
+/* Icônes de titre : uniformes et discrètes (pas une couleur par panneau). */
+.title-icon { color: var(--text-3); flex: none; }
+
+/* Chargeurs fonctionnels. */
+.spin { width: 14px; height: 14px; border: 2px solid var(--border-strong); border-top-color: var(--accent-text); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spin-fast { width: 12px; height: 12px; border: 2px solid var(--border-strong); border-top-color: var(--warn-text); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.banner-indicator-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse-dot 1.5s ease infinite; flex: none; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+/* Toasts : empilés en bas à droite, auto-dismiss, polis d'annonce. */
+.toast-viewport {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  z-index: 80;
+  max-width: min(360px, calc(100vw - 32px));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-body);
+}
+.toast-success { border-left: 3px solid var(--accent); }
+.toast-error { border-left: 3px solid var(--danger); }
+.toast-info { border-left: 3px solid var(--info); }
+.toast-message { flex: 1; }
+.toast-icon { flex: none; margin-top: 2px; }
+.toast-close { padding: 0 var(--sp-1); }
