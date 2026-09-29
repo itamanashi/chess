@@ -8,6 +8,7 @@ import type {
 import { warn } from '../utils/async';
 import {
   STORE_INIT_SAVE_FAILED,
+  TOAST_LIBRARY_DURABLE_LOAD_FAILED,
   TOAST_LIBRARY_SAVE_FAILED,
   TOAST_LIBRARY_CORRUPT,
   TOAST_STORAGE_UNAVAILABLE,
@@ -16,7 +17,7 @@ import {
 import {
   LIBRARY_SCHEMA_VERSION,
   buildLibraryItem,
-  decodeLibrary,
+  decodeLibraryData,
   emptyRoot,
   loadLibrary,
   parseImport,
@@ -40,6 +41,7 @@ export function useRepertoireLibrary() {
   const mutationRevision = useRef(0);
   const idbWriteQueue = useRef<Promise<void>>(Promise.resolve());
   const saveFailureNotified = useRef(false);
+  const loadFailureNotified = useRef(false);
   const toast = useToast();
   // Un seul feedback par montage (StrictMode rejoue l'effet en dev).
   const loadFeedbackSent = useRef(false);
@@ -114,10 +116,21 @@ export function useRepertoireLibrary() {
         persist(initialItems, false);
         return;
       }
-      const checked = decodeLibrary(JSON.stringify(storedItems));
+      const checked = decodeLibraryData(storedItems);
       if (checked.status === 'corrupt') {
         warn('library:idb-load', checked.issues);
-        persist(initialItems, false);
+        if (!loadFailureNotified.current) {
+          loadFailureNotified.current = true;
+          toast.error(TOAST_LIBRARY_DURABLE_LOAD_FAILED);
+        }
+        return;
+      }
+      if (checked.issues.length > 0) {
+        warn('library:idb-load', checked.issues);
+        if (!loadFailureNotified.current) {
+          loadFailureNotified.current = true;
+          toast.error(TOAST_LIBRARY_DURABLE_LOAD_FAILED);
+        }
         return;
       }
       publish(checked.items);
@@ -125,6 +138,10 @@ export function useRepertoireLibrary() {
       else saveLibrary(checked.items);
     }).catch((err: unknown) => {
       warn('library:idb-load', err);
+      if (!loadFailureNotified.current) {
+        loadFailureNotified.current = true;
+        toast.error(TOAST_LIBRARY_DURABLE_LOAD_FAILED);
+      }
     });
     return () => { cancelled = true; };
   // One-time startup hydration; dependencies are stable for the hook lifetime.

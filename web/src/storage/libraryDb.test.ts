@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RepertoireItem } from '../types/chess';
+import type { RepertoireItem, RepertoireMove } from '../types/chess';
 import { createFakeIndexedDB } from './idbFake';
+import { decodeLibraryData } from './libraryRepository';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -11,6 +12,27 @@ describe('repertoire library IndexedDB persistence', () => {
   it('round-trips a library larger than the localStorage quota', async () => {
     vi.stubGlobal('indexedDB', createFakeIndexedDB({ maxValueBytes: 10 * 1024 * 1024 }).fake);
     const { idbLoadLibrary, idbSaveLibrary } = await import('./libraryDb');
+    const makeChain = (length: number): RepertoireMove[] => {
+      const nodes: RepertoireMove[] = [];
+      let tail = nodes;
+      for (let index = 0; index < length; index++) {
+        const node = {
+          coup: 'e4',
+          san: 'e4',
+          uci: 'e2e4',
+          fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          parties: index,
+          victoires_blancs: 0,
+          nuls: 0,
+          victoires_noirs: 0,
+          eco: 'A'.repeat(350),
+          children: [],
+        };
+        tail.push(node);
+        tail = node.children;
+      }
+      return nodes;
+    };
     const item: RepertoireItem = {
       id: 'rep-large',
       title: 'Répertoire généré',
@@ -20,26 +42,30 @@ describe('repertoire library IndexedDB persistence', () => {
       updatedAt: '2026-09-29T00:00:00.000Z',
       schemaVersion: 1,
       root: {
-        fen: 'start',
-        children: Array.from({ length: 18000 }, (_, index) => ({
-          coup: `e${index}`,
-          san: `e${index}`,
-          uci: 'e2e4',
-          fen: `position-${index}`,
-          parties: index,
-          eco: 'A'.repeat(180),
-          victoires_blancs: 0,
-          nuls: 0,
-          victoires_noirs: 0,
-          children: [],
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        children: Array.from({ length: 128 }, (_, index) => ({
+          ...makeChain(index === 0 ? 159 : 122)[0]!,
         })),
       },
     };
-    expect(JSON.stringify([item]).length).toBeGreaterThan(5 * 1024 * 1024);
+    const storedLength = JSON.stringify([item]).length;
+    expect(storedLength).toBeGreaterThan(5 * 1024 * 1024);
 
     await idbSaveLibrary([item]);
-
-    expect(await idbLoadLibrary()).toEqual([item]);
+    const stored = await idbLoadLibrary();
+    expect(stored).toEqual([item]);
+    const decoded = decodeLibraryData(stored);
+    expect(decoded.status).toBe('ready');
+    const savedNodes = decoded.items[0]?.root.children.reduce((total, node) => {
+      let count = 0;
+      let current: RepertoireMove | undefined = node;
+      while (current) {
+        count++;
+        current = current.children?.[0];
+      }
+      return total + count;
+    }, 0);
+    expect(savedNodes).toBe(15653);
   });
 
   it('reports a failed durable write to the caller', async () => {

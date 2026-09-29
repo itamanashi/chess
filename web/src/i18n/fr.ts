@@ -301,6 +301,8 @@ export const TOAST_STORAGE_UNAVAILABLE =
 
 export const TOAST_LIBRARY_SAVE_FAILED =
   'Impossible de sauvegarder la bibliothèque. Vérifiez l’espace de stockage disponible.';
+export const TOAST_LIBRARY_DURABLE_LOAD_FAILED =
+  'La copie durable du répertoire n’a pas pu être relue. La copie locale est conservée.';
 
 // ---------------------------------------------------------------------------
 // Persistance (storage/) — erreurs techniques formulées pour l'utilisateur.
