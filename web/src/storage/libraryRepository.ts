@@ -81,7 +81,11 @@ export function decodeLibrary(raw: string, backupInvalid = false): LibraryLoadRe
     if (backupInvalid) backupCorrupt(raw);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
+  return decodeLibraryData(parsed, backupInvalid ? raw : undefined);
+}
 
+/** Valide les données déjà désérialisées, notamment celles venant d'IndexedDB. */
+export function decodeLibraryData(parsed: unknown, invalidBackup?: string): LibraryLoadResult {
   // Accepted shapes: item array (canonical), { items } envelope,
   // single item, or bare root (legacy direct exports).
   let rawItems: unknown[];
@@ -92,7 +96,7 @@ export function decodeLibrary(raw: string, backupInvalid = false): LibraryLoadRe
   } else if (isRecord(parsed)) {
     rawItems = [parsed];
   } else {
-    if (backupInvalid) backupCorrupt(raw);
+    if (invalidBackup !== undefined) backupCorrupt(invalidBackup);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
 
@@ -122,7 +126,7 @@ export function decodeLibrary(raw: string, backupInvalid = false): LibraryLoadRe
   }
 
   if (items.length === 0) {
-    if (backupInvalid) backupCorrupt(raw);
+    if (invalidBackup !== undefined) backupCorrupt(invalidBackup);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
   return { status: touched ? 'migrated' : 'ready', items, issues };
