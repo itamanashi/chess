@@ -212,10 +212,10 @@ button.side-brand:hover { background: var(--bg-raised); }
    colonne Rejouer étroite, grille des coups à défilement interne). */
 .main-content-container.game-viewer {
   display: grid;
-  grid-template-columns: minmax(0, min(860px, 100%)) minmax(280px, 340px);
+  grid-template-columns: minmax(0, min(980px, 100%)) minmax(280px, 340px);
   align-items: stretch;
   justify-content: center;
-  max-width: 1440px;
+  max-width: 1680px;
 }
 .main-content-container.game-viewer .board-column {
   position: sticky;
@@ -239,7 +239,7 @@ button.side-brand:hover { background: var(--bg-raised); }
   }
   .game-viewer .board-column {
     width: 100%;
-    max-width: calc(100vh - 160px);
+    max-width: calc(100vh - 110px);
     justify-self: center;
   }
   .game-viewer .panel-column { min-height: 0; }
@@ -258,16 +258,16 @@ button.side-brand:hover { background: var(--bg-raised); }
 @media (min-width: 1025px) {
   .main-content-container:not(.no-board):not(.game-viewer) {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(400px, 520px);
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 600px);
     align-items: start;
     justify-content: center;
-    max-width: 1440px;
+    max-width: 1800px;
   }
   .main-content-container:not(.no-board):not(.game-viewer) .board-column {
     position: sticky;
     top: var(--sp-4);
     width: 100%;
-    max-width: 720px;
+    max-width: 900px;
     justify-self: center;
   }
 }
@@ -276,10 +276,10 @@ button.side-brand:hover { background: var(--bg-raised); }
   flex-direction: column;
   gap: var(--sp-2);
   width: 100%;
-  max-width: 680px;
+  max-width: 880px;
   min-width: 0;
 }
-.main-content-container.game-viewer .board-column { max-width: 860px; }
+.main-content-container.game-viewer .board-column { max-width: 980px; }
 .chessboard-wrapper { width: 100%; min-width: 0; position: relative; }
 .chessboard-container { width: 100%; aspect-ratio: 1; overflow: hidden; }
 /* Calque des flèches coudées (cavaliers) : superposé au plateau, passif. */

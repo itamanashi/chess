@@ -47,6 +47,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cgRef = useRef<Api | null>(null);
+  const lastFenRef = useRef<string>('');
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
   const overlayUid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 
@@ -153,9 +154,13 @@ export const Chessboard: React.FC<ChessboardProps> = ({
                 soundFx.playMove();
               }
             } else {
-              // Réinitialiser le plateau si coup invalide
+              // Réinitialiser le plateau si coup invalide (sans toucher
+              // aux dessins de l'utilisateur : `set({fen})` vide le calque
+              // `shapes`, on le restaure aussitôt).
               if (cgRef.current) {
+                const keepUserShapes = cgRef.current.state.drawable.shapes;
                 cgRef.current.set({ fen });
+                cgRef.current.setShapes(keepUserShapes);
               }
             }
           },
@@ -164,14 +169,28 @@ export const Chessboard: React.FC<ChessboardProps> = ({
       drawable: {
         enabled: true,
         visible: true,
-        shapes: splitShapes.straight,
+        // Flèches de l'app (tactiques, correction, moteur) dans le calque
+        // ORDI (`autoShapes`), jamais dans `shapes` (calque UTILISATEUR) :
+        // avant, un clic effaçait les flèches de l'app (eraseOnClick) puis
+        // le `set()` suivant les ressuscitait — la « flèche fantôme ».
+        // Maintenant le clic n'efface que VOS dessins, qui restent effacés.
+        eraseOnClick: true,
+        autoShapes: splitShapes.straight,
       },
     };
 
     if (!cgRef.current) {
       cgRef.current = Chessground(containerRef.current, config);
+      lastFenRef.current = fen;
     } else {
+      // `set()` avec un FEN vide le calque dessins : on ne garde les dessins
+      // que si la position n'a pas changé (changement de flèches, survol…).
+      // Sur un vrai coup, effacement standard comme sur Lichess.
+      const samePosition = lastFenRef.current === fen;
+      const keepUserShapes = samePosition ? cgRef.current.state.drawable.shapes : [];
       cgRef.current.set(config);
+      if (samePosition) cgRef.current.setShapes(keepUserShapes);
+      lastFenRef.current = fen;
     }
   }, [fen, orientation, interactive, computeDests, lastMove, splitShapes, onMove]);
 
@@ -211,7 +230,9 @@ export const Chessboard: React.FC<ChessboardProps> = ({
         soundFx.playMove();
       }
     } else if (cgRef.current) {
+      const keepUserShapes = cgRef.current.state.drawable.shapes;
       cgRef.current.set({ fen });
+      cgRef.current.setShapes(keepUserShapes);
     }
   };
 

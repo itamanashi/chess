@@ -412,7 +412,7 @@
 
 /* --- Génération automatique (BFS) --- */
 .auto-gen-card { border-style: dashed; }
-.auto-gen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--sp-2); margin-top: var(--sp-2); }
+.auto-gen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-2); margin-top: var(--sp-2); }
 .auto-gen-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-small); }
 .auto-gen-field input { max-width: 140px; }
 .auto-gen-result { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--text-3); }
