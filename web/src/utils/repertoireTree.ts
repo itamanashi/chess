@@ -1,5 +1,5 @@
 import { Chess, type Square } from 'chess.js';
-import type { LichessMove, MoveHistoryItem, RepertoireMove, RepertoireRoot } from '../types/chess';
+import type { BoardOrientation, LichessMove, MoveHistoryItem, RepertoireMove, RepertoireRoot } from '../types/chess';
 import { INITIAL_FEN, normalizeCastleUci, normalizeFen } from './repertoire';
 
 /** Nœud mutable de l'arbre (racine ou coup). */
@@ -238,6 +238,51 @@ export function deleteMoveByPath(root: RepertoireRoot, uciPath: string[]): boole
  * Reconstruit l'historique rejouable depuis un chemin UCI (ouverture d'une
  * ligne depuis la bibliothèque). S'arrête au premier coup illégal.
  */
+export function findUciPathsToPositions(
+  root: RepertoireRoot,
+  targetFens: readonly string[],
+): Map<string, string[]> {
+  const targets = new Set(targetFens.map(normalizeFen));
+  const paths = new Map<string, string[]>();
+  const search = (fen: string, children: RepertoireMove[], path: string[]): void => {
+    const normalizedFen = normalizeFen(fen);
+    if (targets.delete(normalizedFen)) paths.set(normalizedFen, path);
+    if (targets.size === 0) return;
+    for (const move of children) {
+      search(move.fen, move.children ?? [], [...path, move.uci]);
+      if (targets.size === 0) return;
+    }
+  };
+  search(root.fen, root.children, []);
+  return paths;
+}
+
+export function getTrainerPositionKeys(
+  root: RepertoireRoot,
+  color: BoardOrientation,
+): string[] {
+  const playerTurn = color === 'white' ? 'w' : 'b';
+  const positions: string[] = [];
+  const seen = new Set<string>();
+  const visit = (fen: string, children: RepertoireMove[]): void => {
+    const key = normalizeFen(fen);
+    if (key.split(' ')[1] === playerTurn && children.length > 0 && !seen.has(key)) {
+      seen.add(key);
+      positions.push(key);
+    }
+    for (const move of children) visit(move.fen, move.children ?? []);
+  };
+  visit(root.fen, root.children);
+  return positions;
+}
+
+export function findUciPathToPosition(
+  root: RepertoireRoot,
+  targetFen: string,
+): string[] | null {
+  return findUciPathsToPositions(root, [targetFen]).get(normalizeFen(targetFen)) ?? null;
+}
+
 export function buildHistoryFromUciPath(startFen: string, uciPath: string[]): MoveHistoryItem[] {
   const c = new Chess();
   try {
