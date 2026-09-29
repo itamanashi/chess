@@ -122,7 +122,8 @@ function sanitizeMove(
     pushError(ctx, `${path} : ${NODE_NOT_OBJECT}`);
     return null;
   }
-  const san = isNonEmptyString(raw.san, MAX_SAN_LENGTH) ? raw.san : null;
+  const sanRaw = raw.san ?? raw.coup;
+  const san = isNonEmptyString(sanRaw, MAX_SAN_LENGTH) ? sanRaw : null;
   if (!san) {
     ctx.pruned++;
     pushError(ctx, `${path} : ${NODE_BAD_SAN}`);
@@ -171,10 +172,10 @@ function sanitizeMove(
     coup: isNonEmptyString(raw.coup, MAX_SAN_LENGTH) ? raw.coup : san,
     uci,
     san,
-    parties: statNumber(raw.parties),
-    victoires_blancs: statNumber(raw.victoires_blancs),
-    nuls: statNumber(raw.nuls),
-    victoires_noirs: statNumber(raw.victoires_noirs),
+    parties: statNumber(raw.parties ?? raw.games),
+    victoires_blancs: statNumber(raw.victoires_blancs ?? raw.white),
+    nuls: statNumber(raw.nuls ?? raw.draws),
+    victoires_noirs: statNumber(raw.victoires_noirs ?? raw.black),
     ...(typeof raw.score_moyen === 'number' && Number.isFinite(raw.score_moyen)
       ? { score_moyen: raw.score_moyen }
       : {}),

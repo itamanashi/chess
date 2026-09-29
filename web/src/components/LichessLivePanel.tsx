@@ -3,6 +3,7 @@ import type { LichessApiResponse, LichessMove } from '../types/chess';
 import { ELO_TARGET_OPTIONS } from '../types/chess';
 import { fetchLichessMoves } from '../services/lichess';
 import { frenchOpeningName } from '../utils/openingsFr';
+import { normalizeCastleUci } from '../utils/repertoire';
 import { isAbortError } from '../utils/async';
 import { tokenStore } from '../storage/preferences';
 import { 
@@ -19,6 +20,7 @@ import {
 
 interface LichessLivePanelProps {
   currentFen: string;
+  candidateUcis: ReadonlySet<string>;
   onPlayMoveFromLichess: (move: LichessMove) => void;
   onAddMoveToRepertoire: (move: LichessMove) => void;
   onHoverMove?: (uci: string | null) => void;
@@ -26,27 +28,37 @@ interface LichessLivePanelProps {
 
 export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
   currentFen,
+  candidateUcis,
   onPlayMoveFromLichess,
   onAddMoveToRepertoire,
   onHoverMove,
 }) => {
   const [token, setToken] = useState(() => tokenStore.get());
   const [dbType, setDbType] = useState<'masters' | 'lichess'>('masters');
+  const [autoQuery, setAutoQuery] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [offline, setOffline] = useState(false);
   const [result, setResult] = useState<LichessApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorContext, setErrorContext] = useState<string | null>(null);
   const [addedUcis, setAddedUcis] = useState<Set<string>>(new Set());
+  const [requestContext, setRequestContext] = useState<string | null>(null);
   // Versioning des requêtes : seule la DERNIÈRE réponse s'affiche. La
   // précédente est annulée (AbortController) et son résultat ignoré même
   // si l'annulation arrive trop tard (garde sur le n° de séquence + FEN).
   const querySeq = useRef(0);
   const queryAbort = useRef<AbortController | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Annulation stable (appelée par handleQuery et le cleanup de démontage).
   const cancelPendingQuery = useCallback(() => {
     querySeq.current++;
     queryAbort.current?.abort();
     queryAbort.current = null;
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
   }, []);
 
   // Démontage : aucune réponse en vol ne doit toucher l'état.
@@ -59,7 +71,11 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
     tokenStore.set(val);
   };
 
-  const handleQuery = async () => {
+  const handleQuery = useCallback(async () => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
     const id = ++querySeq.current;
     queryAbort.current?.abort();
     const ctrl = new AbortController();
@@ -68,6 +84,7 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
     // la réponse est obsolète et ne doit pas écraser l'affichage.
     const fenSnap = currentFen;
     const dbSnap = dbType;
+    const context = `${dbSnap}:${fenSnap}`;
     // Même filtre temporel que le Builder sur la base Masters (audit A7).
     const sinceSnap =
       dbSnap === 'masters'
@@ -75,6 +92,10 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
         : undefined;
     setLoading(true);
     setError(null);
+    setErrorContext(null);
+    setRequestContext(context);
+    setOffline(false);
+    setResult(null);
     try {
       const data = await fetchLichessMoves(fenSnap, token, dbSnap, undefined, undefined, {
         signal: ctrl.signal,
@@ -82,21 +103,62 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
       });
       if (querySeq.current !== id || ctrl.signal.aborted) return;
       setResult(data);
+      setOffline(false);
     } catch (err) {
       if (isAbortError(err) || querySeq.current !== id) return;
       setError(err instanceof Error ? err.message : String(err));
+      setErrorContext(context);
       setResult(null);
+      setOffline(true);
     } finally {
-      if (querySeq.current === id) setLoading(false);
+      if (queryAbort.current === ctrl) {
+        queryAbort.current = null;
+        setLoading(false);
+      } else if (queryAbort.current === null && querySeq.current !== id) {
+        setLoading(false);
+      }
     }
-  };
+  }, [currentFen, dbType, token]);
+
+  useEffect(() => {
+    if (!autoQuery) {
+      cancelPendingQuery();
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      debounceTimer.current = null;
+      void handleQuery();
+    }, 300);
+    debounceTimer.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (debounceTimer.current === timer) debounceTimer.current = null;
+      cancelPendingQuery();
+    };
+  }, [autoQuery, cancelPendingQuery, currentFen, dbType, handleQuery]);
 
   const handleAdd = (m: LichessMove) => {
     onAddMoveToRepertoire(m);
-    setAddedUcis(prev => new Set(prev).add(m.uci));
+    setAddedUcis((prev) => new Set(prev).add(normalizeCastleUci(currentFen, m.uci)));
   };
 
-  const totalMovesParties = result?.moves?.reduce((acc, m) => acc + m.white + m.draws + m.black, 0) || 1;
+  const contextKey = `${dbType}:${currentFen}`;
+  const resultForCurrentPosition = requestContext === contextKey ? result : null;
+  const errorForCurrentPosition = errorContext === contextKey ? error : null;
+  const totalGames = resultForCurrentPosition
+    ? resultForCurrentPosition.white + resultForCurrentPosition.draws + resultForCurrentPosition.black
+    : 0;
+  const isCurrentLoading = loading && requestContext === contextKey;
+  const isCurrentOffline = offline && errorContext === contextKey;
+  const statusLabel = isCurrentLoading
+    ? 'Interrogation en cours'
+    : isCurrentOffline
+      ? 'Hors ligne'
+      : resultForCurrentPosition
+        ? 'En ligne'
+        : autoQuery
+          ? 'Recherche automatique'
+          : 'Auto désactivé';
 
   return (
     <div className="lichess-live-panel">
@@ -141,6 +203,7 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
         <div className="db-toggle-row">
           <button
             className={`db-toggle-btn ${dbType === 'masters' ? 'active' : ''}`}
+            aria-pressed={dbType === 'masters'}
             onClick={() => setDbType('masters')}
           >
             <Layers size={14} />
@@ -148,6 +211,7 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
           </button>
           <button
             className={`db-toggle-btn ${dbType === 'lichess' ? 'active' : ''}`}
+            aria-pressed={dbType === 'lichess'}
             onClick={() => setDbType('lichess')}
           >
             <Globe size={14} />
@@ -155,58 +219,89 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
           </button>
         </div>
 
+        <label className="live-auto-toggle">
+          <input
+            type="checkbox"
+            checked={autoQuery}
+            onChange={(event) => {
+              if (!event.target.checked) {
+                cancelPendingQuery();
+                setLoading(false);
+                setOffline(false);
+                setError(null);
+                setErrorContext(null);
+              }
+              setAutoQuery(event.target.checked);
+            }}
+          />
+          <span>Interroger automatiquement la position</span>
+        </label>
+
         <button 
           className="primary-btn full-width" 
           onClick={handleQuery} 
-          disabled={loading}
+          disabled={isCurrentLoading}
         >
           <Search size={16} />
-          <span>{loading ? 'Interrogation en cours...' : 'Interroger la position actuelle'}</span>
+          <span>{isCurrentLoading ? 'Interrogation en cours...' : 'Interroger la position actuelle'}</span>
         </button>
+        <span
+          className={`lichess-status-badge ${isCurrentOffline ? 'offline' : resultForCurrentPosition ? 'online' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          {statusLabel}
+        </span>
       </div>
 
       {/* Affichage des Erreurs */}
-      {error && (
-        <div className="panel-card error-card">
+      {errorForCurrentPosition && (
+        <div className="panel-card error-card" role="alert">
           <div className="error-header">
             <AlertTriangle size={18} className="text-rose" />
             <h4>Erreur Lichess</h4>
           </div>
-          <p className="error-text">{error}</p>
+          <p className="error-text">{errorForCurrentPosition}</p>
         </div>
       )}
 
       {/* Résultats de l'API Lichess */}
-      {result && (
+      {resultForCurrentPosition && (
         <div className="panel-card lichess-results-card">
           <div className="results-header">
             <h3 className="card-title">
-              Coups les plus joués ({result.moves.length})
+              Coups les plus joués
             </h3>
-            {result.opening && (
+            <span className="lichess-total-games">
+              {totalGames.toLocaleString('fr-FR')} parties
+            </span>
+            {resultForCurrentPosition.opening && (
               <span className="opening-badge">
-                {result.opening.eco && `[${result.opening.eco}] `}
-                {frenchOpeningName(result.opening.name)}
+                {resultForCurrentPosition.opening.eco && `[${resultForCurrentPosition.opening.eco}] `}
+                {frenchOpeningName(resultForCurrentPosition.opening.name)}
               </span>
             )}
           </div>
 
-          {result.moves.length === 0 ? (
+          {resultForCurrentPosition.moves.length === 0 ? (
             <div className="empty-state">Aucun coup trouvé dans la base pour cette position.</div>
           ) : (
-            <div className="lichess-moves-list">
-              {result.moves.map((m, idx) => {
+            <div className="lichess-moves-list" role="list" aria-label="Coups de la base Lichess">
+              {resultForCurrentPosition.moves.map((m, idx) => {
                 const parties = m.white + m.draws + m.black;
-                const pct = Math.round((parties / totalMovesParties) * 100);
+                const pct = totalGames > 0 ? Math.round((parties / totalGames) * 100) : 0;
                 const pw = parties > 0 ? Math.round((m.white / parties) * 100) : 0;
                 const pd = parties > 0 ? Math.round((m.draws / parties) * 100) : 0;
                 const pb = parties > 0 ? Math.round((m.black / parties) * 100) : 0;
-                const isAdded = addedUcis.has(m.uci);
+                const normalizedUci = normalizeCastleUci(currentFen, m.uci);
+                const isInRepertoire = candidateUcis.has(normalizedUci);
+                const isAdded = isInRepertoire || addedUcis.has(normalizedUci);
 
                 return (
                   <div
                     key={idx}
                     className="lichess-move-row"
+                    role="listitem"
                     onMouseEnter={() => onHoverMove?.(m.uci)}
                     onMouseLeave={() => onHoverMove?.(null)}
                   >
@@ -244,6 +339,7 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
                         className="action-btn play-action"
                         onClick={() => onPlayMoveFromLichess(m)}
                         title="Jouer ce coup sur l'échiquier"
+                        aria-label={`Jouer ${m.san} sur l'échiquier`}
                       >
                         <Play size={13} />
                         <span>Jouer</span>
@@ -252,7 +348,8 @@ export const LichessLivePanel: React.FC<LichessLivePanelProps> = ({
                         className={`action-btn add-action ${isAdded ? 'added' : ''}`}
                         onClick={() => handleAdd(m)}
                         disabled={isAdded}
-                        title="Ajouter ce coup à votre répertoire"
+                        title={isInRepertoire ? 'Ce coup est déjà dans votre répertoire' : 'Ajouter ce coup à votre répertoire'}
+                        aria-label={isAdded ? `${m.san}, déjà dans votre répertoire` : `${m.san}, ajouter au répertoire`}
                       >
                         {isAdded ? (
                           <>
