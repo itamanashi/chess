@@ -18,7 +18,7 @@ interface AutoRepertoirePanelProps {
   targetElo: EloTargetKey;
   startFen?: string;
   /** Fusionne l'arbre généré dans le répertoire actif. */
-  onMerge: (root: RepertoireRoot, stats: AutoGenStats) => void;
+  onMerge: (root: RepertoireRoot, stats: AutoGenStats) => void | Promise<void>;
   /** Animation live : chaque nœud émis (throttlé) est montré sur l'échiquier ; null = fin/arrêt. */
   onPreviewMove?: (fen: string | null, uci?: string) => void;
   /**
@@ -173,6 +173,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
     return off;
   }, []);
   const [running, setRunning] = useState(false);
+  const [merging, setMerging] = useState(false);
   const [progress, setProgress] = useState<AutoGenStats>(DEFAULT_STATS);
   const [done, setDone] = useState<{ nodes: number; stats: AutoGenStats; root: RepertoireRoot; completed: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -317,8 +318,16 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
     abortRef.current?.abort();
   };
 
-  const handleMerge = (): void => {
-    if (done) onMerge(done.root, done.stats);
+  const handleMerge = async (): Promise<void> => {
+    if (!done || merging) return;
+    setMerging(true);
+    try {
+      await onMerge(done.root, done.stats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Échec de la sauvegarde du répertoire.');
+    } finally {
+      setMerging(false);
+    }
   };
 
   /** Batch offline : le cache Explorer persistant (localStorage, sans expiration) évite de
@@ -591,9 +600,9 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
           </button>
         )}
         {done && !running && (
-          <button className="secondary-btn" onClick={handleMerge}>
+          <button className="secondary-btn" onClick={() => void handleMerge()} disabled={merging}>
             <Download size={14} />
-            <span>Fusionner{!done.completed ? ' le partiel' : ''} dans le répertoire ({done.nodes})</span>
+            <span>{merging ? 'Sauvegarde…' : `Fusionner${!done.completed ? ' le partiel' : ''} dans le répertoire (${done.nodes})`}</span>
           </button>
         )}
         {done && !running && (
