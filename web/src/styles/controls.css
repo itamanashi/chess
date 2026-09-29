@@ -40,7 +40,7 @@
 
 .primary-btn {
   background: var(--accent);
-  border-color: #5d8227;
+  border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
 }
@@ -231,8 +231,8 @@
 .mate-tag { background: var(--warn-tint); border-color: var(--warn); color: var(--warn-text); font-weight: 700; }
 .eco-badge, .eco-tag, .eco-pill { font-family: var(--font-mono); font-size: var(--fs-kicker); }
 .rep-color-tag, .rep-color-tag-sm { font-weight: 600; }
-.tag-white { background: #e8e4d8; border-color: #e8e4d8; color: #1c1a14; }
-.tag-black { background: #111008; border-color: var(--border-strong); color: var(--text); }
+.tag-white { background: var(--camp-white); border-color: var(--camp-white); color: #20231e; }
+.tag-black { background: rgba(183, 131, 98, 0.14); border-color: var(--camp-black); color: #e0b99d; }
 .san-text, .chip-san, .highlight-san, .gsan-in { font-family: var(--font-mono); }
 .highlight-san {
   background: var(--accent-tint);
@@ -285,9 +285,9 @@ table.stats-table thead th,
   text-align: center;
 }
 .result-bar { margin-top: var(--sp-2); }
-.bar-white { background: #ddd6c4; color: #1c1a14; }
+.bar-white { background: var(--camp-white); color: #20231e; }
 .bar-draw { background: #6e6a60; color: #fff; }
-.bar-black { background: #100f0b; color: var(--text-2); }
+.bar-black { background: var(--bg-app); color: var(--text-2); }
 .advice-scorebar-fill,
 .frequency-progress-fill {
   background: var(--accent);
@@ -398,6 +398,9 @@ table.stats-table thead th,
   border-radius: var(--r-control);
   padding: var(--sp-2) var(--sp-3);
   font-size: var(--fs-small);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .error-header { display: flex; align-items: center; gap: var(--sp-2); color: var(--danger-text); }
 .error-text { color: var(--text-2); margin-top: var(--sp-1); }

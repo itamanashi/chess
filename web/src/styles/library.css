@@ -5,41 +5,39 @@
  * ------------------------------------------------------------------ */
 
 .library-view-container {
-  max-width: 1024px;
+  max-width: 1160px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--sp-5) var(--sp-4);
+  padding: var(--sp-6) var(--sp-5);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-6);
 }
 
-/* En-tête : surtitre factuel, titre, une phrase, actions. Rien de plus. */
+/* En-tête : description et actions restent alignées à gauche. */
 .library-hero-section {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
-  padding-bottom: var(--sp-4);
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-5);
   border-bottom: 1px solid var(--border);
 }
-.hero-content { max-width: 62ch; display: flex; flex-direction: column; gap: var(--sp-2); }
+.hero-content { max-width: 64ch; display: flex; flex-direction: column; gap: var(--sp-3); }
 .hero-kicker {
-  font-size: var(--fs-kicker);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: var(--fs-small);
   color: var(--accent-text);
-  font-weight: 700;
+  font-weight: 600;
 }
 .hero-description { color: var(--text-2); max-width: 62ch; }
 .hero-description strong { color: var(--text); }
-.hero-action-buttons { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.hero-action-buttons { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: flex-start; }
 
 .repertoires-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--sp-3);
+  gap: var(--sp-4);
 }
 
 /* Carte répertoire : bordure latérale = camp joué (info, pas décor). */
@@ -50,18 +48,18 @@
   padding: var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
   border-left-width: 3px;
 }
-.repertoire-card.card-white { border-left-color: #ddd6c4; }
-.repertoire-card.card-black { border-left-color: var(--border-strong); }
+.repertoire-card.card-white { border-left-color: var(--camp-white); }
+.repertoire-card.card-black { border-left-color: var(--camp-black); }
 
 .rep-card-top { display: flex; flex-direction: column; gap: var(--sp-1); }
 .rep-badges-row { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 .rep-title-wrap { margin: 0; font-size: inherit; }
 .rep-title {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 400;
   text-align: left;
   background: none;
@@ -82,11 +80,11 @@ button.rep-title:hover { color: var(--accent-text); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: var(--sp-2) 0;
+  padding: var(--sp-3) 0;
 }
 .metric-box + .metric-box { border-left: 1px solid var(--border); padding-left: var(--sp-3); }
-.metric-val { font-family: var(--font-mono); font-size: var(--fs-emph); font-weight: 600; }
-.metric-lbl { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); }
+.metric-val { font-family: var(--font-mono); font-size: var(--fs-h3); font-weight: 600; }
+.metric-lbl { font-size: var(--fs-small); color: var(--text-3); }
 
 .rep-date-row { display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-small); color: var(--text-3); }
 .rep-actions-footer { display: flex; gap: var(--sp-2); }
@@ -98,7 +96,7 @@ button.rep-title:hover { color: var(--accent-text); }
 .empty-library-card {
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-panel);
-  padding: var(--sp-5);
+  padding: var(--sp-6);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -106,13 +104,14 @@ button.rep-title:hover { color: var(--accent-text); }
 }
 .empty-library-card h3 { font-family: var(--font-display); font-weight: 400; font-size: 20px; }
 .empty-library-card p { color: var(--text-2); max-width: 52ch; }
-.empty-icon-wrap { font-size: 28px; color: var(--text-3); line-height: 1; }
+.empty-icon-wrap { font-size: 28px; color: var(--accent-text); line-height: 1; }
 
 /* Astuce sous le graphe (conservée : utilisée par RepertoireGraphTree). */
 .tree-hint { font-size: var(--fs-small); color: var(--text-3); font-family: var(--font-ui); }
 
 @media (max-width: 760px) {
-  .library-view-container { padding: var(--sp-4) var(--sp-2); }
+  .library-view-container { padding: var(--sp-5) var(--sp-3); gap: var(--sp-5); }
+  .library-hero-section { align-items: flex-start; }
   .repertoires-grid { grid-template-columns: minmax(0, 1fr); }
 }
 

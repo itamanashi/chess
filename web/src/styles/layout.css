@@ -18,14 +18,14 @@
 /* Barre latérale : navigation, contexte, compte. 232px, jamais de labels
    masqués sans équivalent accessible (title + aria-label conservés). */
 .app-sidebar {
-  width: 232px;
+  width: 248px;
   flex: none;
   background: var(--bg-surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-3);
+  padding: var(--sp-4) var(--sp-3);
   position: sticky;
   top: 0;
   height: 100vh;
@@ -40,7 +40,7 @@
   border: none;
   color: var(--text);
   font-family: var(--font-ui);
-  padding: var(--sp-1);
+  padding: var(--sp-2);
   border-radius: var(--r-control);
   text-align: left;
   width: 100%;
@@ -48,22 +48,29 @@
 button.side-brand { cursor: pointer; }
 button.side-brand:hover { background: var(--bg-raised); }
 .brand-logo {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-tint);
+  border: 1px solid rgba(145, 182, 109, 0.24);
+  border-radius: var(--r-control);
   font-size: 24px;
   line-height: 1;
   color: var(--accent-text);
   flex: none;
 }
 .side-brand-text { display: flex; flex-direction: column; min-width: 0; }
-.side-brand-name { font-family: var(--font-display); font-size: 17px; }
+.side-brand-name { font-family: var(--font-display); font-size: 18px; }
 .side-brand-sub { font-size: var(--fs-kicker); color: var(--text-3); }
 
 .side-nav { display: flex; flex-direction: column; gap: 2px; }
 .side-nav-label {
-  font-size: var(--fs-kicker);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-small);
+  font-weight: 600;
   color: var(--text-3);
-  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  padding: var(--sp-3) var(--sp-2) var(--sp-1);
 }
 .side-nav-btn {
   display: flex;
@@ -72,14 +79,15 @@ button.side-brand:hover { background: var(--bg-raised); }
   justify-content: flex-start;
   background: transparent;
   border: 1px solid transparent;
+  border-left: 2px solid transparent;
   color: var(--text-2);
   width: 100%;
-  padding: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) 10px;
 }
 .side-nav-btn:hover:not(:disabled) { background: var(--bg-raised); color: var(--text); }
 .side-nav-btn.active {
   background: var(--accent-tint);
-  border-color: transparent;
+  border-left-color: var(--accent);
   color: var(--accent-text);
   font-weight: 600;
 }
@@ -198,8 +206,8 @@ button.side-brand:hover { background: var(--bg-raised); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
+  gap: var(--sp-5);
+  padding: var(--sp-5);
   max-width: 780px;
   width: 100%;
   margin: 0 auto;
@@ -319,7 +327,7 @@ button.side-brand:hover { background: var(--bg-raised); }
   bottom: 0;
   left: 0;
   right: 0;
-  background: #e8e4d8;
+  background: var(--camp-white);
   transition: height 200ms;
 }
 .evalbar-score {
@@ -358,10 +366,8 @@ button.side-brand:hover { background: var(--bg-raised); }
   margin-bottom: 0;
 }
 .card-title {
-  font-size: var(--fs-small);
+  font-size: var(--fs-body);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
   color: var(--text-2);
   display: flex;
   align-items: center;
@@ -434,37 +440,62 @@ button.side-brand:hover { background: var(--bg-raised); }
   .main-content-container.no-board { max-width: 1000px; }
 }
 
-/* Mobile : la barre latérale devient une barre haute horizontale. */
+/* Mobile : marque compacte puis navigation horizontale, libellés conservés. */
 @media (max-width: 760px) {
   .app-layout { flex-direction: column; }
   .app-sidebar {
     width: 100%;
     height: auto;
-    position: static;
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .side-brand { width: 100%; min-height: 40px; padding-right: 148px; }
+  .side-brand-sub { display: none; }
+  .side-nav {
     flex-direction: row;
     align-items: center;
+    gap: var(--sp-1);
+    max-width: 100%;
     overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: var(--sp-2);
+    padding: 0 0 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
   }
-  .side-brand { width: auto; flex: none; }
-  .side-brand-sub, .side-brand-text { display: none; }
-  .side-nav { flex-direction: row; align-items: center; }
+  .side-nav::-webkit-scrollbar { height: 4px; }
+  .side-nav::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
   .side-nav-label { display: none; }
-  .side-nav-btn { width: auto; }
-  .side-nav-btn span { display: none; }
+  .side-nav-btn { width: auto; flex: none; border-left: 1px solid transparent; }
   .side-context-card, .side-spacer, .side-actions { display: none; }
-  .side-profile-chip { width: auto; flex: none; margin-left: auto; max-width: 44px; justify-content: center; }
-  .side-profile-chip .side-profile-name { display: none; }
+  .side-profile-chip {
+    position: absolute;
+    top: 12px;
+    right: var(--sp-3);
+    width: auto;
+    max-width: 136px;
+    justify-content: center;
+  }
+  .side-profile-chip .side-profile-name { max-width: 82px; }
   .side-account-card {
     position: absolute;
-    top: 60px;
+    top: 104px;
     right: var(--sp-2);
     width: min(320px, calc(100vw - 16px));
     z-index: 50;
     box-shadow: var(--shadow-layer);
   }
-  .main-content-container { padding: var(--sp-2); gap: var(--sp-3); }
+  .main-content-container { padding: var(--sp-3) var(--sp-2); gap: var(--sp-3); }
   .panel-card { padding: var(--sp-3); }
+}
+
+@media (max-width: 420px) {
+  .side-brand { padding-right: 132px; }
+  .side-brand-name { font-size: 16px; }
+  .side-profile-chip { max-width: 126px; gap: 6px; padding: 6px; }
+  .side-profile-chip .side-profile-name { max-width: 68px; }
 }
