@@ -6,65 +6,70 @@
  * ------------------------------------------------------------------ */
 
 :root {
-  /* Fonds : 4 niveaux suffisent (app < section < surélevé < overlay). */
-  --bg-app: #161511;
-  --bg-surface: #1e1c18;
-  --bg-raised: #262320;
-  --bg-overlay: #2c2822;
+  /* Fonds : graphite teinté de vert, du canevas aux couches flottantes. */
+  --bg-app: #1b211d;
+  --bg-surface: #252d27;
+  --bg-raised: #303a32;
+  --bg-overlay: #39443b;
 
-  /* Bordures : séparation par défaut, forte pour l'emphase. */
-  --border: #34312a;
-  --border-strong: #4c463a;
+  /* Bordures : séparation discrète, puis repère net au focus/hover. */
+  --border: #39443b;
+  --border-strong: #536153;
 
-  /* Textes : principal / secondaire / discret (contraste ≥ 4.5:1). */
-  --text: #ece8dd;
-  --text-2: #b7b1a3;
-  --text-3: #98917f;
+  /* Encre claire, comme une notation lisible sur une table d'étude sombre. */
+  --text: #e7e9df;
+  --text-2: #bdc5b9;
+  --text-3: #9aa596;
 
-  /* Accent unique : vert échiquier. Remplissage + encre + teinte + texte. */
-  --accent: #79a736;
-  --accent-hover: #88b844;
-  --accent-ink: #141a06;
-  --accent-tint: rgba(121, 167, 54, 0.14);
-  --accent-text: #a4cf5e;
+  /* Mousse : sélection, coups actifs et actions à valider. */
+  --accent: #91b66d;
+  --accent-hover: #a5c882;
+  --accent-ink: #1b2617;
+  --accent-tint: rgba(145, 182, 109, 0.15);
+  --accent-text: #b8d49a;
+
+  /* Craie et cuivre distinguent les camps, sans colorer les actions. */
+  --camp-white: #e5e3d8;
+  --camp-black: #b78362;
 
   /* Sémantiques : une couleur = un sens. */
-  --warn: #d9a13b;
-  --warn-text: #e2b968;
-  --warn-tint: rgba(217, 161, 59, 0.12);
-  --danger: #cf6257;
-  --danger-text: #e58a7e;
-  --danger-tint: rgba(207, 98, 87, 0.12);
-  --danger-fill: #a83a2c;
-  --info: #7fa6c4;
-  --info-text: #93bad6;
-  --info-tint: rgba(127, 166, 196, 0.12);
+  --warn: #d0a35f;
+  --warn-text: #e0bd83;
+  --warn-tint: rgba(208, 163, 95, 0.13);
+  --danger: #c9786c;
+  --danger-text: #e39a8e;
+  --danger-tint: rgba(201, 120, 108, 0.13);
+  --danger-fill: #a84d43;
+  --info: #87aabd;
+  --info-text: #a5c4d2;
+  --info-tint: rgba(135, 170, 189, 0.13);
+  --warning: var(--warn);
 
-  /* Typographie système : lisible hors-ligne, identité par le serif
-     des titres de vue (manuel d'ouvertures), mono pour coups et codes. */
-  --font-display: Georgia, "Charter", "Bitstream Charter", "Sitka Text", serif;
+  /* Sans-serif pour l'outil, Cambria pour les titres de manuel, mono pour les coups. */
+  --font-display: Cambria, Georgia, "Times New Roman", serif;
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  /* Échelle resserrée : 11px réservé aux surtitres capitales. */
-  --fs-kicker: 11px;
+  /* Échelle de lecture : les données secondaires restent réellement lisibles. */
+  --fs-kicker: 12px;
   --fs-small: 12px;
-  --fs-body: 13px;
-  --fs-emph: 14px;
-  --fs-h3: 15px;
-  --fs-h2: 18px;
-  --fs-h1: 26px;
+  --fs-body: 14px;
+  --fs-emph: 15px;
+  --fs-h3: 16px;
+  --fs-h2: 20px;
+  --fs-h1: 32px;
 
-  /* Espacements : pas de 4/6/8/12/14/16/24. */
+  /* Pas d'espacement réguliers pour séparer commandes, sections et vues. */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
   --sp-5: 24px;
+  --sp-6: 32px;
 
-  /* Deux rayons : contrôles / panneaux. Pastilles = pilles, rien d'autre. */
-  --r-control: 6px;
-  --r-panel: 10px;
+  /* Les surfaces sont adoucies, les commandes restent plus précises. */
+  --r-control: 5px;
+  --r-panel: 9px;
 
   /* Une seule ombre, réservée aux couches (modales, menus). */
   --shadow-layer: 0 16px 48px rgba(0, 0, 0, 0.55);
@@ -99,9 +104,9 @@ h1 {
   font-family: var(--font-display);
   font-size: var(--fs-h1);
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.12;
   margin: 0;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.025em;
 }
 
 h2, h3, h4 {
@@ -115,6 +120,13 @@ h3 { font-size: var(--fs-h3); font-weight: 600; }
 h4 { font-size: var(--fs-emph); font-weight: 600; }
 
 p { margin: 0; }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
 /* Focus visible partout : bordure seule ne suffit pas. */
 button:focus-visible,
