@@ -48,4 +48,17 @@ describe('repertoire library IndexedDB persistence', () => {
 
     await expect(idbSaveLibrary([])).rejects.toThrow('put failed');
   });
+
+  it('does not resolve the save until IndexedDB commits the transaction', async () => {
+    vi.stubGlobal('indexedDB', createFakeIndexedDB({ transactionCompleteDelayMs: 30 }).fake);
+    const { idbSaveLibrary } = await import('./libraryDb');
+    let saved = false;
+
+    const pendingSave = idbSaveLibrary([]).then(() => { saved = true; });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(saved).toBe(false);
+
+    await pendingSave;
+    expect(saved).toBe(true);
+  });
 });

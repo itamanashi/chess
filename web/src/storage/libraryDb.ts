@@ -25,6 +25,14 @@ function promisify<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+function transactionDone(tx: IDBTransaction): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('Transaction IndexedDB échouée.'));
+    tx.onabort = () => reject(tx.error ?? new Error('Transaction IndexedDB annulée.'));
+  });
+}
+
 let openPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
@@ -76,7 +84,12 @@ export async function idbLoadLibrary(): Promise<RepertoireItem[] | null> {
 }
 
 export function idbSaveLibrary(items: RepertoireItem[]): Promise<void> {
-  return withStore('readwrite', async (store) => {
-    await promisify(store.put({ key: LIBRARY_RECORD_KEY, items } satisfies LibraryRecord));
+  return openDb().then(async (db) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const done = transactionDone(tx);
+    await Promise.all([
+      promisify(tx.objectStore(STORE).put({ key: LIBRARY_RECORD_KEY, items } satisfies LibraryRecord)),
+      done,
+    ]);
   });
 }
