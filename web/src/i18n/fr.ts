@@ -299,6 +299,9 @@ export const TOAST_LIBRARY_CORRUPT =
 export const TOAST_STORAGE_UNAVAILABLE =
   'Stockage local indisponible : vos modifications ne seront pas conservées.';
 
+export const TOAST_LIBRARY_SAVE_FAILED =
+  'Impossible de sauvegarder la bibliothèque. Vérifiez l’espace de stockage disponible.';
+
 // ---------------------------------------------------------------------------
 // Persistance (storage/) — erreurs techniques formulées pour l'utilisateur.
 // ---------------------------------------------------------------------------

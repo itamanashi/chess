@@ -52,7 +52,7 @@ interface RepertoireBuilderProps {
   canGoBack: boolean;
   onHoverMove?: (uci: string | null) => void;
   onBackToStart?: () => void;
-  onAutoMerge?: (root: import('../types/chess').RepertoireRoot) => void;
+  onAutoMerge?: (root: import('../types/chess').RepertoireRoot) => void | Promise<void>;
   onAutoPreviewMove?: (fen: string | null, uci?: string) => void;
   onAutoEngineArrows?: (arrows: { orig: string; dest: string; brush: string }[] | null) => void;
 }

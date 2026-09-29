@@ -543,12 +543,12 @@ export const App: React.FC = () => {
 
   // Fusion d'un arbre généré automatiquement (BFS) dans le répertoire actif.
   const handleAutoMerge = useCallback(
-    (autoRoot: import('./types/chess').RepertoireRoot) => {
+    async (autoRoot: import('./types/chess').RepertoireRoot) => {
       if (!activeRepertoire) return;
-      library.updateActiveRoot(activeRepertoire.id, (root) => {
+      const saved = await library.updateActiveRoot(activeRepertoire.id, (root) => {
         mergeAutoRoot(root, autoRoot);
       });
-      toast.success('Arbre automatique fusionné dans le répertoire.');
+      if (saved) toast.success('Arbre automatique fusionné dans le répertoire.');
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeRepertoire?.id],

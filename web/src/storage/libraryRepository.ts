@@ -68,12 +68,17 @@ export function loadLibrary(): LibraryLoadResult {
     // Clé absente OU stockage inaccessible (déjà journalisé par le wrapper).
     return { status: 'empty', items: [], issues: [] };
   }
+  return decodeLibrary(raw, true);
+}
+
+/** Valide une bibliothèque sérialisée, quel que soit son support durable. */
+export function decodeLibrary(raw: string, backupInvalid = false): LibraryLoadResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (err) {
     warn('library:parse', err);
-    backupCorrupt(raw);
+    if (backupInvalid) backupCorrupt(raw);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
 
@@ -87,7 +92,7 @@ export function loadLibrary(): LibraryLoadResult {
   } else if (isRecord(parsed)) {
     rawItems = [parsed];
   } else {
-    backupCorrupt(raw);
+    if (backupInvalid) backupCorrupt(raw);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
 
@@ -117,7 +122,7 @@ export function loadLibrary(): LibraryLoadResult {
   }
 
   if (items.length === 0) {
-    backupCorrupt(raw);
+    if (backupInvalid) backupCorrupt(raw);
     return { status: 'corrupt', items: [], issues: [STORE_CORRUPT_BACKUP] };
   }
   return { status: touched ? 'migrated' : 'ready', items, issues };
