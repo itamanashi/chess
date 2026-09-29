@@ -1831,16 +1831,16 @@ export const MOVE_QUALITY_LABELS: Record<MoveQuality, string> = {
 };
 
 export const MOVE_QUALITY_COLORS: Record<MoveQuality, string> = {
-  brillant: '#1BADA6',
-  genial: '#2D9CDB',
-  meilleur: '#96BC4B',
-  'tres-bien': '#96BC4B',
-  bon: '#96AF8B',
-  theorique: '#A88865',
-  imprecision: '#F7C045',
-  erreur: '#E58F2A',
-  gaffe: '#CA3431',
-  'gain-manque': '#DBAC16',
+  brillant: '#7d9a7e',
+  genial: '#d8d2c6',
+  meilleur: '#7d9a7e',
+  'tres-bien': '#7d9a7e',
+  bon: '#9a9488',
+  theorique: '#b58863',
+  imprecision: '#ead9b5',
+  erreur: '#b58863',
+  gaffe: '#c46b5a',
+  'gain-manque': '#b58863',
 };
 
 /** Premiers plis considérés comme théorie (livre d'ouvertures). */
@@ -2089,12 +2089,12 @@ export const PIECE_GLYPHS: Record<PieceKind, string> = {
 };
 
 export const PIECE_COLORS: Record<PieceKind, string> = {
-  p: '#94a3b8',
-  n: '#7fa6c4',
-  b: '#1BADA6',
-  r: '#E58F2A',
-  q: '#CA3431',
-  k: '#A88865',
+  p: '#9a9488',
+  n: '#b58863',
+  b: '#7d9a7e',
+  r: '#b58863',
+  q: '#c46b5a',
+  k: '#d8d2c6',
 };
 
 /** Phases dans l'ordre d'affichage (cf. `phaseOfPly`). */

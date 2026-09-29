@@ -126,10 +126,10 @@
 .full-width { width: 100%; }
 .btn-danger {
   background: var(--danger-fill);
-  border-color: #7e2a20;
+  border-color: var(--danger);
   color: #fff;
 }
-.btn-danger:hover:not(:disabled) { background: #b8442f; }
+.btn-danger:hover:not(:disabled) { background: var(--danger); }
 .btn-label { overflow: hidden; text-overflow: ellipsis; }
 
 /* Lien sobre (pas un bouton déguisé). */
@@ -222,7 +222,7 @@
   color: var(--text-2);
   white-space: nowrap;
 }
-.badge-success { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-text); }
+.badge-success { background: var(--success-tint); border-color: var(--success); color: var(--success-text); }
 .badge-warning { background: var(--warn-tint); border-color: var(--warn); color: var(--warn-text); }
 .badge-preview { background: var(--info-tint); border-color: var(--info); color: var(--info-text); }
 .eval-badge { font-family: var(--font-mono); }
@@ -231,8 +231,8 @@
 .mate-tag { background: var(--warn-tint); border-color: var(--warn); color: var(--warn-text); font-weight: 700; }
 .eco-badge, .eco-tag, .eco-pill { font-family: var(--font-mono); font-size: var(--fs-kicker); }
 .rep-color-tag, .rep-color-tag-sm { font-weight: 600; }
-.tag-white { background: var(--camp-white); border-color: var(--camp-white); color: #20231e; }
-.tag-black { background: rgba(183, 131, 98, 0.14); border-color: var(--camp-black); color: #e0b99d; }
+.tag-white { background: var(--camp-white); border-color: var(--camp-white); color: #0e0d0b; }
+.tag-black { background: rgb(181 136 99 / 0.14); border-color: var(--camp-black); color: var(--board-light); }
 .san-text, .chip-san, .highlight-san, .gsan-in { font-family: var(--font-mono); }
 .highlight-san {
   background: var(--accent-tint);
@@ -285,8 +285,8 @@ table.stats-table thead th,
   text-align: center;
 }
 .result-bar { margin-top: var(--sp-2); }
-.bar-white { background: var(--camp-white); color: #20231e; }
-.bar-draw { background: #6e6a60; color: #fff; }
+.bar-white { background: var(--camp-white); color: #0e0d0b; }
+.bar-draw { background: #6f6a60; color: #ece8df; }
 .bar-black { background: var(--bg-app); color: var(--text-2); }
 .advice-scorebar-fill,
 .frequency-progress-fill {
@@ -297,7 +297,7 @@ table.stats-table thead th,
 .chesscom-stats-table .chesscom-wdl-bar { margin-top: 0; min-width: 100px; height: 14px; line-height: 12px; font-size: 10px; }
 .chesscom-wdl-segment { display: flex; align-items: center; justify-content: center; }
 .chesscom-wdl-win { background: var(--accent); }
-.chesscom-wdl-draw { background: #6e6a60; }
+.chesscom-wdl-draw { background: #6f6a60; }
 .chesscom-wdl-loss { background: var(--danger-fill); }
 
 /* Modales : une seule langue visuelle (backdrop + dialogue + actions). */

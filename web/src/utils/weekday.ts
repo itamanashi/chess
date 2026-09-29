@@ -36,15 +36,15 @@ export const WEEKDAY_SHORT: Record<Weekday, string> = {
   sun: 'Dim.',
 };
 
-/** Une couleur par jour (mêmes teintes que le reste de l'onglet). */
+/** Une couleur par jour, dans la palette neutre de l'échiquier. */
 export const WEEKDAY_COLORS: Record<Weekday, string> = {
-  mon: '#38bdf8',
-  tue: '#6366f1',
-  wed: '#8b5cf6',
-  thu: '#e879f9',
-  fri: '#f59e0b',
-  sat: '#10b981',
-  sun: '#f43f5e',
+  mon: '#d8d2c6',
+  tue: '#b58863',
+  wed: '#9a9488',
+  thu: '#5c4632',
+  fri: '#ead9b5',
+  sat: '#7d9a7e',
+  sun: '#6f6a60',
 };
 
 /** getDay() (0 = dimanche) → jour semaine commençant lundi. */

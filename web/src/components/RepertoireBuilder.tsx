@@ -795,7 +795,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
             </div>
           ) : (
             <div className="turn-content player-turn">
-              <Compass size={18} className="text-emerald" />
+              <Compass size={18} className="text-accent" />
               <div>
                 <h4>À votre tour ({repertoire.color === 'white' ? 'Blancs' : 'Noirs'})</h4>
                 <p>Choisissez votre réponse de répertoire pour cette position.</p>
@@ -953,7 +953,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
         <div className="panel-card player-decision-card">
           <div className="card-title-row">
             <h3 className="card-title">
-              <Compass size={16} className="text-emerald" />
+              <Compass size={16} className="text-accent" />
               Votre Réponse de Répertoire
             </h3>
           </div>
@@ -962,7 +962,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
           {registeredMoves.length > 0 ? (
             <div className="registered-move-banner">
               <div className="registered-header">
-                <CheckCircle2 size={18} className="text-emerald" />
+                <CheckCircle2 size={18} className="text-success" />
                 <h4>Coup mémorisé dans votre répertoire :</h4>
               </div>
               <div className="registered-moves-chips">
@@ -1269,7 +1269,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                       </div>
 
                       <div className="candidate-score">
-                        <span className="score-badge text-emerald" title="Taux de victoires pour votre camp">
+                        <span className="score-badge text-success" title="Taux de victoires pour votre camp">
                           {myWinRate}% victoires
                         </span>
                       </div>

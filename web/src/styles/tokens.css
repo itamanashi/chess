@@ -1,48 +1,58 @@
 /* ------------------------------------------------------------------
  * Carnet d'étude — fondations.
- * Outil d'étude d'ouvertures : dark chaud, un seul accent fonctionnel
- * (vert échiquier = actions, sélection, succès), typographie système
+ * Outil d'étude d'ouvertures : graphite, ivoire, accents d'échiquier et
+ * vert sauge réservé aux succès, typographie système
  * (aucune dépendance réseau), densité d'outil, pas de décor.
  * ------------------------------------------------------------------ */
 
 :root {
-  /* Fonds : graphite teinté de vert, du canevas aux couches flottantes. */
-  --bg-app: #1b211d;
-  --bg-surface: #252d27;
-  --bg-raised: #303a32;
-  --bg-overlay: #39443b;
+  /* Palette du studio : charbon, ivoire et bois d'échiquier. */
+  --bg-app: #0e0d0b;
+  --bg-surface: #161512;
+  --bg-raised: #1e1c18;
+  --bg-overlay: #1e1c18;
 
   /* Bordures : séparation discrète, puis repère net au focus/hover. */
-  --border: #39443b;
-  --border-strong: #536153;
+  --border: rgb(236 232 223 / 0.12);
+  --border-strong: rgb(236 232 223 / 0.22);
 
-  /* Encre claire, comme une notation lisible sur une table d'étude sombre. */
-  --text: #e7e9df;
-  --text-2: #bdc5b9;
-  --text-3: #9aa596;
+  /* Ivoire et gris chauds, repris directement du studio de référence. */
+  --text: #ece8df;
+  --text-2: #9a9488;
+  --text-3: #6f6a60;
 
-  /* Mousse : sélection, coups actifs et actions à valider. */
-  --accent: #91b66d;
-  --accent-hover: #a5c882;
-  --accent-ink: #1b2617;
-  --accent-tint: rgba(145, 182, 109, 0.15);
-  --accent-text: #b8d49a;
+  /* Accent ivoire ; les tons noisette restent dédiés à l'échiquier. */
+  --accent: #d8d2c6;
+  --accent-hover: #ece8df;
+  --accent-ink: #0e0d0b;
+  --accent-tint: rgb(216 210 198 / 0.14);
+  --accent-text: #d8d2c6;
 
-  /* Craie et cuivre distinguent les camps, sans colorer les actions. */
-  --camp-white: #e5e3d8;
-  --camp-black: #b78362;
+  /* Vert sauge réservé aux états positifs explicites. */
+  --success: #7d9a7e;
+  --success-text: #7d9a7e;
+  --success-tint: rgb(125 154 126 / 0.16);
+
+  /* Cases et pièces : palette exacte de l'échiquier du studio. */
+  --camp-white: #f4efe4;
+  --camp-black: #b58863;
+  --board-light: #ead9b5;
+  --board-dark: #b58863;
+  --board-coord: #5c4632;
+  --piece-white: #f4efe4;
+  --piece-black: #2a241c;
 
   /* Sémantiques : une couleur = un sens. */
-  --warn: #d0a35f;
-  --warn-text: #e0bd83;
-  --warn-tint: rgba(208, 163, 95, 0.13);
-  --danger: #c9786c;
-  --danger-text: #e39a8e;
-  --danger-tint: rgba(201, 120, 108, 0.13);
-  --danger-fill: #a84d43;
-  --info: #87aabd;
-  --info-text: #a5c4d2;
-  --info-tint: rgba(135, 170, 189, 0.13);
+  --warn: #b58863;
+  --warn-text: #ead9b5;
+  --warn-tint: rgb(181 136 99 / 0.16);
+  --danger: #c46b5a;
+  --danger-text: #c46b5a;
+  --danger-tint: rgb(196 107 90 / 0.16);
+  --danger-fill: #c46b5a;
+  --info: #9a9488;
+  --info-text: #9a9488;
+  --info-tint: rgb(154 148 136 / 0.16);
   --warning: var(--warn);
 
   /* Sans-serif pour l'outil, Cambria pour les titres de manuel, mono pour les coups. */
@@ -72,7 +82,7 @@
   --r-panel: 9px;
 
   /* Une seule ombre, réservée aux couches (modales, menus). */
-  --shadow-layer: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-layer: 0 24px 60px rgb(0 0 0 / 0.45);
 
   --focus: var(--accent-text);
   --dur: 120ms;
@@ -139,7 +149,8 @@ input:focus-visible,
 
 /* Utilitaires de texte (seuls !important du système). */
 .text-muted { color: var(--text-3) !important; }
-.text-emerald { color: var(--accent-text) !important; }
+.text-accent { color: var(--accent-text) !important; }
+.text-success { color: var(--success-text) !important; }
 .text-amber { color: var(--warn-text) !important; }
 .text-rose { color: var(--danger-text) !important; }
 .text-info { color: var(--info-text) !important; }

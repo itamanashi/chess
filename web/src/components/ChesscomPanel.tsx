@@ -136,24 +136,24 @@ const OUTCOME_SHORT: Record<ChesscomOutcome, string> = {
 };
 
 const OUTCOME_COLOR: Record<ChesscomOutcome, string> = {
-  win: '#10b981',
-  draw: '#9ca3af',
-  loss: '#f43f5e',
+  win: '#7d9a7e',
+  draw: '#6f6a60',
+  loss: '#c46b5a',
 };
 
 /** Couleurs des formes narratives (une teinte par récit). */
 const SHAPE_COLORS: Record<GameShape, string> = {
-  gachee: '#f43f5e',
-  intense: '#8b5cf6',
-  abrupte: '#f59e0b',
-  tendue: '#38bdf8',
-  tranquille: '#10b981',
-  mouvementee: '#e879f9',
-  equilibree: '#9ca3af',
+  gachee: '#c46b5a',
+  intense: '#5c4632',
+  abrupte: '#b58863',
+  tendue: '#ead9b5',
+  tranquille: '#9a9488',
+  mouvementee: '#d8d2c6',
+  equilibree: '#6f6a60',
 };
 
-/** Couleur UNIQUE d'une case d'activité : score interpolé rouge → ambre → vert. */
-const ACTIVITY_MID_RGB: [number, number, number] = [245, 158, 11]; // #f59e0b (ambre)
+/** Couleur UNIQUE d'une case d'activité : score interpolé entre les tons du thème. */
+const ACTIVITY_MID_RGB: [number, number, number] = [181, 136, 99]; // #b58863
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
@@ -186,7 +186,7 @@ function formatActivityDay(isoDate: string): string {
 }
 
 /** Une couleur par cadence (ordre = volume décroissant, stable par rendu). */
-const RATING_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#9ca3af'];
+const RATING_COLORS = ['#d8d2c6', '#b58863', '#7d9a7e', '#c46b5a', '#9a9488'];
 
 /** Graphique à barres pour les parties par période (jour / mois / an, SVG pur). */
 const PeriodGamesChart: React.FC<{ rows: PeriodStatRow[] }> = ({ rows }) => {
@@ -229,7 +229,7 @@ const PeriodGamesChart: React.FC<{ rows: PeriodStatRow[] }> = ({ rows }) => {
               y={y(r.games)}
               width={barWidth}
               height={H - padB - y(r.games)}
-              fill="#6366f1"
+              fill="#d8d2c6"
             >
               <title>{r.label} : {r.games} parties</title>
             </rect>
@@ -290,9 +290,9 @@ const AccuracyTrendChart: React.FC<{ rows: AccuracyPeriodRow[] }> = ({ rows }) =
             </text>
           </g>
         ))}
-        <polyline points={pts} fill="none" stroke="#10b981" strokeWidth={2} strokeLinejoin="round" />
+        <polyline points={pts} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinejoin="round" />
         {data.map((r, i) => (
-          <circle key={r.key} cx={x(i)} cy={y(r.avg)} r={2.4} fill="#10b981">
+          <circle key={r.key} cx={x(i)} cy={y(r.avg)} r={2.4} fill="var(--accent)">
             <title>{`${r.label} : ${r.avg.toFixed(1)} % (${r.count} partie(s) analysée(s))`}</title>
           </circle>
         ))}
@@ -318,12 +318,12 @@ const MoveNumberChart: React.FC<{ agg: MoveAccuracyByNumber; mode: 'total' | 'co
         .sort((a, b) => a.x - b.x);
     if (mode === 'colors') {
       return [
-        { label: 'Blancs', color: '#e5e0d2', points: toPoints(agg.white) },
-        { label: 'Noirs', color: '#7fa6c4', points: toPoints(agg.black) },
+        { label: 'Blancs', color: '#f4efe4', points: toPoints(agg.white) },
+        { label: 'Noirs', color: '#b58863', points: toPoints(agg.black) },
       ].filter((s) => s.points.length > 0);
     }
     const points = toPoints(agg.total);
-    return points.length > 0 ? [{ label: 'Total', color: '#10b981', points }] : [];
+    return points.length > 0 ? [{ label: 'Total', color: 'var(--accent)', points }] : [];
   }, [agg, mode]);
   const all = series.flatMap((s) => s.points);
   if (series.length === 0 || all.length === 0) {
@@ -431,9 +431,9 @@ const OpponentRatingChart: React.FC<{ rows: OpponentRatingRow[] }> = ({ rows }) 
   // Étiquettes échantillonnées (max ~8) quand il y a beaucoup de tranches.
   const labelStep = Math.max(1, Math.ceil(rows.length / 8));
   const SEGMENTS = [
-    { key: 'losses', color: '#f43f5e', name: 'Défaites' },
-    { key: 'draws', color: '#9ca3af', name: 'Nulles' },
-    { key: 'wins', color: '#10b981', name: 'Victoires' },
+    { key: 'losses', color: '#c46b5a', name: 'Défaites' },
+    { key: 'draws', color: '#6f6a60', name: 'Nulles' },
+    { key: 'wins', color: 'var(--success)', name: 'Victoires' },
   ] as const;
   return (
     <div>
@@ -485,15 +485,15 @@ const OpponentRatingChart: React.FC<{ rows: OpponentRatingRow[] }> = ({ rows }) 
       </svg>
       <div className="rating-legend">
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#10b981' }} />
+          <span className="rating-dot" style={{ background: 'var(--success)' }} />
           <span>Victoires</span>
         </span>
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#9ca3af' }} />
+          <span className="rating-dot" style={{ background: '#6f6a60' }} />
           <span>Nulles</span>
         </span>
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#f43f5e' }} />
+          <span className="rating-dot" style={{ background: '#c46b5a' }} />
           <span>Défaites</span>
         </span>
       </div>
@@ -564,7 +564,7 @@ const ShapeAccuracyChart: React.FC<{ rows: ShapeAccuracyRow[] }> = ({ rows }) =>
                 y={y(r.avg)}
                 width={barWidth}
                 height={Math.max(0, base - y(r.avg))}
-                fill="#10b981"
+                fill="var(--accent)"
               >
                 <title>{`${GAME_SHAPE_LABELS[r.shape]} : ${r.avg.toFixed(1)} % (${r.count} partie(s) notée(s))`}</title>
               </rect>
@@ -681,14 +681,14 @@ const PHASE_SHORT_LABELS: Record<string, string> = {
 };
 
 /** Couleurs Blancs/Noirs (mêmes teintes que la précision par coup). */
-const PIECE_WHITE = '#e5e0d2';
-const PIECE_BLACK = '#7fa6c4';
+const PIECE_WHITE = '#f4efe4';
+const PIECE_BLACK = '#b58863';
 
 /** Couleurs des phases (teinte = phase, clarté = couleur jouée). */
 const PHASE_BAR_COLORS: Record<string, { total: string; white: string; black: string }> = {
-  opening: { total: '#38bdf8', white: '#bae6fd', black: '#0284c7' },
-  middlegame: { total: '#8b5cf6', white: '#c4b5fd', black: '#7c3aed' },
-  endgame: { total: '#f59e0b', white: '#fcd34d', black: '#b45309' },
+  opening: { total: '#d8d2c6', white: '#f4efe4', black: '#b58863' },
+  middlegame: { total: '#b58863', white: '#ead9b5', black: '#5c4632' },
+  endgame: { total: '#7d9a7e', white: '#9a9488', black: '#6f6a60' },
 };
 
 /** Une seule barre horizontale des fins en phase Ouverture/Milieu/Finale. */
@@ -751,7 +751,7 @@ const PhaseAccuracyChart: React.FC<{ rows: PhaseStatRow[]; mode: 'total' | 'colo
         { key: `${r.phase}-w`, label: `${PHASE_LABELS[r.phase]} (Blancs)`, short: `${PHASE_SHORT_LABELS[r.phase]} Bl.`, color: PIECE_WHITE, avg: avg(r.white.accSum, r.white.accN), n: r.white.accN },
         { key: `${r.phase}-b`, label: `${PHASE_LABELS[r.phase]} (Noirs)`, short: `${PHASE_SHORT_LABELS[r.phase]} No.`, color: PIECE_BLACK, avg: avg(r.black.accSum, r.black.accN), n: r.black.accN },
       ]
-      : [{ key: r.phase, label: PHASE_LABELS[r.phase], short: PHASE_SHORT_LABELS[r.phase], color: '#10b981', avg: avg(r.total.accSum, r.total.accN), n: r.total.accN }],
+      : [{ key: r.phase, label: PHASE_LABELS[r.phase], short: PHASE_SHORT_LABELS[r.phase], color: 'var(--accent)', avg: avg(r.total.accSum, r.total.accN), n: r.total.accN }],
   );
   const W = 560;
   const H = 150;
@@ -942,7 +942,7 @@ const MasteryTrendChart: React.FC<{ rows: MasteryTrendRow[] }> = ({ rows }) => {
               y={y(r.avg)}
               width={barWidth}
               height={Math.max(0, base - y(r.avg))}
-              fill="#10b981"
+              fill="var(--accent)"
             >
               <title>{`${r.label} : ${r.avg.toFixed(1)} coups (${r.count} partie(s))`}</title>
             </rect>
@@ -1007,10 +1007,10 @@ const TacticRowsChart: React.FC<{ rows: TacticRowDatum[] }> = ({ rows }) => {
                 {total > 0 && (
                   <>
                     {r.found > 0 && (
-                      <div className="chesscom-wdl-segment" style={{ width: `${(r.found / total) * 100}%`, background: '#10b981' }} />
+                      <div className="chesscom-wdl-segment" style={{ width: `${(r.found / total) * 100}%`, background: 'var(--success)' }} />
                     )}
                     {r.missed > 0 && (
-                      <div className="chesscom-wdl-segment" style={{ width: `${(r.missed / total) * 100}%`, background: '#f43f5e' }} />
+                      <div className="chesscom-wdl-segment" style={{ width: `${(r.missed / total) * 100}%`, background: '#c46b5a' }} />
                     )}
                   </>
                 )}
@@ -1024,11 +1024,11 @@ const TacticRowsChart: React.FC<{ rows: TacticRowDatum[] }> = ({ rows }) => {
       </div>
       <div className="rating-legend">
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#10b981' }} />
+          <span className="rating-dot" style={{ background: 'var(--success)' }} />
           <span>Trouvées</span>
         </span>
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#f43f5e' }} />
+          <span className="rating-dot" style={{ background: '#c46b5a' }} />
           <span>Manquées</span>
         </span>
       </div>
@@ -1307,7 +1307,7 @@ const PieceAccuracyBars: React.FC<{
         <div className="rating-legend">
           {PIECE_PHASE_ORDER.map((ph, i) => (
             <span key={ph} className="rating-legend-item">
-              <span className="rating-dot" style={{ background: '#e5e0d2', opacity: phaseOpacity[i] }} />
+              <span className="rating-dot" style={{ background: '#f4efe4', opacity: phaseOpacity[i] }} />
               <span>{PHASE_LABELS[ph]}</span>
             </span>
           ))}
@@ -1673,9 +1673,9 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.wins.total,
         other: ending.wins.total - ending.wins.resign - ending.wins.mate - ending.wins.clock,
         items: [
-          { key: 'v-resign', label: 'Abandon', color: '#10b981', count: ending.wins.resign },
-          { key: 'v-mate', label: 'Échec et mat', color: '#059669', count: ending.wins.mate },
-          { key: 'v-clock', label: 'Temps', fullLabel: "Temps expiré (l'adversaire)", color: '#6ee7b7', count: ending.wins.clock },
+          { key: 'v-resign', label: 'Abandon', color: '#7d9a7e', count: ending.wins.resign },
+          { key: 'v-mate', label: 'Échec et mat', color: '#7d9a7e', count: ending.wins.mate },
+          { key: 'v-clock', label: 'Temps', fullLabel: "Temps expiré (l'adversaire)", color: '#7d9a7e', count: ending.wins.clock },
         ],
       },
       {
@@ -1683,12 +1683,12 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.draws.total,
         other: ending.draws.other,
         items: [
-          { key: 'd-agreed', label: 'Accord', color: '#334155', count: ending.draws.agreed },
-          { key: 'd-repetition', label: 'Répétition', color: '#475569', count: ending.draws.repetition },
-          { key: 'd-stalemate', label: 'Pat', color: '#64748b', count: ending.draws.stalemate },
-          { key: 'd-fifty', label: '50 coups', fullLabel: 'Règle des 50 coups', color: '#94a3b8', count: ending.draws.fiftyMove },
-          { key: 'd-insufficient', label: 'Manque de matériel', color: '#38bdf8', count: ending.draws.insufficient },
-          { key: 'd-timevsinsufficient', label: 'Temps vs matériel', fullLabel: 'Hors délai contre manque de matériel', color: '#cbd5e1', count: ending.draws.timeVsInsufficient },
+          { key: 'd-agreed', label: 'Accord', color: '#5c4632', count: ending.draws.agreed },
+          { key: 'd-repetition', label: 'Répétition', color: '#6f6a60', count: ending.draws.repetition },
+          { key: 'd-stalemate', label: 'Pat', color: '#9a9488', count: ending.draws.stalemate },
+          { key: 'd-fifty', label: '50 coups', fullLabel: 'Règle des 50 coups', color: '#d8d2c6', count: ending.draws.fiftyMove },
+          { key: 'd-insufficient', label: 'Manque de matériel', color: '#b58863', count: ending.draws.insufficient },
+          { key: 'd-timevsinsufficient', label: 'Temps vs matériel', fullLabel: 'Hors délai contre manque de matériel', color: '#ead9b5', count: ending.draws.timeVsInsufficient },
         ],
       },
       {
@@ -1696,9 +1696,9 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.losses.total,
         other: ending.losses.total - ending.losses.resign - ending.losses.mate - ending.losses.clock,
         items: [
-          { key: 'l-resign', label: 'Abandon', color: '#f43f5e', count: ending.losses.resign },
-          { key: 'l-mate', label: 'Échec et mat', color: '#e11d48', count: ending.losses.mate },
-          { key: 'l-clock', label: 'Temps', fullLabel: 'Temps expiré', color: '#fda4af', count: ending.losses.clock },
+          { key: 'l-resign', label: 'Abandon', color: '#c46b5a', count: ending.losses.resign },
+          { key: 'l-mate', label: 'Échec et mat', color: '#c46b5a', count: ending.losses.mate },
+          { key: 'l-clock', label: 'Temps', fullLabel: 'Temps expiré', color: '#c46b5a', count: ending.losses.clock },
         ],
       },
     ];
@@ -2461,7 +2461,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         <div className="panel-card">
           <div className="card-title-row">
               <h3 className="card-title">
-                <CalendarDays size={16} className="title-icon text-emerald" />
+                <CalendarDays size={16} className="title-icon text-accent" />
                 Activité
               </h3>
           </div>
@@ -2975,7 +2975,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
                       {g.other > 0 && (
                         <div
                           className="chesscom-wdl-segment"
-                          style={{ width: `${(g.other / g.total) * 100}%`, background: '#71717a' }}
+                          style={{ width: `${(g.other / g.total) * 100}%`, background: '#6f6a60' }}
                           title={`Autre : ${g.other} (${endingView.shareOf(g.other, g.total)} %)`}
                         />
                       )}
@@ -2992,7 +2992,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
                     ))}
                     {g.other > 0 && (
                       <span className="rating-legend-item" title="Motif inclassable ou exotique">
-                        <span className="rating-dot" style={{ background: '#71717a' }} />
+                        <span className="rating-dot" style={{ background: '#6f6a60' }} />
                         <span>Autre</span>
                         <strong>{g.other.toLocaleString('fr-FR')}</strong>
                         <span className="text-muted">{endingView.shareOf(g.other, g.total)} %</span>
@@ -3196,7 +3196,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
                       aria-label={`${HUNG_PIECE_LABELS[p]} : ${pct.toFixed(0)} % des pièces en prise`}
                     >
                       {n > 0 && (
-                        <div className="chesscom-wdl-segment" style={{ width: `${pct}%`, background: '#f43f5e' }} />
+                        <div className="chesscom-wdl-segment" style={{ width: `${pct}%`, background: '#c46b5a' }} />
                       )}
                     </div>
                     <strong className="forks-hbar-value">
@@ -3237,7 +3237,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
           <div className="panel-card">
             <div className="card-title-row">
               <h3 className="card-title">
-                <BarChart3 size={16} className="title-icon text-emerald" />
+                <BarChart3 size={16} className="title-icon text-accent" />
                 Ouvertures
               </h3>
             </div>

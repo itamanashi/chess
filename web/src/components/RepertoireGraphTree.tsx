@@ -771,7 +771,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
           key={`e-${n.key}`}
           d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
           fill="none"
-          stroke={n.transposition ? '#f59e0b' : '#475569'}
+          stroke={n.transposition ? '#b58863' : '#5c4632'}
           strokeWidth={2}
           strokeDasharray={n.transposition ? '5 4' : undefined}
           markerEnd={n.transposition ? 'url(#arrow-transpo)' : 'url(#arrow)'}
@@ -950,10 +950,10 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             >
               <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#5c4632" />
                 </marker>
                 <marker id="arrow-transpo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#b58863" />
                 </marker>
               </defs>
               {graphStatic.edges}
@@ -961,7 +961,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             <div className="tree-nodes" style={{ position: 'absolute', top: 0, left: 0 }}>
               <div
                 className="move-node is-root"
-                style={{ left: rootPos.x, top: rootPos.y, width: NODE_W, height: NODE_H, ['--accent' as string]: '#fbbf24' }}
+                style={{ left: rootPos.x, top: rootPos.y, width: NODE_W, height: NODE_H, ['--accent' as string]: '#d8d2c6' }}
               >
                 <div className="move-label">🏁</div>
               </div>
