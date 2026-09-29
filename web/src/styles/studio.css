@@ -250,6 +250,8 @@
 .color-selector-row { margin-top: 0; }
 .selector-label { color: var(--text-2); }
 .selector-label strong { color: var(--text); }
+.trainer-review-summary { margin: 0; font-size: var(--fs-small); color: var(--text-3); }
+.trainer-review-summary strong { color: var(--text); }
 .stats-dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin-top: 0; }
 .stat-card { display: flex; gap: var(--sp-2); align-items: center; border: 1px solid var(--border); border-radius: var(--r-control); padding: var(--sp-2); }
 .stat-icon-wrapper { display: inline-flex; flex: none; }

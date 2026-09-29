@@ -40,6 +40,7 @@ npm run dev
     * **Coup correct** : confirmation visuelle émeraude, son gratifiant et réponse adverse automatique.
     * **Coup hors répertoire** : alerte rouge, son d'avertissement, indication du coup théorique attendu avec possibilité de réessayer ou de voir la solution.
 * Suivi des performances : taux de précision (%), série de coups parfaits (streak) et variantes complétées.
+* **FSRS et découverte progressive** : l'algorithme FSRS planifie les révisions (rétention cible 90 %), avec « À revoir » après une erreur, « Difficile » si un indice a été utilisé et « Bien » pour une réussite sans indice. Le Drill débloque d'abord 10 positions de votre camp ; chaque première réussite sans indice valide une position, puis ouvre la cohorte suivante de 10. Les révisions échues restent prioritaires et la progression est conservée localement par répertoire.
 
 ### 3. 🌐 Lichess Live Explorer
 * Interrogez en direct l'API Lichess Masters ou Lichess Joueurs à partir de la position courante du plateau (sans aucun copier-coller de FEN !).

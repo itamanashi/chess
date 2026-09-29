@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BoardOrientation, TrainingStats, RepertoireMove } from '../types/chess';
+import type { TrainerReviewSummary } from '../storage/trainerReviews';
 import { 
   Trophy, 
   Flame, 
@@ -21,6 +22,8 @@ interface TrainerPanelProps {
   expectedMoveSan?: string;
   userPlayedSan?: string;
   stats: TrainingStats;
+  reviewSummary: TrainerReviewSummary;
+  canContinueTraining: boolean;
   onResetStats: () => void;
   onRestartLine: () => void;
   onShowHint: () => void;
@@ -38,6 +41,8 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
   expectedMoveSan,
   userPlayedSan,
   stats,
+  reviewSummary,
+  canContinueTraining,
   onResetStats,
   onRestartLine,
   onShowHint,
@@ -78,6 +83,25 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
             Je m'entraîne avec les : <strong>{colorToTrain === 'white' ? '♔ Blancs' : '♚ Noirs'}</strong>
           </span>
         </div>
+        <p className="trainer-review-summary" role="status">
+          {reviewSummary.totalPositions === 0 ? (
+            <>Aucune position de votre camp à apprendre dans ce répertoire.</>
+          ) : (
+            <>
+              <strong>
+                Séquence {reviewSummary.batchNumber} : {reviewSummary.batchLearned}/{reviewSummary.batchSize} positions apprises
+              </strong>
+              {' · '}{reviewSummary.unlockedPositions}/{reviewSummary.totalPositions} débloquées
+              {reviewSummary.due > 0 && <> · {reviewSummary.due} révision{reviewSummary.due > 1 ? 's' : ''} due{reviewSummary.due > 1 ? 's' : ''}</>}
+              {!canContinueTraining && reviewSummary.nextDueAt !== null && (
+                <> · prochaine révision le {new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(reviewSummary.nextDueAt)}</>
+              )}
+              {!canContinueTraining && reviewSummary.due === 0 && reviewSummary.nextDueAt === null && (
+                <> · séquence terminée</>
+              )}
+            </>
+          )}
+        </p>
 
         {/* Barre de stats et streaks */}
         <div className="stats-dashboard-grid">
@@ -139,10 +163,14 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
               <Trophy size={24} className="banner-icon text-amber" />
               <div className="banner-text">
                 <h4>Ligne terminée</h4>
-                <p>Tous les coups prévus dans cette branche ont été joués.</p>
+                <p>
+                  {canContinueTraining
+                    ? 'La prochaine position de la séquence est prête.'
+                    : 'Toutes les positions débloquées sont apprises. Les nouvelles positions seront révélées par lots de 10.'}
+                </p>
               </div>
-              <button className="primary-btn" onClick={onRestartLine}>
-                Nouvelle variante
+              <button className="primary-btn" onClick={onRestartLine} disabled={!canContinueTraining}>
+                {canContinueTraining ? 'Position suivante' : 'En attente'}
               </button>
             </div>
           )
@@ -217,6 +245,7 @@ export const TrainerPanel: React.FC<TrainerPanelProps> = ({
           <li>L'ordinateur joue automatiquement les réponses adverses de votre répertoire.</li>
           <li>À chaque tour, vous devez jouer le coup mémorisé pour votre camp.</li>
           <li>Les variantes sont répétées pour ancrer les schémas dans votre mémoire à long terme.</li>
+          <li>FSRS planifie les rappels selon vos réponses : une erreur revient rapidement, un coup réussi sans indice valide la position, et un indice ralentit sa progression.</li>
           <li>La variante suivante démarre automatiquement en fin de ligne.</li>
         </ul>
       </div>

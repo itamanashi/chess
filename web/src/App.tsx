@@ -23,6 +23,8 @@ import {
   makePlaceholderMove,
   buildHistoryFromUciPath,
   buildHistoryFromSans,
+  findUciPathsToPositions,
+  getTrainerPositionKeys,
   mergeAutoRoot,
   turnOfFen,
 } from './utils/repertoireTree';
@@ -78,8 +80,14 @@ export const App: React.FC = () => {
   // Bibliothèque = CRUD + persistance via le repository versionné.
   const library = useRepertoireLibrary();
   const { activeRepertoire } = library;
+  const trainerPositionKeys = useMemo(
+    () => activeRepertoire
+      ? getTrainerPositionKeys(activeRepertoire.root, activeRepertoire.color)
+      : [],
+    [activeRepertoire],
+  );
   // Trainer = feedback + stats + fin de ligne.
-  const trainer = useTrainerMode();
+  const trainer = useTrainerMode(activeRepertoire?.id, trainerPositionKeys);
   // Survol = aperçu temporaire sans toucher à la timeline.
   const preview = useHoverPreview(fen, timeline.lastMove);
   // Animation live de la génération auto : pendant un run, l'échiquier suit
@@ -353,6 +361,7 @@ export const App: React.FC = () => {
                 previewSan,
                 validExpectedMoves[0]?.san || 'aucun coup',
                 validExpectedMoves[0]?.uci || '',
+                prevNormFen,
               );
               soundFx.playError();
               return false;
@@ -390,7 +399,7 @@ export const App: React.FC = () => {
           );
 
           if (isTheory) {
-            trainer.feedbackSuccess();
+            trainer.feedbackSuccess(prevNormFen, trainer.hintRevealed);
             soundFx.playSuccess();
 
             const nextNorm = normalizeFen(newFen);
@@ -416,6 +425,7 @@ export const App: React.FC = () => {
               playedSan,
               validExpectedMoves[0]?.san || 'aucun coup',
               validExpectedMoves[0]?.uci || '',
+              prevNormFen,
             );
             soundFx.playError();
           }
@@ -439,6 +449,7 @@ export const App: React.FC = () => {
       trainer.resetForNavigation,
       trainer.feedbackError,
       trainer.feedbackSuccess,
+      trainer.hintRevealed,
       trainer.completeLine,
       cancelTrainerReply,
       applyTrainerOpponentReply,
@@ -457,42 +468,59 @@ export const App: React.FC = () => {
     [executeMove, fen],
   );
 
-  // Redémarrage d'une variante d'entraînement : retour au début, coup
-  // attendu reposé, et premier coup adverse automatique si l'adversaire
-  // ouvre (répertoire noirs — sans ça, on restait bloqué face à un trait
-  // adverse sans réplique). Stats conservées. Utilisé par l'enchaînement
-  // auto ET par les boutons manuels (« Nouvelle variante »).
+  // Démarre la prochaine position échue, sinon la prochaine position neuve
+  // de la cohorte de découverte active.
   const restartTrainerLine = useCallback(() => {
     if (!activeRepertoire) return;
     cancelAutoRestart();
-    jumpToMove(0);
     const rootFen = activeRepertoire.root?.fen ?? INITIAL_FEN;
-    const startOptions = repertoireIndex.fenToChildren.get(normalizeFen(rootFen)) || [];
+    const candidates = [
+      ...trainer.reviewSummary.duePositionKeys,
+      ...trainer.reviewSummary.newPositionKeys,
+    ];
+    const pathsByPosition = findUciPathsToPositions(
+      activeRepertoire.root,
+      candidates,
+    );
+    const nextPosition = candidates.find((positionKey) => {
+      return pathsByPosition.has(positionKey)
+        && (repertoireIndex.fenToChildren.get(positionKey)?.length ?? 0) > 0;
+    });
+    if (nextPosition) {
+      const path = pathsByPosition.get(nextPosition);
+      if (path) {
+        const reviewHistory = buildHistoryFromUciPath(rootFen, path);
+        const reviewFen = reviewHistory[reviewHistory.length - 1]?.fen;
+        if (reviewFen && normalizeFen(reviewFen) === nextPosition) {
+          cancelTrainerReply();
+          trainer.resetForNavigation();
+          timeline.loadLine(reviewHistory);
+          const expectedMoves = repertoireIndex.fenToChildren.get(nextPosition) ?? [];
+          trainer.setExpectedMoveSan(expectedMoves[0]?.san ?? '');
+          trainer.setExpectedMoveUci(expectedMoves[0]?.uci ?? '');
+          return;
+        }
+      }
+    }
+    cancelTrainerReply();
+    trainer.resetForNavigation();
     trainer.setExpectedMoveSan('');
     trainer.setExpectedMoveUci('');
-    if (startOptions.length === 0) return; // répertoire vide : position de départ, rien à entraîner
-    const myColor = activeRepertoire.color === 'white' ? 'w' : 'b';
-    if (turnOfFen(rootFen) === myColor) {
-      trainer.setExpectedMoveSan(startOptions[0].san);
-      trainer.setExpectedMoveUci(startOptions[0].uci);
-    } else {
-      // L'adversaire ouvre : réplique auto pondérée après un court délai,
-      // comme en cours de ligne (annulée par toute navigation).
-      const replyToken = ++trainerReplyToken.current;
-      trainerReplyTimer.current = setTimeout(() => {
-        trainerReplyTimer.current = null;
-        if (replyToken !== trainerReplyToken.current) return;
-        if (fenRef.current !== rootFen) return;
-        applyTrainerOpponentReply(rootFen, startOptions, false);
-      }, 450);
-    }
+    trainer.setIsLineFinished(true);
   // Dépendances membres (voir applyTrainerOpponentReply).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    activeRepertoire, repertoireIndex, jumpToMove, cancelAutoRestart,
-    trainer.setExpectedMoveSan, trainer.setExpectedMoveUci,
-    applyTrainerOpponentReply,
+    activeRepertoire, repertoireIndex, cancelAutoRestart,
+    cancelTrainerReply, timeline.loadLine, trainer.reviewSummary,
+    trainer.resetForNavigation, trainer.setExpectedMoveSan, trainer.setExpectedMoveUci,
+    trainer.setIsLineFinished,
   ]);
+
+  useEffect(() => {
+    if (activeStudioTab === 'trainer' && activeRepertoire) restartTrainerLine();
+  // Start at the next due/new position once on entry, not after each review-state update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStudioTab, activeRepertoire?.id]);
 
   // Enchaînement auto : fin de ligne → nouvelle variante après un court
   // délai (le temps de percevoir le succès), sans écran intermédiaire.
@@ -500,6 +528,7 @@ export const App: React.FC = () => {
   // Cul-de-sac immédiat (skip-once) : l'écran de fin est conservé.
   useEffect(() => {
     if (activeStudioTab !== 'trainer' || !activeRepertoire || !trainer.isLineFinished) return;
+    if (trainer.reviewSummary.due === 0 && trainer.reviewSummary.newPositionKeys.length === 0) return;
     if (skipAutoRestartOnce.current) {
       skipAutoRestartOnce.current = false;
       return;
@@ -519,7 +548,7 @@ export const App: React.FC = () => {
       }
       setAutoRestartPending(false);
     };
-  }, [activeStudioTab, activeRepertoire, trainer.isLineFinished, restartTrainerLine]);
+  }, [activeStudioTab, activeRepertoire, trainer.isLineFinished, trainer.reviewSummary, restartTrainerLine]);
 
   // Ajouter un coup (avec ses vraies stats Lichess/moteur) puis le jouer.
   const handleAddAndPlayMove = useCallback((m: LichessMove) => {
@@ -1089,6 +1118,11 @@ export const App: React.FC = () => {
                 expectedMoveSan={trainer.expectedMoveSan}
                 userPlayedSan={trainer.userPlayedSan}
                 stats={trainer.stats}
+                reviewSummary={trainer.reviewSummary}
+                canContinueTraining={
+                  trainer.reviewSummary.due > 0
+                  || trainer.reviewSummary.newPositionKeys.length > 0
+                }
                 onResetStats={trainer.resetStats}
                 onRestartLine={restartTrainerLine}
                 onShowHint={trainer.showHint}
