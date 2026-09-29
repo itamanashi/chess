@@ -16,6 +16,8 @@ export interface FakeIdbOptions {
   failOpen?: boolean;
   /** Les valeurs sérialisées au-delà de cette taille rejettent (quota serré). */
   maxValueBytes?: number;
+  /** Retarde le commit simulé pour vérifier l'attente de la transaction. */
+  transactionCompleteDelayMs?: number;
 }
 
 interface FakeDbEntry {
@@ -37,7 +39,11 @@ export function createFakeIndexedDB(opts: FakeIdbOptions = {}): {
     });
   };
 
-  const storeApi = (entry: FakeDbEntry, storeName: string): Record<string, unknown> => {
+  const storeApi = (
+    entry: FakeDbEntry,
+    storeName: string,
+    tx?: Record<string, unknown>,
+  ): Record<string, unknown> => {
     const mapOf = (): Map<unknown, unknown> => {
       const m = entry.stores.get(storeName);
       if (!m) throw new Error(`no such object store: ${storeName}`);
@@ -83,6 +89,11 @@ export function createFakeIndexedDB(opts: FakeIdbOptions = {}): {
             mapOf().set(rec.key, value);
             req['result'] = rec.key;
             (req['onsuccess'] as ((ev: unknown) => void) | null)?.({ target: req });
+            if (tx) {
+              setTimeout(() => {
+                (tx['oncomplete'] as ((ev: unknown) => void) | null)?.({ target: tx });
+              }, opts.transactionCompleteDelayMs ?? 0);
+            }
           } catch (e) {
             asyncErr(req, e);
           }
@@ -139,15 +150,16 @@ export function createFakeIndexedDB(opts: FakeIdbOptions = {}): {
             },
             transaction: (names: string | string[]) => {
               const list = Array.isArray(names) ? names : [names];
-              return {
+              const tx: Record<string, unknown> = {
                 objectStore: (s: string) => {
                   if (!list.includes(s)) throw new Error(`not in transaction: ${s}`);
-                  return storeApi(current, s);
+                  return storeApi(current, s, tx);
                 },
                 oncomplete: null,
                 onerror: null,
                 onabort: null,
               };
+              return tx;
             },
             close: () => {},
             onversionchange: null,
