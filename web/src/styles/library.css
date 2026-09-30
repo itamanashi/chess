@@ -1,7 +1,5 @@
 /* ------------------------------------------------------------------
- * Bibliothèque : page d'accueil. Titre serif aligné à gauche, actions
- * groupées, cartes de répertoires (séparation justifiée : une carte =
- * un répertoire avec ses actions propres).
+ * Bibliothèque : index des répertoires, avec le camp joué comme repère.
  * ------------------------------------------------------------------ */
 
 .library-view-container {
@@ -18,41 +16,62 @@
 .library-hero-section {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-5);
-  padding-bottom: var(--sp-5);
+  gap: var(--sp-6);
+  padding-bottom: var(--sp-6);
   border-bottom: 1px solid var(--border);
 }
-.hero-content { max-width: 64ch; display: flex; flex-direction: column; gap: var(--sp-3); }
+.hero-content { max-width: 62ch; display: flex; flex-direction: column; gap: var(--sp-3); }
 .hero-kicker {
   font-size: var(--fs-small);
   color: var(--accent-text);
   font-weight: 600;
 }
-.hero-description { color: var(--text-2); max-width: 62ch; }
+.hero-description { color: var(--text-2); max-width: 56ch; }
 .hero-description strong { color: var(--text); }
-.hero-action-buttons { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: flex-start; }
+.hero-action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-start; }
+
+.library-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: calc(var(--sp-4) * -1);
+}
+.library-section-header h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 400;
+}
+.library-count { color: var(--text-3); font-size: var(--fs-small); }
 
 .repertoires-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: var(--sp-4);
 }
 
-/* Carte répertoire : bordure latérale = camp joué (info, pas décor). */
+/* La lisière indique le camp joué ; chaque répertoire garde ses actions réunies. */
 .repertoire-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--r-panel);
-  padding: var(--sp-4);
+  padding: var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   border-left-width: 3px;
+  transition: border-color var(--dur) ease, background-color var(--dur) ease;
 }
 .repertoire-card.card-white { border-left-color: var(--camp-white); }
 .repertoire-card.card-black { border-left-color: var(--camp-black); }
+.repertoire-card:hover {
+  background: var(--bg-raised);
+  border-top-color: var(--border-strong);
+  border-right-color: var(--border-strong);
+  border-bottom-color: var(--border-strong);
+}
 
 .rep-card-top { display: flex; flex-direction: column; gap: var(--sp-1); }
 .rep-badges-row { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
@@ -112,13 +131,16 @@ button.rep-title:hover { color: var(--accent-text); }
 @media (max-width: 760px) {
   .library-view-container { padding: var(--sp-5) var(--sp-3); gap: var(--sp-5); }
   .library-hero-section { align-items: flex-start; }
+  .hero-action-buttons { width: 100%; }
+  .hero-action-buttons .primary-btn { width: 100%; }
   .repertoires-grid { grid-template-columns: minmax(0, 1fr); }
+  .repertoire-card { padding: var(--sp-4); }
 }
 
 /* Grands écrans / 2K : la bibliothèque ne reste pas en bande étroite. */
 @media (min-width: 1600px) {
   .library-view-container { max-width: 1280px; }
-  .repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
 }
 @media (min-width: 2100px) {
   .library-view-container { max-width: 1440px; }
