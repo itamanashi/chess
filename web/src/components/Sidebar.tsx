@@ -73,6 +73,8 @@ const PIECE_SKINS: Array<{ id: PieceSkin; label: string }> = [
   { id: 'merida', label: 'Merida' },
   { id: 'fantasy', label: 'Fantasy' },
   { id: 'shapes', label: 'Formes' },
+  { id: 'neo', label: 'Neo' },
+  { id: 'neo-angle', label: 'Neo angle' },
 ];
 
 /** Compteur compact de pastille (12 345 → « 12,3 k »). */
@@ -106,6 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const inStudio = activeView === 'studio';
   // Carte compte dépliée au clic sur le profil (sinon chip compact).
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pieceSkinsOpen, setPieceSkinsOpen] = useState(false);
   // Avatar en échec (URL morte) : on retombe sur l'initiale. Comparé à
   // l'URL courante (pas de setState dans un effet) : un nouvel avatar
   // réessaie naturellement.
@@ -244,9 +247,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      <fieldset className="side-piece-skin">
-        <legend className="form-label">Style des pièces</legend>
-        <div className="piece-skin-options">
+      <section className="side-piece-skin" aria-labelledby="piece-skin-title">
+        <div className="side-piece-skin-head">
+          <h2 id="piece-skin-title" className="form-label">Style des pièces</h2>
+          <button
+            className="piece-skin-toggle"
+            type="button"
+            aria-expanded={pieceSkinsOpen}
+            aria-controls="piece-skin-options"
+            onClick={() => setPieceSkinsOpen((open) => !open)}
+          >
+            {pieceSkinsOpen ? 'Réduire' : 'Déployer'}
+          </button>
+        </div>
+        {!pieceSkinsOpen && (
+          <span className="piece-skin-current">
+            {PIECE_SKINS.find(({ id }) => id === pieceSkin)?.label ?? 'Classique'}
+          </span>
+        )}
+        <div id="piece-skin-options" className={`piece-skin-options ${pieceSkinsOpen ? 'is-open' : ''}`} hidden={!pieceSkinsOpen}>
           {PIECE_SKINS.map(({ id, label }) => (
             <label key={id} className={`piece-skin-option ${pieceSkin === id ? 'selected' : ''}`}>
               <input
@@ -267,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </label>
           ))}
         </div>
-      </fieldset>
+      </section>
 
       {!accountOpen ? (
         chessUser ? (

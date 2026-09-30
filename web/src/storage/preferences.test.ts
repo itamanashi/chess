@@ -30,6 +30,19 @@ describe('piece skin preference', () => {
     expect(uiPrefs.getPieceSkin()).toBe('chessnut');
   });
 
+  it('accepts the expanded Neo skin choices', () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+
+    uiPrefs.setPieceSkin('neo-angle');
+
+    expect(uiPrefs.getPieceSkin()).toBe('neo-angle');
+  });
+
   it('migrates the former Unicode skin to the illustrated set', () => {
     const values = new Map([['chess_piece_skin', 'unicode']]);
     vi.stubGlobal('localStorage', {

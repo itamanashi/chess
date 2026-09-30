@@ -1,0 +1,8 @@
+Neo is a local presentation variant of the Chessnut set.
+
+The underlying SVG artwork is Chessnut by Alexis Luengas,
+licensed under Apache License 2.0:
+https://github.com/LexLuengas/chessnut-pieces
+
+This project applies a monochrome contrast treatment in CSS; no SVG artwork
+is redistributed under a separate name.
