@@ -154,8 +154,6 @@ const DEFAULT_SETTLE_DELAY_MS = 80;
 const DEFAULT_GRACE_DELAY_MS = 150;
 /** Listener-count tripwire: under normal use ≤ 2 waiters coexist. */
 const MAX_LISTENERS_WARN = 8;
-/** Plafond de threads (rendements décroissants + mémoire WASM au-delà). */
-export const ENGINE_MAX_THREADS = 16;
 /** Hash (Mo) quand le multicœur est actif (MultiPV large à D20+). */
 const ENGINE_THREADS_HASH_MB = 256;
 
@@ -163,23 +161,27 @@ const ENGINE_THREADS_HASH_MB = 256;
  * Threads voulus, pur et testable : multicœur seulement si le contexte est
  * isolé cross-origin (SharedArrayBuffer disponible — le serveur dev sert
  * COOP/COEP). Sans isolation, `Threads > 1` ferait échouer le spawn des
- * pthreads : on reste à 1, le moteur marche quand même.
+ * pthreads : on reste à 1, le moteur marche quand même. Le nombre est limité
+ * uniquement par les cœurs logiques détectés et le maximum annoncé par UCI.
  */
-export function engineThreadCount(isolated: boolean, cores: number): number {
+export function engineThreadCount(isolated: boolean, cores: number, engineMaxThreads = Infinity): number {
   if (!isolated) return 1;
   if (!Number.isFinite(cores) || cores < 2) return 1;
-  return Math.max(2, Math.min(Math.floor(cores), ENGINE_MAX_THREADS));
+  const available = Math.floor(cores);
+  const maximum = Number.isFinite(engineMaxThreads) ? Math.floor(engineMaxThreads) : available;
+  if (maximum < 2) return 1;
+  return Math.min(available, maximum);
 }
 
 /** Threads voulus d'après le navigateur (1 = mono-thread, repli sûr). */
-export function desiredEngineThreads(): number {
+export function desiredEngineThreads(engineMaxThreads = Infinity): number {
   try {
     const isolated = typeof crossOriginIsolated === 'boolean' ? crossOriginIsolated : false;
     const cores =
       typeof navigator !== 'undefined' && typeof navigator.hardwareConcurrency === 'number'
         ? navigator.hardwareConcurrency
         : 1;
-    return engineThreadCount(isolated, cores);
+    return engineThreadCount(isolated, cores, engineMaxThreads);
   } catch {
     return 1;
   }
@@ -443,7 +445,7 @@ export class EngineSession {
         }
         await uciWait.promise;
         this.lineListeners.delete(uciTap);
-        const supportsThreads = uciSeen.some((l) => /^option name Threads\b/i.test(l));
+        const threadsOption = uciSeen.find((l) => /^option name Threads\b/i.test(l));
         const readyWait = this.waitForLine((l) => l === 'readyok', this.handshakeTimeoutMs);
         try {
           w.postMessage('isready');
@@ -456,7 +458,9 @@ export class EngineSession {
         // navigateur — sans ce setoption, Stockfish reste à 1 thread malgré
         // les cœurs libres. À froid, avant toute recherche ; un échec ne
         // casse pas le handshake (mono-thread conservé).
-        const threads = supportsThreads ? desiredEngineThreads() : 1;
+        const advertisedMax = threadsOption?.match(/\bmax\s+(\d+)/i);
+        const maxThreads = advertisedMax ? Number(advertisedMax[1]) : Infinity;
+        const threads = threadsOption ? desiredEngineThreads(maxThreads) : 1;
         if (threads > 1) {
           const optWait = this.waitForLine((l) => l === 'readyok', this.handshakeTimeoutMs);
           try {
