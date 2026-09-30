@@ -66,11 +66,11 @@ function standardScript(replyUci = 'e2e4', replyCp = 40): Script {
 }
 
 /** Comme standardScript, mais expose `option name Threads` (build threadé). */
-function threadedScript(replyUci = 'e2e4', replyCp = 40): Script {
+function threadedScript(replyUci = 'e2e4', replyCp = 40, maxThreads = 256): Script {
   const base = standardScript(replyUci, replyCp);
   return (msg, emit, fail) => {
     if (msg === 'uci') {
-      emit('option name Threads type spin default 1 min 1 max 256');
+      emit(`option name Threads type spin default 1 min 1 max ${maxThreads}`);
       emit('uciok');
     } else {
       base(msg, emit, fail);
@@ -113,14 +113,16 @@ async function waitForPending(pending: unknown[], n = 1, budgetMs = 3000): Promi
 }
 
 describe('EngineSession threads (multicœur)', () => {
-  it('engineThreadCount: 1 sans isolation, cœurs plafonnés à 16', () => {
+  it('engineThreadCount: utilise tous les cœurs sauf limites navigateur ou moteur', () => {
     expect(engineThreadCount(false, 8)).toBe(1);
     expect(engineThreadCount(false, 64)).toBe(1);
     expect(engineThreadCount(true, 1)).toBe(1);
     expect(engineThreadCount(true, 0)).toBe(1);
     expect(engineThreadCount(true, Number.NaN)).toBe(1);
     expect(engineThreadCount(true, 8)).toBe(8);
-    expect(engineThreadCount(true, 64)).toBe(16);
+    expect(engineThreadCount(true, 64)).toBe(64);
+    expect(engineThreadCount(true, 64, 32)).toBe(32);
+    expect(engineThreadCount(true, 64, 1)).toBe(1);
   });
 
   it('applique Threads+Hash au handshake quand isolé, rien sinon', async () => {
@@ -154,6 +156,34 @@ describe('EngineSession threads (multicœur)', () => {
     await mono.start();
     expect(plain.sent.some((m) => m.startsWith('setoption'))).toBe(false);
     expect(mono.threadCount).toBe(1);
+  });
+
+  it('applies every reported logical core above the former 16-thread cap', async () => {
+    vi.stubGlobal('crossOriginIsolated', true);
+    vi.stubGlobal('navigator', { hardwareConcurrency: 64 });
+    try {
+      const fake = new FakeWorker(threadedScript());
+      const session = sessionWith(fake);
+      await session.start();
+      expect(fake.sent).toContain('setoption name Threads value 64');
+      expect(session.threadCount).toBe(64);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('respects the maximum thread count advertised by the engine', async () => {
+    vi.stubGlobal('crossOriginIsolated', true);
+    vi.stubGlobal('navigator', { hardwareConcurrency: 64 });
+    try {
+      const fake = new FakeWorker(threadedScript('e2e4', 40, 32));
+      const session = sessionWith(fake);
+      await session.start();
+      expect(fake.sent).toContain('setoption name Threads value 32');
+      expect(session.threadCount).toBe(32);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
