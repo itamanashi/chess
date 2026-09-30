@@ -47,9 +47,6 @@ import {
   TOAST_PGN_EMPTY,
   toastBatchAdded,
   toastCopyOk,
-  toastImportError,
-  toastImportPartial,
-  toastImportSuccess,
 } from './i18n';
 import { RepertoireLibrary } from './components/RepertoireLibrary';
 import { RepertoireBuilder } from './components/RepertoireBuilder';
@@ -794,19 +791,6 @@ export const App: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cancelTrainerReply, cancelBlackOpening, cancelAutoRestart]);
 
-  // Importation JSON dans la bibliothèque (validée avant insertion).
-  const handleImportRepertoire = (content: string, filename: string) => {
-    try {
-      const { items, warnings } = library.importRepertoire(content, filename);
-      const label =
-        items.length === 1 ? `« ${items[0].title} »` : `${items.length} répertoires`;
-      toast.success(toastImportSuccess(label));
-      warnings.slice(0, 2).forEach((w) => toast.error(toastImportPartial(w)));
-    } catch (err) {
-      toast.error(toastImportError(err instanceof Error ? err.message : String(err)));
-    }
-  };
-
   // Copie presse-papiers avec feedback uniforme (l'API Clipboard peut être
   // indisponible hors contexte sécurisé : on l'explicite au lieu d'échouer nu).
   const copyText = (text: string, what: 'FEN' | 'PGN') => {
@@ -947,10 +931,8 @@ export const App: React.FC = () => {
         <RepertoireLibrary
           repertoires={library.repertoires}
           onOpenRepertoire={handleOpenRepertoire}
-          onOpenGames={handleOpenGames}
           onCreateRepertoire={handleCreateRepertoire}
           onDeleteRepertoire={library.deleteRepertoire}
-          onImportRepertoire={handleImportRepertoire}
         />
       )}
 

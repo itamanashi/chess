@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import type { RepertoireItem, BoardOrientation, EloTargetKey, StudioTab } from '../types/chess';
 import { ELO_TARGET_OPTIONS } from '../types/chess';
 import { eloTargetDescription, eloTargetLabel } from '../i18n';
@@ -6,40 +6,32 @@ import { indexRepertoire, downloadFile } from '../utils/repertoire';
 import { ConfirmDialog } from './ConfirmDialog';
 import {
   Plus,
-  Upload,
   BookOpen,
   Target,
   Trash2,
   Download,
   Clock,
   ShieldCheck,
-  ListTree,
-  History
+  ListTree
 } from 'lucide-react';
 
 interface RepertoireLibraryProps {
   repertoires: RepertoireItem[];
   onOpenRepertoire: (rep: RepertoireItem, initialTab?: StudioTab) => void;
-  /** Accès direct aux parties Chess.com (sans ouvrir de répertoire). */
-  onOpenGames: () => void;
   onCreateRepertoire: (title: string, color: BoardOrientation, targetElo: EloTargetKey) => void;
   onDeleteRepertoire: (id: string) => void;
-  onImportRepertoire: (content: string, filename: string) => void;
 }
 
 export const RepertoireLibrary: React.FC<RepertoireLibraryProps> = ({
   repertoires,
   onOpenRepertoire,
-  onOpenGames,
   onCreateRepertoire,
   onDeleteRepertoire,
-  onImportRepertoire,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newColor, setNewColor] = useState<BoardOrientation>('black');
   const [newTargetElo, setNewTargetElo] = useState<EloTargetKey>('all_700');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteRep = pendingDeleteId ? repertoires.find((r) => r.id === pendingDeleteId) ?? null : null;
 
@@ -51,59 +43,32 @@ export const RepertoireLibrary: React.FC<RepertoireLibraryProps> = ({
     setIsModalOpen(false);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (text) {
-        onImportRepertoire(text, file.name);
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
   return (
     <div className="library-view-container">
-      {/* En-tête : ce que c'est, ce qu'on y fait. */}
       <div className="library-hero-section">
         <div className="hero-content">
-          <span className="hero-kicker">Répertoires d'ouvertures</span>
-          <h1>Répertoires</h1>
+          <span className="hero-kicker">Carnet d'ouvertures</span>
+          <h1>Bibliothèque</h1>
           <p className="hero-description">
-            Un répertoire par couleur, calibré sur le niveau de vos adversaires :
-            construisez les variantes que vous rencontrerez réellement, puis mémorisez-les.
+            Retrouvez vos lignes par couleur et par niveau, puis reprenez l'étude là où vous l'avez laissée.
           </p>
         </div>
 
         <div className="hero-action-buttons">
           <button className="primary-btn" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} />
-            <span>Nouveau Répertoire</span>
+            <span>Nouveau répertoire</span>
           </button>
-          <button className="secondary-btn" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={16} />
-            <span>Importer JSON</span>
-          </button>
-          <button className="secondary-btn" onClick={onOpenGames} title="Voir mes parties Chess.com sans ouvrir de répertoire">
-            <History size={16} />
-            <span>Mes parties</span>
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            accept=".json,application/json"
-            aria-label="Importer un répertoire depuis un fichier JSON"
-            onChange={handleFileChange}
-          />
         </div>
       </div>
 
-      {/* Grille des Répertoires */}
+      <div className="library-section-header">
+        <h2>Vos répertoires</h2>
+        <span className="library-count">
+          {repertoires.length} {repertoires.length === 1 ? 'répertoire' : 'répertoires'}
+        </span>
+      </div>
+
       <div className="repertoires-grid">
         {repertoires.length === 0 ? (
           <div className="empty-library-card">
