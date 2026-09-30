@@ -62,7 +62,7 @@ export const MiniBoard: React.FC<MiniBoardProps> = ({ fen, orientation = 'w' }) 
       {rows.map((sq, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <span key={i} className={`miniboard-sq ${sq.light ? 'is-light' : 'is-dark'}`}>
-          {sq.pieceClass && React.createElement('piece', { className: sq.pieceClass, 'aria-hidden': true })}
+          {sq.pieceClass && <span className={`cg-piece ${sq.pieceClass}`} aria-hidden="true" />}
         </span>
       ))}
     </div>

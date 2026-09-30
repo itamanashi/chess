@@ -287,7 +287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="piece-skin-preview cg-wrap" data-piece-skin={id} aria-hidden="true">
                 {PIECE_PREVIEW.map((type, index) => (
                   <span key={type} className={`piece-skin-preview-square ${index % 2 === 0 ? 'is-light' : 'is-dark'}`}>
-                    {React.createElement('piece', { className: `${index < 3 ? 'white' : 'black'} ${type}` })}
+                    <span className={`cg-piece ${index < 3 ? 'white' : 'black'} ${type}`} />
                   </span>
                 ))}
               </span>
