@@ -105,11 +105,22 @@ export const App: React.FC = () => {
   // en fin de run (le panneau renvoie null).
   const [autoGenArrows, setAutoGenArrows] = useState<{ orig: string; dest: string; brush: string }[] | null>(null);
   const [analysisArrows, setAnalysisArrows] = useState<{ orig: string; dest: string; brush: string }[]>([]);
+  const [analysisPreview, setAnalysisPreview] = useState<{
+    rootFen: string;
+    fen: string;
+    lastMove: [string, string];
+  } | null>(null);
   const handleAnalysisArrows = useCallback(
     (arrows: { orig: string; dest: string; brush: string }[] | null) => {
       setAnalysisArrows(arrows ?? []);
     },
     [],
+  );
+  const handleAnalysisPreview = useCallback(
+    (preview: { fen: string; lastMove: [string, string] } | null) => {
+      setAnalysisPreview(preview ? { ...preview, rootFen: fen } : null);
+    },
+    [fen],
   );
   const handleAutoEngineArrows = useCallback(
     (arrows: { orig: string; dest: string; brush: string }[] | null) => {
@@ -686,9 +697,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Accès direct aux parties Chess.com : studio sur l'onglet jeux SANS
-  // répertoire actif (les autres onglets restent désactivés tant qu'aucun
-  // répertoire n'est ouvert — voir handleChangeStudioTab + Sidebar).
+  // Accès direct aux parties Chess.com et à l'analyse libre sans répertoire.
   const handleOpenGames = useCallback(() => {
     cancelTrainerReply();
     cancelBlackOpening();
@@ -697,6 +706,20 @@ export const App: React.FC = () => {
     library.setActiveRepertoireId(null);
     setActiveStudioTab('games');
     setAppView('studio');
+    timeline.reset();
+    trainer.resetForNavigation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cancelTrainerReply, cancelBlackOpening, cancelAutoRestart]);
+
+  const handleOpenAnalysis = useCallback(() => {
+    cancelTrainerReply();
+    cancelBlackOpening();
+    cancelAutoRestart();
+    setGameViewer(null);
+    library.setActiveRepertoireId(null);
+    setActiveStudioTab('analysis');
+    setAppView('studio');
+    setAnalysisPreview(null);
     timeline.reset();
     trainer.resetForNavigation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -748,14 +771,15 @@ export const App: React.FC = () => {
 
   // Changement d'onglet : quitter le trainer annule sa réponse en vol
   // (elle s'appliquerait sinon dans le builder/explorer). Sans répertoire
-  // actif, seul l'onglet jeux est accessible (défense en profondeur : la
-  // Sidebar désactive déjà les autres).
+  // actif, seuls les jeux et l'analyse libre sont accessibles (défense en
+  // profondeur : la Sidebar désactive déjà les autres).
   const handleChangeStudioTab = useCallback(
     (tab: StudioTab) => {
-      if (!activeRepertoire && tab !== 'games') return;
+      if (!activeRepertoire && tab !== 'games' && tab !== 'analysis') return;
       if (tab !== 'trainer') cancelTrainerReply();
       cancelAutoRestart();
       setActiveStudioTab(tab);
+      setAnalysisPreview(null);
     },
     [cancelTrainerReply, cancelAutoRestart, activeRepertoire],
   );
@@ -902,6 +926,7 @@ export const App: React.FC = () => {
         activeRepertoire={activeRepertoire}
         onBackToLibrary={handleBackToLibrary}
         onOpenGames={handleOpenGames}
+        onOpenAnalysis={handleOpenAnalysis}
         activeStudioTab={activeStudioTab}
         onChangeStudioTab={handleChangeStudioTab}
         repertoireStats={activeRepertoire ? {
@@ -929,12 +954,12 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* VUE 2 : LE STUDIO D'ÉTUDE & DE CONSTRUCTION (l'onglet jeux vit
-          aussi sans répertoire actif, via « Mes parties » de la bibliothèque).
+      {/* VUE 2 : LE STUDIO D'ÉTUDE & DE CONSTRUCTION (les onglets jeux et
+          analyse vivent aussi sans répertoire actif).
           En jeux sans partie ouverte, pas d'échiquier : le panneau occupe
           toute la largeur. Idem pour l'onglet arbre : le graphe a son propre
           visualiseur, l'échiquier principal est redondant. */}
-      {appView === 'studio' && (activeRepertoire || activeStudioTab === 'games') && (
+      {appView === 'studio' && (activeRepertoire || activeStudioTab === 'games' || activeStudioTab === 'analysis') && (
         <main className={`main-content-container ${activeStudioTab === 'games' && !gameViewer ? 'no-board' : ''} ${activeStudioTab === 'tree' ? 'no-board tree-tab' : ''} ${isGameViewer ? 'game-viewer' : ''}`}>
           {/* Colonne gauche : Échiquier Chessground (masquée en jeux tant
               qu'aucune partie n'est ouverte, et dans l'onglet arbre) */}
@@ -956,11 +981,15 @@ export const App: React.FC = () => {
               </div>
             ) : (
               <Chessboard
-                fen={activeStudioTab === 'analysis' ? fen : boardFen}
+                fen={activeStudioTab === 'analysis' ? (analysisPreview?.rootFen === fen ? analysisPreview.fen : fen) : boardFen}
                 orientation={orientation}
                 onMove={executeMove}
-                lastMove={activeStudioTab === 'analysis' ? timeline.lastMove : boardLastMove}
-                interactive={activeStudioTab !== 'trainer' || !isOpponentTurn}
+                lastMove={activeStudioTab === 'analysis'
+                  ? (analysisPreview?.rootFen === fen ? analysisPreview.lastMove : timeline.lastMove)
+                  : boardLastMove}
+                interactive={activeStudioTab === 'analysis'
+                  ? analysisPreview?.rootFen !== fen
+                  : activeStudioTab !== 'trainer' || !isOpponentTurn}
                 shapes={boardShapes}
               />
             )}
@@ -1172,7 +1201,14 @@ export const App: React.FC = () => {
             )}
 
             {activeStudioTab === 'analysis' && (
-              <AnalysisPanel currentFen={fen} onShapesChange={handleAnalysisArrows} />
+              <AnalysisPanel
+                currentFen={fen}
+                history={history}
+                currentIndex={currentIndex}
+                onJumpToMove={jumpToMove}
+                onShapesChange={handleAnalysisArrows}
+                onPreviewChange={handleAnalysisPreview}
+              />
             )}
           </section>
         </main>

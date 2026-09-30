@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
-import type { EngineMove } from '../types/chess';
+import type { EngineMove, MoveHistoryItem } from '../types/chess';
 import {
   analyzeLocalFen,
   getLocalEngineStatus,
@@ -12,15 +12,25 @@ import { isAbortError } from '../utils/async';
 
 const DEPTHS = [12, 16, 18, 20, 24] as const;
 const VARIATION_COUNTS = [1, 2, 3, 4, 5, 6] as const;
-const LINE_COLORS = ['blue', 'yellow', 'red', 'red', 'red'];
 const NO_ENGINE_MOVES: EngineMove[] = [];
 
 interface AnalysisPanelProps {
   currentFen: string;
+  history: MoveHistoryItem[];
+  currentIndex: number;
+  onJumpToMove: (index: number) => void;
   onShapesChange: (shapes: { orig: string; dest: string; brush: string }[] | null) => void;
+  onPreviewChange: (preview: { fen: string; lastMove: [string, string] } | null) => void;
 }
 
-export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShapesChange }) => {
+export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
+  currentFen,
+  history,
+  currentIndex,
+  onJumpToMove,
+  onShapesChange,
+  onPreviewChange,
+}) => {
   const [depth, setDepth] = useState<number>(18);
   const [variationCount, setVariationCount] = useState<number>(3);
   const [result, setResult] = useState<{ fen: string; moves: EngineMove[] }>({ fen: currentFen, moves: [] });
@@ -29,6 +39,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
   const [activeAnalysis, setActiveAnalysis] = useState<{ fen: string; controller: AbortController } | null>(null);
   const [error, setError] = useState<{ fen: string; message: string } | null>(null);
   const [engineStatus, setEngineStatus] = useState<LocalEngineStatus>(getLocalEngineStatus);
+  const [previewPosition, setPreviewPosition] = useState<{ rootFen: string; fen: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const runIdRef = useRef(0);
   const turn = useMemo(() => new Chess(currentFen).turn(), [currentFen]);
@@ -45,11 +56,12 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
       abortRef.current?.abort();
       abortRef.current = null;
       onShapesChange(null);
+      onPreviewChange(null);
     };
-  }, [currentFen, onShapesChange]);
+  }, [currentFen, onShapesChange, onPreviewChange]);
 
   useEffect(() => {
-    if (moves.length === 0) {
+    if (moves.length === 0 || previewPosition?.rootFen === currentFen) {
       onShapesChange(null);
       return;
     }
@@ -59,13 +71,11 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
         return [{
           orig: move.uci.slice(0, 2),
           dest: move.uci.slice(2, 4),
-          brush: index === selectedLine
-            ? 'green'
-            : LINE_COLORS[index < selectedLine ? index : index - 1] ?? 'red',
+          brush: index === 0 ? 'green' : 'red',
         }];
       }),
     );
-  }, [moves, selectedLine, onShapesChange]);
+  }, [moves, currentFen, previewPosition, onShapesChange]);
 
   const startAnalysis = async () => {
     const id = ++runIdRef.current;
@@ -112,6 +122,31 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
     abortRef.current?.abort();
     abortRef.current = null;
     setActiveAnalysis(null);
+  };
+
+  const previewLineAt = (move: EngineMove, ply: number) => {
+    try {
+      const board = new Chess(currentFen);
+      const sans = move.pvSans.length > 0 ? move.pvSans : [move.san];
+      let lastMove: [string, string] | null = null;
+      for (let index = 0; index <= ply; index += 1) {
+        const uci = move.pvUci?.[index] ?? (index === 0 ? move.uci : undefined);
+        const played = uci && uci.length >= 4
+          ? board.move({
+              from: uci.slice(0, 2),
+              to: uci.slice(2, 4),
+              ...(uci[4] ? { promotion: uci[4] } : {}),
+            })
+          : board.move(sans[index]);
+        if (!played) throw new Error('Coup de variante illégal.');
+        lastMove = [played.from, played.to];
+      }
+      setSelectedLine(moves.indexOf(move));
+      setPreviewPosition({ rootFen: currentFen, fen: board.fen() });
+      if (lastMove) onPreviewChange({ fen: board.fen(), lastMove });
+    } catch {
+      setError({ fen: currentFen, message: 'Cette variante ne peut pas être rejouée sur l’échiquier.' });
+    }
   };
 
   const statusLabel =
@@ -182,22 +217,39 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
       <div className="analysis-lines">
         {moves.length > 0 ? (
           moves.map((move, index) => (
-            <button
+            <div
               className={`analysis-line ${selectedLine === index ? 'selected' : ''}`}
               key={`${move.uci}-${index}`}
-              onClick={() => setSelectedLine(index)}
-              aria-pressed={selectedLine === index}
-              title={`Afficher la flèche de la ligne ${index + 1}`}
             >
-              <span className="analysis-line-rank">{index + 1}</span>
-              <span className="analysis-line-content">
-                <span className="analysis-line-top">
-                  <span className="analysis-line-score">{move.scoreFormatted || '—'}</span>
-                  <span className="analysis-line-depth">D{move.depth}</span>
+              <button
+                className="analysis-line-summary"
+                onClick={() => previewLineAt(move, 0)}
+                title={`Afficher le premier coup de la ligne ${index + 1}`}
+              >
+                <span className="analysis-line-rank">{index + 1}</span>
+                <span className="analysis-line-content">
+                  <span className="analysis-line-top">
+                    <span className="analysis-line-score">{move.scoreFormatted || '—'}</span>
+                    <span className="analysis-line-depth">D{move.depth}</span>
+                  </span>
                 </span>
-                <span className="analysis-line-pv">{move.pvSans.join(' ') || move.san}</span>
-              </span>
-            </button>
+              </button>
+              <div className="analysis-line-pv" aria-label={`Variante ${index + 1}`}>
+                {(move.pvSans.length > 0 ? move.pvSans : [move.san]).map((san, ply) => (
+                  <React.Fragment key={`${ply}-${san}`}>
+                    {ply > 0 && ' '}
+                    <button
+                      className="analysis-ply-btn"
+                      onClick={() => previewLineAt(move, ply)}
+                      title={`Afficher la position après ${san}`}
+                      aria-label={`Ligne ${index + 1}, coup ${ply + 1} : ${san}`}
+                    >
+                      {san}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
           ))
         ) : (
           <p className="analysis-empty">
@@ -207,9 +259,44 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ currentFen, onShap
           </p>
         )}
       </div>
-      {moves.length > 0 && (
-        <p className="analysis-arrow-hint">Sélectionnez une ligne pour mettre sa flèche en évidence.</p>
-      )}
+      {moves.length > 0 && <p className="analysis-arrow-hint">Cliquez sur une ligne pour son premier coup, ou sur un coup précis pour afficher cette position.</p>}
+
+      <section className="analysis-history" aria-labelledby="analysis-history-title">
+        <div className="analysis-history-heading">
+          <h3 id="analysis-history-title">Historique de la partie</h3>
+          <span>{Math.max(0, history.length - 1)} {history.length === 2 ? 'coup' : 'coups'}</span>
+        </div>
+        {history.length > 1 ? (
+          <div className="analysis-history-moves">
+            <button
+              className={`analysis-history-move ${currentIndex === 0 ? 'active' : ''}`}
+              onClick={() => onJumpToMove(0)}
+              aria-current={currentIndex === 0 ? 'step' : undefined}
+            >
+              Début
+            </button>
+            {history.slice(1).map((item, offset) => {
+              const historyIndex = offset + 1;
+              const before = new Chess(history[historyIndex - 1].fen);
+              const moveNumber = before.fen().split(' ')[5] ?? '1';
+              const prefix = before.turn() === 'w' ? `${moveNumber}.` : `${moveNumber}...`;
+              return (
+                <button
+                  key={`${historyIndex}-${item.uci}`}
+                  className={`analysis-history-move ${currentIndex === historyIndex ? 'active' : ''}`}
+                  onClick={() => onJumpToMove(historyIndex)}
+                  aria-current={currentIndex === historyIndex ? 'step' : undefined}
+                  title={`Aller au coup ${prefix} ${item.san}`}
+                >
+                  <span>{prefix}</span> {item.san}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="analysis-history-empty">Jouez un coup sur l’échiquier pour commencer la partie.</p>
+        )}
+      </section>
     </section>
   );
 };

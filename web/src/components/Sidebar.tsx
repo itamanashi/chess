@@ -27,6 +27,8 @@ interface SidebarProps {
   onBackToLibrary: () => void;
   /** Bibliothèque → studio sur l'onglet jeux, sans répertoire. */
   onOpenGames: () => void;
+  /** Bibliothèque → analyse, sans répertoire. */
+  onOpenAnalysis: () => void;
   activeStudioTab: StudioTab;
   onChangeStudioTab: (tab: StudioTab) => void;
   repertoireStats?: {
@@ -88,9 +90,9 @@ function compactCount(n: number): string {
 
 /**
  * Barre latérale (remplace l'ancien bandeau haut) : navigation toujours
- * visible — bibliothèque, onglets studio et « Mes parties » ne sont plus
- * cachés derrière le bouton « Étudier ». Sans répertoire actif, seuls
- * Bibliothèque et Mes parties sont accessibles (le reste est désactivé,
+ * visible — bibliothèque, onglets studio, « Mes parties » et l'analyse
+ * libre sont accessibles sans ouvrir un répertoire. Sans répertoire actif,
+ * les vues liées à un répertoire sont désactivées,
  * avec garde redondante dans handleChangeStudioTab).
  */
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -98,6 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeRepertoire,
   onBackToLibrary,
   onOpenGames,
+  onOpenAnalysis,
   activeStudioTab,
   onChangeStudioTab,
   repertoireStats,
@@ -124,6 +127,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       onOpenGames();
       return;
     }
+    if (tab === 'analysis' && !activeRepertoire) {
+      onOpenAnalysis();
+      return;
+    }
     onChangeStudioTab(tab);
   };
 
@@ -141,14 +148,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
         const tab = STUDIO_TABS.find((t) => t.shortcut === e.key);
         if (!tab) return;
-        if (tab.key !== 'games' && !activeRepertoire) return;
+        if (tab.key !== 'games' && tab.key !== 'analysis' && !activeRepertoire) return;
         handleTab(tab.key);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inStudio, activeRepertoire, onBackToLibrary, onChangeStudioTab, onOpenGames]);
+  }, [inStudio, activeRepertoire, onBackToLibrary, onChangeStudioTab, onOpenGames, onOpenAnalysis]);
 
   const gamesCount = account.games.length;
 
@@ -187,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="side-nav-label">Studio</div>
 
         {STUDIO_TABS.map(({ key, label, hint, shortcut, Icon }) => {
-          const needsRep = key !== 'games';
+          const needsRep = key !== 'games' && key !== 'analysis';
           const disabled = needsRep && !activeRepertoire;
           const active = inStudio && activeStudioTab === key;
           const showBadge = key === 'games' && gamesCount > 0;
