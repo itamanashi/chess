@@ -104,59 +104,60 @@
   filter: grayscale(1) contrast(1.2) brightness(0.96);
 }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.king,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.king { background-image: url("/piece-skins/chessnut/wK.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.king { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wk.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.queen,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.queen { background-image: url("/piece-skins/chessnut/wQ.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.queen { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wq.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.rook,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.rook { background-image: url("/piece-skins/chessnut/wR.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.rook { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wr.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.bishop,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.bishop { background-image: url("/piece-skins/chessnut/wB.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.bishop { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wb.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.knight,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.knight { background-image: url("/piece-skins/chessnut/wN.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.knight { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wn.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.white.pawn,
-.piece-skin-preview[data-piece-skin="neo"] piece.white.pawn { background-image: url("/piece-skins/chessnut/wP.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.white.pawn { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wp.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.king,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.king { background-image: url("/piece-skins/chessnut/bK.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.king { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bk.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.queen,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.queen { background-image: url("/piece-skins/chessnut/bQ.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.queen { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bq.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.rook,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.rook { background-image: url("/piece-skins/chessnut/bR.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.rook { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/br.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.bishop,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.bishop { background-image: url("/piece-skins/chessnut/bB.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.bishop { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bb.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.knight,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.knight { background-image: url("/piece-skins/chessnut/bN.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.knight { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bn.png"); }
 .app-layout[data-piece-skin="neo"] .cg-wrap piece.black.pawn,
-.piece-skin-preview[data-piece-skin="neo"] piece.black.pawn { background-image: url("/piece-skins/chessnut/bP.svg"); }
+.piece-skin-preview[data-piece-skin="neo"] piece.black.pawn { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bp.png"); }
 
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece,
 .piece-skin-preview[data-piece-skin="neo-angle"] piece {
-  filter: contrast(1.35) saturate(0.7);
-  background-size: 88%;
+  filter: contrast(1.08) saturate(0.85);
+  background-size: 100%;
+  transform: skewX(-7deg);
 }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.king,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.king { background-image: url("/piece-skins/shapes/wK.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.king { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wk.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.queen,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.queen { background-image: url("/piece-skins/shapes/wQ.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.queen { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wq.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.rook,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.rook { background-image: url("/piece-skins/shapes/wR.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.rook { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wr.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.bishop,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.bishop { background-image: url("/piece-skins/shapes/wB.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.bishop { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wb.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.knight,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.knight { background-image: url("/piece-skins/shapes/wN.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.knight { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wn.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.pawn,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.pawn { background-image: url("/piece-skins/shapes/wP.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.pawn { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wp.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.king,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.king { background-image: url("/piece-skins/shapes/bK.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.king { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bk.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.queen,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.queen { background-image: url("/piece-skins/shapes/bQ.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.queen { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bq.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.rook,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.rook { background-image: url("/piece-skins/shapes/bR.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.rook { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/br.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.bishop,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.bishop { background-image: url("/piece-skins/shapes/bB.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.bishop { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bb.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.knight,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.knight { background-image: url("/piece-skins/shapes/bN.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.knight { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bn.png"); }
 .app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.pawn,
-.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.pawn { background-image: url("/piece-skins/shapes/bP.svg"); }
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.pawn { background-image: url("https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bp.png"); }
 
 .piece-skin-preview.cg-wrap {
   display: grid;
