@@ -12,6 +12,7 @@ Exécutez simplement le script Python à la racine :
 python run_web.py
 ```
 Le serveur Web Vite démarre et ouvre automatiquement votre navigateur sur `http://localhost:5173`.
+Ce lanceur démarre aussi une base SQLite locale pour conserver les réponses Lichess et les évaluations Stockfish hors des données du navigateur. L'ancien IndexedDB est importé dans cette base au premier lancement. Sur Windows, le fichier est dans `%LOCALAPPDATA%\ChessRepertoireStudio\explorer-cache.sqlite3`; sur Linux/macOS, dans `$XDG_DATA_HOME/ChessRepertoireStudio/` ou `~/.local/share/ChessRepertoireStudio/`.
 
 ### Option 2 : Lancement direct via npm
 ```bash
@@ -19,6 +20,7 @@ cd web
 npm install
 npm run dev
 ```
+Le lancement direct garde uniquement les bases navigateur (IndexedDB); pour la persistance SQLite, utiliser `python run_web.py`.
 
 ---
 

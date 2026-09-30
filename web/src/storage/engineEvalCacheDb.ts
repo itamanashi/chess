@@ -1,4 +1,5 @@
 import type { EngineMove } from '../types/chess';
+import { clearSqliteEngineEvals, getSqliteEngineEval, putSqliteEngineEvals } from './sqliteEngineEval';
 
 /**
  * Cache durable des évaluations moteur sur IndexedDB.
@@ -40,6 +41,7 @@ function promisify<T>(request: IDBRequest<T>): Promise<T> {
 }
 
 let openPromise: Promise<IDBDatabase> | null = null;
+let backupPromise: Promise<void> | null = null;
 
 /** Ouvre (et crée au besoin) la base. Promesse mise en cache par module. */
 function openDb(): Promise<IDBDatabase> {
@@ -87,13 +89,33 @@ export function engineEvalCacheKey(fen: string, depth: number, multiPv: number):
   return `${fen}|d${depth}|pv${multiPv}`;
 }
 
+function backupExistingEvaluations(): Promise<void> {
+  if (import.meta.env.VITE_SQLITE_CACHE_ENABLED !== 'true') return Promise.resolve();
+  if (!backupPromise) {
+    backupPromise = withStore('readonly', (store) => promisify(store.getAll()))
+      .then((records) => putSqliteEngineEvals(records))
+      .catch(() => {
+        backupPromise = null;
+      });
+  }
+  return backupPromise;
+}
+
 /** Une évaluation par clé (lecture différée). */
 export async function idbGetEngineEval(key: string): Promise<EngineEvalRecord | undefined> {
+  void backupExistingEvaluations();
   try {
-    return await withStore('readonly', (store) => promisify(store.get(key)));
+    const record = await withStore('readonly', (store) => promisify(store.get(key)));
+    if (record) return record;
   } catch {
-    return undefined;
+    // IndexedDB indisponible : le read-through SQLite reste disponible.
   }
+  const sqliteRecord = await getSqliteEngineEval(key);
+  if (sqliteRecord) {
+    void idbPutEngineEval(sqliteRecord);
+    return sqliteRecord;
+  }
+  return undefined;
 }
 
 /** Écriture d'une évaluation. */
@@ -103,6 +125,7 @@ export async function idbPutEngineEval(record: EngineEvalRecord): Promise<void> 
   } catch {
     // Échec silencieux : dégradation en mémoire seule
   }
+  await putSqliteEngineEvals([record]);
 }
 
 /** Écriture groupée d'évaluations. */
@@ -115,6 +138,7 @@ export async function idbPutManyEngineEval(records: EngineEvalRecord[]): Promise
   } catch {
     // Échec silencieux : dégradation en mémoire seule
   }
+  await putSqliteEngineEvals(records);
 }
 
 /** Nombre d'évaluations en cache (diagnostic). */
@@ -128,9 +152,11 @@ export async function idbCountEngineEval(): Promise<number> {
 
 /** Nettoie toutes les évaluations (option utilisateur). */
 export async function idbClearEngineEval(): Promise<void> {
+  await backupPromise;
   try {
     await withStore('readwrite', (store) => promisify(store.clear()));
   } catch {
     // Échec silencieux
   }
+  await clearSqliteEngineEvals();
 }

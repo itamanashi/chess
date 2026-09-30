@@ -11,6 +11,7 @@ import {
 } from '../services/autoRepertoire';
 import { analyzeLocalFen, desiredEngineThreads, getLocalEngineThreads, onLocalEngineStatusChange } from '../services/localEngine';
 import { explorerCacheReady, lichessCacheMemorySize, lichessPersistHealthy } from '../services/lichess';
+import { explorerSqliteStatus, loadExplorerSqliteStats } from '../storage/explorerSqlite';
 import { isAbortError } from '../utils/async';
 
 interface AutoRepertoirePanelProps {
@@ -194,6 +195,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   // Le compteur de cache se corrige dès que le préchargement durable
   // (IndexedDB) a rempli la mémoire, sans attendre un run.
   const [, bumpCacheCount] = useReducer((n: number) => n + 1, 0);
+  const [, bumpSqliteCount] = useReducer((n: number) => n + 1, 0);
   useEffect(() => {
     let alive = true;
     explorerCacheReady()
@@ -203,6 +205,9 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       .catch(() => {
         /* mémoire seule : le compteur reste tel quel */
       });
+    loadExplorerSqliteStats().then(() => {
+      if (alive) bumpSqliteCount();
+    });
     return () => {
       alive = false;
     };
@@ -468,9 +473,12 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       <p
         className="text-muted"
         style={{ fontSize: 12 }}
-        title="La taille affichée est celle de la mémoire (LRU 2000). IndexedDB conserve les réponses sans expiration et les relit au besoin. Chaque entrée dépend de l'endpoint, des cotes, des vitesses, du filtre temporel et de la position : un autre réglage utilise d'autres clés."
+        title="Mémoire (LRU 2000) et IndexedDB accélèrent l'accès. Le lancement avec python run_web.py ajoute une base SQLite sur disque, indépendante des données du navigateur. Les entrées dépendent de l'endpoint, des cotes, des vitesses, du filtre temporel et de la position."
       >
-        Cache Explorer : {lichessCacheMemorySize()} position(s) en mémoire — IndexedDB conserve le cache durable.
+        Explorer : {lichessCacheMemorySize()} en mémoire ·{' '}
+        {explorerSqliteStatus().available
+          ? `SQLite locale ${explorerSqliteStatus().entries} position(s), ${explorerSqliteStatus().engineEvaluations} évaluations moteur`
+          : 'IndexedDB navigateur'}
       </p>
       {!lichessPersistHealthy() && (
         <p
