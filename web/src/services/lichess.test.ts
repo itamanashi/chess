@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ELO_TARGET_OPTIONS } from '../types/chess';
-import { fetchLichessMoves, hasLichessCache } from './lichess';
+import {
+  fetchLichessMoves,
+  fetchLichessMovesWithCacheStatus,
+  hasLichessCache,
+} from './lichess';
 import { createFakeIndexedDB } from '../storage/idbFake';
 
 /**
@@ -115,6 +119,19 @@ describe('single-flight (audit A10)', () => {
   });
 });
 
+describe('source du cache', () => {
+  it('distingue réseau et mémoire sans changer la réponse API', async () => {
+    const fetchMock = stubOk();
+    const fen = fenN(14);
+    const network = await fetchLichessMovesWithCacheStatus(fen);
+    expect(network).toMatchObject({ source: 'network', data: { white: 10 } });
+    const memory = await fetchLichessMovesWithCacheStatus(fen);
+    expect(memory).toMatchObject({ source: 'memory', data: network.data });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(fetchLichessMoves(fen)).resolves.toEqual(network.data);
+  });
+});
+
 describe('retry/backoff (audit A10)', () => {
   it('retries 429 then succeeds (Retry-After honored without stalling the test)', async () => {
     const mock = vi.fn(async () => new Response('x', { status: 429 }));
@@ -208,6 +225,18 @@ describe('persistance IndexedDB (durable, sans plafond)', () => {
     // Flushes périodiques (25/50) déjà passés + reliquat manuel : tout est là.
     expect(await lichess.flushLichessPersist()).toBe(true);
     expect(await db.idbCount()).toBe(60);
+  });
+
+  it('signale une panne de lecture IndexedDB et continue via le réseau', async () => {
+    const { fake } = createFakeIndexedDB({ failOpen: true });
+    vi.stubGlobal('indexedDB', fake);
+    const { lichess } = await freshLichess();
+    await lichess.explorerCacheReady();
+    expect(lichess.lichessPersistHealthy()).toBe(false);
+    stubOk();
+    const result = await lichess.fetchLichessMovesWithCacheStatus(fenN(51), undefined, 'masters');
+    expect(result.source).toBe('network');
+    expect(lichess.lichessPersistHealthy()).toBe(false);
   });
 
   it('IDB failure degrades to memory-only without throwing', async () => {
@@ -306,8 +335,9 @@ describe('persistance IndexedDB (durable, sans plafond)', () => {
       { key: legacyKey, data: { white: 12, draws: 0, black: 0, moves: [] }, savedAt: 1 },
     ]);
     const fetchMock = stubOk();
-    const res = await lichess.fetchLichessMoves(fullFen, undefined, 'masters');
-    expect(res.white).toBe(12);
+    const result = await lichess.fetchLichessMovesWithCacheStatus(fullFen, undefined, 'masters');
+    expect(result.source).toBe('indexeddb');
+    expect(result.data.white).toBe(12);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(lichess.hasLichessCache(fullFen, 'masters')).toBe(true);
   });
@@ -342,5 +372,33 @@ describe('persistance IndexedDB (durable, sans plafond)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(store.has('lichess_explorer_cache_v2')).toBe(false);
     expect(await db.idbCount()).toBe(1);
+  });
+
+  it('migration en panne : conserve le blob et réutilise ses données en mémoire', async () => {
+    const seedFen = fenN(81);
+    const seedKey = `masters:all:blitz,rapid,classical::${seedFen}`;
+    const store = new Map<string, string>([
+      ['lichess_explorer_cache_v2', JSON.stringify({
+        [seedKey]: { data: { white: 43, draws: 1, black: 2, moves: [] }, savedAt: Date.now() },
+      })],
+    ]);
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => { store.set(key, value); },
+      removeItem: (key: string) => { store.delete(key); },
+    });
+    const { fake } = createFakeIndexedDB({ failPuts: true });
+    vi.stubGlobal('indexedDB', fake);
+    const fetchMock = vi.fn(async () => {
+      throw new Error('network forbidden');
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { lichess } = await freshLichess();
+    await lichess.explorerCacheReady();
+    const result = await lichess.fetchLichessMovesWithCacheStatus(seedFen, undefined, 'masters');
+    expect(result).toMatchObject({ source: 'memory', data: { white: 43 } });
+    expect(store.has('lichess_explorer_cache_v2')).toBe(true);
+    expect(lichess.lichessPersistHealthy()).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

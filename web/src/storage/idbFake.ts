@@ -96,6 +96,13 @@ export function createFakeIndexedDB(opts: FakeIdbOptions = {}): {
             }
           } catch (e) {
             asyncErr(req, e);
+            if (tx) {
+              queueMicrotask(() => {
+                tx['error'] = e;
+                (tx['onerror'] as ((ev: unknown) => void) | null)?.({ target: tx });
+                (tx['onabort'] as ((ev: unknown) => void) | null)?.({ target: tx });
+              });
+            }
           }
         });
         return req;
@@ -158,6 +165,7 @@ export function createFakeIndexedDB(opts: FakeIdbOptions = {}): {
                 oncomplete: null,
                 onerror: null,
                 onabort: null,
+                error: null,
               };
               return tx;
             },

@@ -17,7 +17,12 @@ import {
   isHigherHeapItem,
   type AutoGenNode,
 } from './autoRepertoire';
-import { fetchLichessMoves, flushLichessPersist, hasLichessCache } from './lichess';
+import {
+  fetchLichessMoves,
+  fetchLichessMovesWithCacheStatus,
+  flushLichessPersist,
+  hasLichessCache,
+} from './lichess';
 import { Chess } from 'chess.js';
 import { computeLineValues, type LineValueNode } from '../utils/lineValue';
 import { INITIAL_FEN, normalizeFen } from '../utils/repertoire';
@@ -25,17 +30,23 @@ import type { EngineMove, LichessMove, RepertoireMove, RepertoireRoot } from '..
 
 vi.mock('./lichess', () => ({
   fetchLichessMoves: vi.fn(),
+  fetchLichessMovesWithCacheStatus: vi.fn(),
   hasLichessCache: vi.fn(() => false),
   flushLichessPersist: vi.fn(async () => true),
   explorerCacheReady: vi.fn(async () => {}),
 }));
 
 const mockFetch = vi.mocked(fetchLichessMoves);
+const mockFetchWithCacheStatus = vi.mocked(fetchLichessMovesWithCacheStatus);
 const mockHasCache = vi.mocked(hasLichessCache);
 
 beforeEach(() => {
   vi.resetAllMocks();
   mockHasCache.mockReturnValue(false);
+  mockFetchWithCacheStatus.mockImplementation(async (...args) => ({
+    data: await mockFetch(...args),
+    source: mockHasCache(args[0], args[2], args[3], args[4], args[5]?.since) ? 'memory' : 'network',
+  }));
 });
 
 function lichessMove(san: string, games: number, uci = 'e2e4'): LichessMove {
@@ -616,6 +627,19 @@ describe('anti-freeze (budget + yield)', () => {
     expect(vi.mocked(flushLichessPersist)).toHaveBeenCalled();
   });
 
+  it('compte les hits IndexedDB comme cache, pas comme requêtes API', async () => {
+    mockFetchWithCacheStatus.mockResolvedValueOnce({
+      data: { white: 1, draws: 0, black: 0, moves: [] },
+      source: 'indexeddb',
+    });
+    const { stats } = await generateAutoRepertoire(START, {
+      maxDepth: 1, maxPositions: 1, gapMs: 0, pruneMinLineValue: 0,
+    });
+    expect(stats.positionsInterrogees).toBe(1);
+    expect(stats.cached).toBe(1);
+    expect(stats.api).toBe(0);
+  });
+
   it('arrêt pendant un run 100 % cache → partiel, completed=false', async () => {    // Coups LÉGAUX générés depuis chaque FEN : l'arbre reste alimenté
     // (profondeur 12, 2 branches) donc le run dure assez pour que
     // l'arrêt à 20 ms l'interrompe vraiment.
@@ -982,4 +1006,3 @@ describe('correctifs audit — probabilité d’atteinte, transpositions, quiesc
     expect(warm.stats.cached).toBeGreaterThan(0);
   });
 });
-

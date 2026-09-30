@@ -98,8 +98,18 @@ export function idbGet(key: string): Promise<ExplorerCacheRecord | undefined> {
 /** Écriture incrémentale (flush des seules clés modifiées). */
 export function idbPutMany(records: ExplorerCacheRecord[]): Promise<void> {
   if (records.length === 0) return Promise.resolve();
-  return withStore('readwrite', async (store) => {
-    await Promise.all(records.map((rec) => promisify(store.put(rec))));
+  return openDb().then(async (db) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const committed = new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error('Transaction IndexedDB échouée.'));
+      tx.onabort = () => reject(tx.error ?? new Error('Transaction IndexedDB annulée.'));
+    });
+    await Promise.all([
+      Promise.all(records.map((rec) => promisify(store.put(rec)))),
+      committed,
+    ]);
   });
 }
 
