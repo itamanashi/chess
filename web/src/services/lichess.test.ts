@@ -37,6 +37,7 @@ function lastUrl(mock: ReturnType<typeof vi.fn>): string {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('masters temporal filter (audit A7)', () => {
@@ -283,6 +284,28 @@ describe('persistance IndexedDB (durable, sans plafond)', () => {
     const res = await second.lichess.fetchLichessMoves(fenN(71), undefined, 'masters');
     expect(res.white).toBe(10);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('relit une réponse depuis SQLite locale avant de consulter Lichess', async () => {
+    const { fake } = createFakeIndexedDB();
+    vi.stubGlobal('indexedDB', fake);
+    vi.stubEnv('VITE_SQLITE_CACHE_ENABLED', 'true');
+    const record = { white: 31, draws: 12, black: 8, moves: [] };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/explorer-cache/entry?')) {
+        return new Response(JSON.stringify({ record: { data: record, savedAt: 123 } }), { status: 200 });
+      }
+      throw new Error('Lichess ne doit pas être interrogé si SQLite a la position.');
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { lichess } = await freshLichess();
+    await lichess.explorerCacheReady();
+
+    const result = await lichess.fetchLichessMovesWithCacheStatus(fenN(73), undefined, 'masters');
+
+    expect(result.source).toBe('sqlite');
+    expect(result.data.white).toBe(31);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('normalisation 4-champs : compteurs et EP fantôme partagent une entrée', async () => {

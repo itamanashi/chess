@@ -17,6 +17,11 @@ import {
   idbPutMany,
   type ExplorerCacheRecord,
 } from '../storage/explorerCacheDb';
+import {
+  backupExplorerSqliteRecords,
+  getExplorerSqliteRecord,
+  putExplorerSqliteRecord,
+} from '../storage/explorerSqlite';
 import { tokenStore } from '../storage/preferences';
 import {
   LICHESS_AUTH_REQUIRED,
@@ -32,10 +37,10 @@ import {
  * une position revisitée en boucle pouvait sauter pendant qu'un one-shot
  * restait). `get()` rafraîchit la récence.
  *
- * Durabilité : chaque appel API est conservé INDÉFINIMENT dans IndexedDB
- * (quota navigateur : Go, pas Mo — aucun plafond, aucune expiration). La
- * LRU mémoire (2000) reste le chemin rapide ; une entrée évincée de la
- * mémoire est relue depuis IndexedDB avant tout appel réseau (read-through).
+ * Durabilité : les résultats du lancement local sont persistés dans SQLite
+ * côté application et répliqués dans IndexedDB côté navigateur. La LRU
+ * mémoire (2000) et IndexedDB restent les chemins rapides; vider les données
+ * du site ne supprime donc pas la base SQLite locale.
  *
  * CLÉ NORMALISÉE (4 champs FEN, comme `db_cache.py`) : les compteurs
  * demi-coup/coup et l'EP fantôme ne changent pas la position — deux FEN ne
@@ -47,7 +52,7 @@ import {
  * COORDONNÉE AVEC LE CACHE PYTHON : Non. Ce cache navigateur est indépendant
  * du db_cache.py SQLite. Les clés ne sont pas compatibles entre les deux environnements.
  * - db_cache.py: pos_key() sur 4 champs FEN (python-chess behavior)
- * - lichess.ts: mémoire LRU + IndexedDB SANS expiration, clés incluant
+ * - lichess.ts: mémoire LRU + IndexedDB + SQLite locale, clés incluant
  *   db/ratings/speeds/since paramètres.
  * Rate limit 25/min : la logique backoff/retry est contenue dans fetchWithRetry.
  * Ne pas supposer que les entrées en cache couvrent les requêtes Python.
@@ -66,7 +71,7 @@ let cacheReadFailureLogged = false;
 
 export interface LichessMovesCacheResult {
   data: LichessApiResponse;
-  source: 'memory' | 'indexeddb' | 'network';
+  source: 'memory' | 'indexeddb' | 'sqlite' | 'network';
   /** Timestamp of the most recent HTTP attempt; used to pace retries safely. */
   networkStartedAtMs?: number;
 }
@@ -164,6 +169,15 @@ async function preloadExplorerCache(): Promise<void> {
       CACHE_LICHESS.set(key, { data: rec.data, savedAt: rec.savedAt });
     }
   }
+  const recordsToBackUp = new Map<string, ExplorerCacheRecord>();
+  for (const rec of all) {
+    const key = canonicalExplorerKey(rec.key) ?? rec.key;
+    const existing = recordsToBackUp.get(key);
+    if (!existing || rec.savedAt >= existing.savedAt) {
+      recordsToBackUp.set(key, { key, data: rec.data, savedAt: rec.savedAt });
+    }
+  }
+  await backupExplorerSqliteRecords([...recordsToBackUp.values()]);
   if (rewrites.length > 0) {
     try {
       await idbPutMany(rewrites);
@@ -397,19 +411,32 @@ export async function fetchLichessMovesWithCacheStatus(
     markCacheReadFailed(err);
     /* IDB indisponible : on passe au réseau */
   }
+  const sqliteRecord = await getExplorerSqliteRecord(cacheKey, opts?.signal);
+  if (sqliteRecord) {
+    CACHE_LICHESS.set(cacheKey, { data: sqliteRecord.data, savedAt: sqliteRecord.savedAt });
+    try {
+      await idbPutMany([{ key: cacheKey, ...sqliteRecord }]);
+    } catch (err) {
+      persistHealthy = false;
+      warn('lichess:idb-mirror', err);
+    }
+    return { data: sqliteRecord.data, source: 'sqlite' };
+  }
   // Single-flight : une clé en vol = une seule requête partagée.
   const flying = INFLIGHT.get(cacheKey);
   if (flying) {
     return flying;
   }
   const p = fetchWithRetry(fen, token, db, ratings, speeds, opts).then(
-    ({ data, lastRequestStartedAtMs }) => {
+    async ({ data, lastRequestStartedAtMs }) => {
       // Tout succès entre au cache, y compris moves:[] : un 200 vide est
       // une réponse autoritaire ("aucune partie"), pas une erreur (seules
       // les erreurs sont exclues, comme db_cache.py). Ne pas le mettre en
       // cache re-demanderait la position à chaque render (budget 25/min).
-      // Conservé indéfiniment : mémoire LRU 2000 + IndexedDB sans plafond.
-      CACHE_LICHESS.set(cacheKey, { data, savedAt: Date.now() });
+      // Conservé indéfiniment : mémoire LRU 2000 + IndexedDB et SQLite.
+      const savedAt = Date.now();
+      CACHE_LICHESS.set(cacheKey, { data, savedAt });
+      await putExplorerSqliteRecord(cacheKey, data, savedAt);
       dirtyKeys.add(cacheKey);
       markDirtyPersist();
       insertsSinceFlush++;

@@ -11,6 +11,9 @@ export default defineConfig({
     // tourne déjà → le garder, pas en relancer un).
     port: 5173,
     strictPort: true,
+    proxy: {
+      '/api/explorer-cache': 'http://127.0.0.1:8765',
+    },
     // Isolation cross-origin REQUISE par le Stockfish 19 threadé
     // (`public/sf19/`, SharedArrayBuffer) : sans ces en-têtes le moteur
     // démarre mais ne répond jamais (silence total). Toute mise en prod
