@@ -1,0 +1,5 @@
+Shapes chess piece set
+
+Author: flugsio.
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/shapes
+Licensed under CC BY-SA 4.0.

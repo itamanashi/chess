@@ -1,0 +1,6 @@
+Fantasy chess piece set
+
+Author: Maurizio Monge.
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/fantasy
+Licensed under the MIT License. Source project:
+https://github.com/maurimo/chess-art

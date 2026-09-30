@@ -59,6 +59,22 @@ const STUDIO_TABS: TabDef[] = [
   { key: 'games', label: 'Mes parties', hint: "Mes parties Chess.com : historique, navigation et statistiques d'ouvertures", shortcut: '6', Icon: History },
 ];
 
+const PIECE_PREVIEW: Array<'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn'> = [
+  'king',
+  'queen',
+  'knight',
+  'rook',
+  'bishop',
+  'pawn',
+];
+const PIECE_SKINS: Array<{ id: PieceSkin; label: string }> = [
+  { id: 'cburnett', label: 'Classique' },
+  { id: 'chessnut', label: 'Gravure' },
+  { id: 'merida', label: 'Merida' },
+  { id: 'fantasy', label: 'Fantasy' },
+  { id: 'shapes', label: 'Formes' },
+];
+
 /** Compteur compact de pastille (12 345 → « 12,3 k »). */
 function compactCount(n: number): string {
   if (n < 1000) return n.toLocaleString('fr-FR');
@@ -228,17 +244,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      <label className="side-piece-skin">
-        <span className="form-label">Style des pièces</span>
-        <select
-          className="text-input"
-          value={pieceSkin}
-          onChange={(event) => onPieceSkinChange(event.currentTarget.value === 'unicode' ? 'unicode' : 'cburnett')}
-        >
-          <option value="cburnett">Classique</option>
-          <option value="unicode">Symboles</option>
-        </select>
-      </label>
+      <fieldset className="side-piece-skin">
+        <legend className="form-label">Style des pièces</legend>
+        <div className="piece-skin-options">
+          {PIECE_SKINS.map(({ id, label }) => (
+            <label key={id} className={`piece-skin-option ${pieceSkin === id ? 'selected' : ''}`}>
+              <input
+                type="radio"
+                name="piece-skin"
+                value={id}
+                checked={pieceSkin === id}
+                onChange={() => onPieceSkinChange(id)}
+              />
+              <span className="piece-skin-preview cg-wrap" data-piece-skin={id} aria-hidden="true">
+                {PIECE_PREVIEW.map((type, index) => (
+                  <span key={type} className={`piece-skin-preview-square ${index % 2 === 0 ? 'is-light' : 'is-dark'}`}>
+                    {React.createElement('piece', { className: `${index < 3 ? 'white' : 'black'} ${type}` })}
+                  </span>
+                ))}
+              </span>
+              <span className="piece-skin-name">{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {!accountOpen ? (
         chessUser ? (

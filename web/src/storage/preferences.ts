@@ -164,10 +164,10 @@ export function subscribeChesscomUser(cb: () => void): () => void {
 }
 
 export type SuggestionSource = 'advice' | 'engine' | 'users';
-export type PieceSkin = 'cburnett' | 'unicode';
+export type PieceSkin = 'cburnett' | 'chessnut' | 'merida' | 'fantasy' | 'shapes';
 
 const SUGGESTION_SOURCES: SuggestionSource[] = ['advice', 'engine', 'users'];
-const PIECE_SKINS: PieceSkin[] = ['cburnett', 'unicode'];
+const PIECE_SKINS: PieceSkin[] = ['cburnett', 'chessnut', 'merida', 'fantasy', 'shapes'];
 
 export const uiPrefs = {
   getEngineDepth(fallback: number | 'auto'): number | 'auto' {
@@ -205,6 +205,10 @@ export const uiPrefs = {
   getPieceSkin(): PieceSkin {
     const raw = readRaw(PIECE_SKIN_KEY);
     if (raw && (PIECE_SKINS as string[]).includes(raw)) return raw as PieceSkin;
+    if (raw === 'unicode') {
+      writeRaw(PIECE_SKIN_KEY, 'chessnut');
+      return 'chessnut';
+    }
     if (raw !== null) warn('prefs:piece-skin', prefInvalidValue(raw));
     return 'cburnett';
   },
