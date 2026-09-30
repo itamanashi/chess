@@ -2,9 +2,13 @@ import React, { useMemo } from 'react';
 import { Chess } from 'chess.js';
 import { INITIAL_FEN } from '../utils/repertoire';
 
-const GLYPHS: Record<'w' | 'b', Record<string, string>> = {
-  w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
-  b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' },
+const PIECE_CLASSES: Record<'k' | 'q' | 'r' | 'b' | 'n' | 'p', string> = {
+  k: 'king',
+  q: 'queen',
+  r: 'rook',
+  b: 'bishop',
+  n: 'knight',
+  p: 'pawn',
 };
 
 /**
@@ -28,22 +32,20 @@ interface MiniBoardProps {
 }
 
 /**
- * Mini-échiquier statique (glyphes Unicode, sans Chessground) pour les
- * aperçus contextuels. Léger : aucun moteur, aucun état.
+ * Mini-échiquier statique avec pièces Chessground, sans instance Chessground.
  */
 export const MiniBoard: React.FC<MiniBoardProps> = ({ fen, orientation = 'w' }) => {
   const rows = useMemo(() => {
     try {
       const board = new Chess(fen).board(); // board[0] = rangée 8
-      const grid: Array<{ glyph: string; mine: boolean; light: boolean }> = [];
+      const grid: Array<{ pieceClass: string; light: boolean }> = [];
       for (let r = 0; r < 8; r++) {
         for (let f = 0; f < 8; f++) {
           const rankIdx = orientation === 'w' ? 7 - r : r;
           const fileIdx = orientation === 'w' ? f : 7 - f;
           const sq = board[7 - rankIdx][fileIdx];
           grid.push({
-            glyph: sq ? GLYPHS[sq.color][sq.type] : '',
-            mine: sq?.color === 'w',
+            pieceClass: sq ? `${sq.color === 'w' ? 'white' : 'black'} ${PIECE_CLASSES[sq.type]}` : '',
             light: (rankIdx + fileIdx) % 2 === 1,
           });
         }
@@ -56,14 +58,11 @@ export const MiniBoard: React.FC<MiniBoardProps> = ({ fen, orientation = 'w' }) 
 
   if (!rows) return null;
   return (
-    <div className="miniboard" role="img" aria-label={`Position : ${fen}`}>
+    <div className="miniboard cg-wrap" role="img" aria-label={`Position : ${fen}`}>
       {rows.map((sq, i) => (
-        // Couleur du glyphe = camp de la pièce (lisible sur case claire/sombre).
         // eslint-disable-next-line react/no-array-index-key
         <span key={i} className={`miniboard-sq ${sq.light ? 'is-light' : 'is-dark'}`}>
-          <span className={sq.mine ? 'is-piece-w' : 'is-piece-b'} aria-hidden="true">
-            {sq.glyph}
-          </span>
+          {sq.pieceClass && React.createElement('piece', { className: sq.pieceClass, 'aria-hidden': true })}
         </span>
       ))}
     </div>
