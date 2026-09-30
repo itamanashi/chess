@@ -139,7 +139,46 @@ button.side-brand:hover { background: var(--bg-raised); }
 .side-spacer { flex: 1; min-height: var(--sp-2); }
 .side-actions { display: flex; gap: var(--sp-1); }
 .side-actions .side-action-btn { flex: 1; }
-.side-piece-skin { display: flex; flex-direction: column; gap: var(--sp-1); }
+.side-piece-skin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.piece-skin-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.piece-skin-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color var(--dur) ease, border-color var(--dur) ease, color var(--dur) ease;
+}
+.piece-skin-option:hover { border-color: var(--border-strong); color: var(--text); }
+.piece-skin-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+.piece-skin-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.piece-skin-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.piece-skin-name { font-size: var(--fs-small); line-height: 1.2; text-align: center; }
 
 .side-profile-chip {
   display: flex;

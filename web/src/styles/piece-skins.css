@@ -1,41 +1,132 @@
-.app-layout[data-piece-skin="unicode"] .cg-wrap cg-board piece,
-.app-layout[data-piece-skin="unicode"] .miniboard piece {
-  background-image: none !important;
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.king { background-image: url("/piece-skins/chessnut/wK.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.queen { background-image: url("/piece-skins/chessnut/wQ.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.rook { background-image: url("/piece-skins/chessnut/wR.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.bishop { background-image: url("/piece-skins/chessnut/wB.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.knight { background-image: url("/piece-skins/chessnut/wN.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.white.pawn { background-image: url("/piece-skins/chessnut/wP.svg"); }
+
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.king { background-image: url("/piece-skins/chessnut/bK.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.queen { background-image: url("/piece-skins/chessnut/bQ.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.rook { background-image: url("/piece-skins/chessnut/bR.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.bishop { background-image: url("/piece-skins/chessnut/bB.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.knight { background-image: url("/piece-skins/chessnut/bN.svg"); }
+.app-layout[data-piece-skin="chessnut"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="chessnut"] piece.black.pawn { background-image: url("/piece-skins/chessnut/bP.svg"); }
+
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.king { background-image: url("/piece-skins/merida/wK.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.queen { background-image: url("/piece-skins/merida/wQ.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.rook { background-image: url("/piece-skins/merida/wR.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.bishop { background-image: url("/piece-skins/merida/wB.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.knight { background-image: url("/piece-skins/merida/wN.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="merida"] piece.white.pawn { background-image: url("/piece-skins/merida/wP.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.king { background-image: url("/piece-skins/merida/bK.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.queen { background-image: url("/piece-skins/merida/bQ.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.rook { background-image: url("/piece-skins/merida/bR.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.bishop { background-image: url("/piece-skins/merida/bB.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.knight { background-image: url("/piece-skins/merida/bN.svg"); }
+.app-layout[data-piece-skin="merida"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="merida"] piece.black.pawn { background-image: url("/piece-skins/merida/bP.svg"); }
+
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.king { background-image: url("/piece-skins/fantasy/wK.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.queen { background-image: url("/piece-skins/fantasy/wQ.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.rook { background-image: url("/piece-skins/fantasy/wR.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.bishop { background-image: url("/piece-skins/fantasy/wB.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.knight { background-image: url("/piece-skins/fantasy/wN.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.white.pawn { background-image: url("/piece-skins/fantasy/wP.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.king { background-image: url("/piece-skins/fantasy/bK.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.queen { background-image: url("/piece-skins/fantasy/bQ.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.rook { background-image: url("/piece-skins/fantasy/bR.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.bishop { background-image: url("/piece-skins/fantasy/bB.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.knight { background-image: url("/piece-skins/fantasy/bN.svg"); }
+.app-layout[data-piece-skin="fantasy"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="fantasy"] piece.black.pawn { background-image: url("/piece-skins/fantasy/bP.svg"); }
+
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.king { background-image: url("/piece-skins/shapes/wK.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.queen { background-image: url("/piece-skins/shapes/wQ.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.rook { background-image: url("/piece-skins/shapes/wR.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.bishop { background-image: url("/piece-skins/shapes/wB.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.knight { background-image: url("/piece-skins/shapes/wN.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="shapes"] piece.white.pawn { background-image: url("/piece-skins/shapes/wP.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.king { background-image: url("/piece-skins/shapes/bK.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.queen { background-image: url("/piece-skins/shapes/bQ.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.rook { background-image: url("/piece-skins/shapes/bR.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.bishop { background-image: url("/piece-skins/shapes/bB.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.knight { background-image: url("/piece-skins/shapes/bN.svg"); }
+.app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="shapes"] piece.black.pawn { background-image: url("/piece-skins/shapes/bP.svg"); }
+
+.piece-skin-preview.cg-wrap {
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 84px);
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+}
+
+.piece-skin-preview-square {
   display: grid;
   place-items: center;
-  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
-  line-height: 1;
+  min-width: 0;
+  min-height: 0;
 }
+.piece-skin-preview-square.is-light { background: var(--board-light); }
+.piece-skin-preview-square.is-dark { background: var(--board-dark); }
+.piece-skin-preview-square.is-light { background: var(--board-light); }
+.piece-skin-preview-square.is-dark { background: var(--board-dark); }
 
-.app-layout[data-piece-skin="unicode"] .cg-wrap cg-board piece {
-  font-size: clamp(18px, 8vw, 56px);
+.piece-skin-preview.cg-wrap piece {
+  position: static;
+  width: 88%;
+  height: 88%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  will-change: auto;
 }
-
-.app-layout[data-piece-skin="unicode"] .miniboard piece {
-  font-size: 19px;
-}
-
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.white::before {
-  color: #fff;
-  -webkit-text-stroke: 0.7px #332d25;
-  text-shadow: 0 1px 1px #332d25;
-}
-
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black::before {
-  color: #332d25;
-  -webkit-text-stroke: 0.2px #f2eee6;
-}
-
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.king::before { content: "♔"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.queen::before { content: "♕"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.rook::before { content: "♖"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.bishop::before { content: "♗"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.knight::before { content: "♘"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.pawn::before { content: "♙"; }
-
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.king::before { content: "♚"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.queen::before { content: "♛"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.rook::before { content: "♜"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.bishop::before { content: "♝"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.knight::before { content: "♞"; }
-.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.pawn::before { content: "♟"; }

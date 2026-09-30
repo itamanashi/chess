@@ -1,0 +1,6 @@
+Merida chess piece set
+
+Author: Armando Hernandez Marroquin.
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/merida
+Licensed under GPLv2+. See the Lichess COPYING.md file:
+https://github.com/lichess-org/lila/blob/master/COPYING.md
