@@ -578,11 +578,20 @@
   border-radius: var(--r-control);
   overflow: hidden;
 }
-.miniboard-sq { display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1; }
+.miniboard.cg-wrap { display: grid; position: relative; }
+.miniboard-sq { display: flex; align-items: center; justify-content: center; }
 .miniboard-sq.is-light { background: var(--board-light); }
 .miniboard-sq.is-dark { background: var(--board-dark); }
-.miniboard-sq .is-piece-w { color: var(--piece-white); text-shadow: 1px 0 0 #2c261c, -1px 0 0 #2c261c, 0 1px 0 #2c261c, 0 -1px 0 #2c261c; }
-.miniboard-sq .is-piece-b { color: var(--piece-black); }
+.miniboard.cg-wrap piece {
+  position: static;
+  display: block;
+  width: 82%;
+  height: 82%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  will-change: auto;
+}
 /* Performance par ouverture (nom + ECO + total, coups, barre V/N/D). */
 .perf-rows { display: flex; flex-direction: column; gap: var(--sp-3); }
 .perf-row { display: flex; flex-direction: column; gap: var(--sp-1); }

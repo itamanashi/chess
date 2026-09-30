@@ -1,0 +1,41 @@
+.app-layout[data-piece-skin="unicode"] .cg-wrap cg-board piece,
+.app-layout[data-piece-skin="unicode"] .miniboard piece {
+  background-image: none !important;
+  display: grid;
+  place-items: center;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  line-height: 1;
+}
+
+.app-layout[data-piece-skin="unicode"] .cg-wrap cg-board piece {
+  font-size: clamp(18px, 8vw, 56px);
+}
+
+.app-layout[data-piece-skin="unicode"] .miniboard piece {
+  font-size: 19px;
+}
+
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.white::before {
+  color: #fff;
+  -webkit-text-stroke: 0.7px #332d25;
+  text-shadow: 0 1px 1px #332d25;
+}
+
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black::before {
+  color: #332d25;
+  -webkit-text-stroke: 0.2px #f2eee6;
+}
+
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.king::before { content: "♔"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.queen::before { content: "♕"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.rook::before { content: "♖"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.bishop::before { content: "♗"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.knight::before { content: "♘"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.pawn::before { content: "♙"; }
+
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.king::before { content: "♚"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.queen::before { content: "♛"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.rook::before { content: "♜"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.bishop::before { content: "♝"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.knight::before { content: "♞"; }
+.app-layout[data-piece-skin="unicode"] .cg-wrap piece.black.pawn::before { content: "♟"; }

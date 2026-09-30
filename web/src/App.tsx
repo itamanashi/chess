@@ -40,6 +40,7 @@ import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, ChevronsLeft, Che
 import { Chessboard } from './components/Chessboard';
 import { EvalBar } from './components/EvalBar';
 import { Sidebar } from './components/Sidebar';
+import { uiPrefs, type PieceSkin } from './storage/preferences';
 import { useToast } from './hooks/useToast';
 import {
   TOAST_COPY_UNAVAILABLE,
@@ -63,6 +64,7 @@ export const App: React.FC = () => {
   const [appView, setAppView] = useState<'library' | 'studio'>('library');
   const [activeStudioTab, setActiveStudioTab] = useState<StudioTab>('builder');
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
+  const [pieceSkin, setPieceSkin] = useState<PieceSkin>(() => uiPrefs.getPieceSkin());
   const [isMainLinePlaying, setIsMainLinePlaying] = useState(false);
   // Surcouche tactique animée (attaques, défenses, clouages, fourchettes).
   const [showTactics, setShowTactics] = useState(false);
@@ -115,6 +117,10 @@ export const App: React.FC = () => {
     : preview.displayLastMove;
   // Service UI uniforme : feedback non bloquant (remplace les alert()).
   const toast = useToast();
+  const handlePieceSkinChange = (skin: PieceSkin): void => {
+    setPieceSkin(skin);
+    uiPrefs.setPieceSkin(skin);
+  };
 
   // --- TIMERS ASYNC SUIVIS (annulation systématique) ---
   // Réponse adverse du trainer (380 ms) : un seul en vol, invalidé par le
@@ -881,7 +887,7 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="app-layout">
+    <div className="app-layout" data-piece-skin={pieceSkin}>
       {/* Barre latérale : navigation toujours visible (fini le bandeau haut) */}
       <Sidebar
         activeView={appView}
@@ -898,6 +904,8 @@ export const App: React.FC = () => {
         onExportJson={handleExportJson}
         onExportPgn={handleExportPgn}
         account={chessAccount}
+        pieceSkin={pieceSkin}
+        onPieceSkinChange={handlePieceSkinChange}
       />
 
       <div className="app-main">

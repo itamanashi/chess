@@ -5,6 +5,7 @@ import './styles/controls.css'
 import './styles/layout.css'
 import './styles/library.css'
 import './styles/studio.css'
+import './styles/piece-skins.css'
 import App from './App.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 

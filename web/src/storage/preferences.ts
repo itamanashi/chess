@@ -12,6 +12,7 @@ const TOKEN_KEY = 'lichess_token';
 const ENGINE_DEPTH_KEY = 'chess_local_engine_depth';
 const SUGGESTION_SOURCE_KEY = 'chess_suggestion_source';
 const AUTOPLAY_KEY = 'chess_auto_play_opponent';
+const PIECE_SKIN_KEY = 'chess_piece_skin';
 const CHESSCOM_USER_KEY = 'chesscom_username';
 const CHESSCOM_AVATAR_KEY = 'chesscom_avatar';
 
@@ -163,8 +164,10 @@ export function subscribeChesscomUser(cb: () => void): () => void {
 }
 
 export type SuggestionSource = 'advice' | 'engine' | 'users';
+export type PieceSkin = 'cburnett' | 'unicode';
 
 const SUGGESTION_SOURCES: SuggestionSource[] = ['advice', 'engine', 'users'];
+const PIECE_SKINS: PieceSkin[] = ['cburnett', 'unicode'];
 
 export const uiPrefs = {
   getEngineDepth(fallback: number | 'auto'): number | 'auto' {
@@ -197,5 +200,15 @@ export const uiPrefs = {
   },
   setAutoPlayOpponent(enabled: boolean): void {
     writeRaw(AUTOPLAY_KEY, String(enabled));
+  },
+
+  getPieceSkin(): PieceSkin {
+    const raw = readRaw(PIECE_SKIN_KEY);
+    if (raw && (PIECE_SKINS as string[]).includes(raw)) return raw as PieceSkin;
+    if (raw !== null) warn('prefs:piece-skin', prefInvalidValue(raw));
+    return 'cburnett';
+  },
+  setPieceSkin(skin: PieceSkin): void {
+    writeRaw(PIECE_SKIN_KEY, skin);
   },
 };

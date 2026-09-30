@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { RepertoireItem, StudioTab } from '../types/chess';
 import { eloTargetLabel } from '../i18n';
 import type { ChesscomAccount } from '../hooks/useChesscomAccount';
+import type { PieceSkin } from '../storage/preferences';
 import {
   BookOpen,
   Download,
@@ -36,6 +37,8 @@ interface SidebarProps {
   onExportPgn?: () => void;
   /** Compte Chess.com partagé (carte compte en bas de sidebar). */
   account: ChesscomAccount;
+  pieceSkin: PieceSkin;
+  onPieceSkinChange: (skin: PieceSkin) => void;
 }
 
 interface TabDef {
@@ -81,6 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onExportJson,
   onExportPgn,
   account,
+  pieceSkin,
+  onPieceSkinChange,
 }) => {
   const inStudio = activeView === 'studio';
   // Carte compte dépliée au clic sur le profil (sinon chip compact).
@@ -222,6 +227,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
       )}
+
+      <label className="side-piece-skin">
+        <span className="form-label">Style des pièces</span>
+        <select
+          className="text-input"
+          value={pieceSkin}
+          onChange={(event) => onPieceSkinChange(event.currentTarget.value === 'unicode' ? 'unicode' : 'cburnett')}
+        >
+          <option value="cburnett">Classique</option>
+          <option value="unicode">Symboles</option>
+        </select>
+      </label>
 
       {!accountOpen ? (
         chessUser ? (

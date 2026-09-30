@@ -139,6 +139,7 @@ button.side-brand:hover { background: var(--bg-raised); }
 .side-spacer { flex: 1; min-height: var(--sp-2); }
 .side-actions { display: flex; gap: var(--sp-1); }
 .side-actions .side-action-btn { flex: 1; }
+.side-piece-skin { display: flex; flex-direction: column; gap: var(--sp-1); }
 
 .side-profile-chip {
   display: flex;
