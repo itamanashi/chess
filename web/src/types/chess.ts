@@ -158,7 +158,7 @@ export interface LichessApiResponse {
 
 export type AppView = 'library' | 'studio';
 
-export type StudioTab = 'builder' | 'explorer' | 'tree' | 'trainer' | 'live' | 'games';
+export type StudioTab = 'builder' | 'explorer' | 'tree' | 'trainer' | 'live' | 'games' | 'analysis';
 
 export interface MoveHistoryItem {
   san: string;

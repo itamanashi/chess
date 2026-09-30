@@ -58,6 +58,7 @@ import { RepertoireGraphTree } from './components/RepertoireGraphTree';
 import { TrainerPanel } from './components/TrainerPanel';
   import { LichessLivePanel } from './components/LichessLivePanel';
   import { ChesscomPanel } from './components/ChesscomPanel';
+import { AnalysisPanel } from './components/AnalysisPanel';
 
 export const App: React.FC = () => {
   // --- VUE GLOBALE ---
@@ -103,6 +104,13 @@ export const App: React.FC = () => {
   // vert, équivalents bleus). Fusionnées aux formes du plateau, effacées
   // en fin de run (le panneau renvoie null).
   const [autoGenArrows, setAutoGenArrows] = useState<{ orig: string; dest: string; brush: string }[] | null>(null);
+  const [analysisArrows, setAnalysisArrows] = useState<{ orig: string; dest: string; brush: string }[]>([]);
+  const handleAnalysisArrows = useCallback(
+    (arrows: { orig: string; dest: string; brush: string }[] | null) => {
+      setAnalysisArrows(arrows ?? []);
+    },
+    [],
+  );
   const handleAutoEngineArrows = useCallback(
     (arrows: { orig: string; dest: string; brush: string }[] | null) => {
       setAutoGenArrows(arrows);
@@ -882,8 +890,8 @@ export const App: React.FC = () => {
     return tacticsToShapes(tacticsFiltered.report, tacticsFiltered.moved, tacticFilter);
   }, [tacticsFiltered, tacticFilter]);
   const boardShapes = useMemo(
-    () => [...(correctionShapes ?? []), ...tacticShapes, ...(autoGenArrows ?? [])],
-    [correctionShapes, tacticShapes, autoGenArrows],
+    () => [...(correctionShapes ?? []), ...tacticShapes, ...(autoGenArrows ?? []), ...analysisArrows],
+    [correctionShapes, tacticShapes, autoGenArrows, analysisArrows],
   );
 
   return (
@@ -948,10 +956,10 @@ export const App: React.FC = () => {
               </div>
             ) : (
               <Chessboard
-                fen={boardFen}
+                fen={activeStudioTab === 'analysis' ? fen : boardFen}
                 orientation={orientation}
                 onMove={executeMove}
-                lastMove={boardLastMove}
+                lastMove={activeStudioTab === 'analysis' ? timeline.lastMove : boardLastMove}
                 interactive={activeStudioTab !== 'trainer' || !isOpponentTurn}
                 shapes={boardShapes}
               />
@@ -987,7 +995,7 @@ export const App: React.FC = () => {
                 avec répertoire (masqué en mode jeux-sans-répertoire : le
                 « Hors répertoire » serait du bruit).
                 (Les mêmes états existaient éparpillés par panneau.) */}
-            {activeRepertoire && (
+            {activeRepertoire && activeStudioTab !== 'analysis' && (
             <div className="board-status-strip" role="status">
               {candidateMoves.length > 0 ? (
                 <span className="badge badge-success">
@@ -1161,6 +1169,10 @@ export const App: React.FC = () => {
                 onUpdateGameAnalysis={chessAccount.updateGameAnalysis}
                 repertoires={library.repertoires}
               />
+            )}
+
+            {activeStudioTab === 'analysis' && (
+              <AnalysisPanel currentFen={fen} onShapesChange={handleAnalysisArrows} />
             )}
           </section>
         </main>

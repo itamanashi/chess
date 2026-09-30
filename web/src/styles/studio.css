@@ -4,6 +4,38 @@
  * une carte = un bloc fonctionnel autonome.
  * ------------------------------------------------------------------ */
 
+/* --- Analyse moteur : une colonne de variantes au service du plateau --- */
+.analysis-panel { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.analysis-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.analysis-heading h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 400; }
+.analysis-position-note { color: var(--text-3); font-size: var(--fs-small); margin-top: 2px; }
+.analysis-engine-status { display: inline-flex; align-items: center; gap: var(--sp-1); color: var(--text-3); font-size: var(--fs-small); white-space: nowrap; }
+.analysis-engine-status > span { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.analysis-engine-status.ready { color: var(--success-text); }
+.analysis-engine-status.error { color: var(--danger-text); }
+.analysis-controls { display: flex; align-items: flex-end; gap: var(--sp-2); flex-wrap: wrap; padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border); }
+.analysis-control { display: flex; flex: 1 1 132px; flex-direction: column; gap: var(--sp-1); min-width: 0; color: var(--text-3); font-size: var(--fs-small); }
+.analysis-select { padding: var(--sp-1) var(--sp-2); }
+.analysis-run-btn { min-height: 36px; }
+.analysis-progress { color: var(--info-text); font-size: var(--fs-small); }
+.analysis-error { border-left: 2px solid var(--danger); color: var(--danger-text); padding-left: var(--sp-2); }
+.analysis-lines { display: flex; flex-direction: column; min-width: 0; }
+.analysis-line { display: flex; align-items: flex-start; gap: var(--sp-3); width: 100%; padding: var(--sp-3) var(--sp-2); text-align: left; color: var(--text); background: transparent; border: 0; border-top: 1px solid var(--border); cursor: pointer; }
+.analysis-line:first-child { border-top: 0; }
+.analysis-line:hover { background: var(--bg-raised); }
+.analysis-line.selected { background: var(--accent-tint); }
+.analysis-line-rank { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border: 1px solid var(--border-strong); border-radius: 50%; color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-small); }
+.analysis-line.selected .analysis-line-rank { border-color: var(--accent); color: var(--accent-text); }
+.analysis-line-content { display: flex; flex: 1; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.analysis-line-top { display: flex; align-items: baseline; gap: var(--sp-2); }
+.analysis-line-score { color: var(--accent-text); font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.analysis-line-depth { color: var(--text-3); font-family: var(--font-mono); font-size: var(--fs-small); }
+.analysis-line-pv { color: var(--text-2); font-family: var(--font-mono); font-size: var(--fs-small); line-height: 1.7; overflow-wrap: anywhere; }
+.analysis-line.selected .analysis-line-pv { color: var(--text); }
+.analysis-empty, .analysis-arrow-hint { color: var(--text-3); font-size: var(--fs-small); }
+.analysis-empty { padding: var(--sp-3) 0; max-width: 48ch; }
+.analysis-arrow-hint { border-top: 1px solid var(--border); padding-top: var(--sp-2); }
+
 /* --- Explorateur : historique + suites --- */
 .explorer-panel { display: flex; flex-direction: column; gap: var(--sp-3); }
 .moves-history-grid {
