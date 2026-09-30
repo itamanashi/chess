@@ -1,0 +1,8 @@
+Neo angle is a local presentation variant of the Shapes set.
+
+The underlying SVG artwork is Shapes by flugsio,
+licensed under CC BY-SA 4.0:
+https://github.com/flugsio/chess_shapes
+
+This project applies a contrast and scale treatment in CSS; no SVG artwork
+is redistributed under a separate name.

@@ -99,6 +99,65 @@
 .app-layout[data-piece-skin="shapes"] .cg-wrap piece.black.pawn,
 .piece-skin-preview[data-piece-skin="shapes"] piece.black.pawn { background-image: url("/piece-skins/shapes/bP.svg"); }
 
+.app-layout[data-piece-skin="neo"] .cg-wrap piece,
+.piece-skin-preview[data-piece-skin="neo"] piece {
+  filter: grayscale(1) contrast(1.2) brightness(0.96);
+}
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.king { background-image: url("/piece-skins/chessnut/wK.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.queen { background-image: url("/piece-skins/chessnut/wQ.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.rook { background-image: url("/piece-skins/chessnut/wR.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.bishop { background-image: url("/piece-skins/chessnut/wB.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.knight { background-image: url("/piece-skins/chessnut/wN.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="neo"] piece.white.pawn { background-image: url("/piece-skins/chessnut/wP.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.king { background-image: url("/piece-skins/chessnut/bK.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.queen { background-image: url("/piece-skins/chessnut/bQ.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.rook { background-image: url("/piece-skins/chessnut/bR.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.bishop { background-image: url("/piece-skins/chessnut/bB.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.knight { background-image: url("/piece-skins/chessnut/bN.svg"); }
+.app-layout[data-piece-skin="neo"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="neo"] piece.black.pawn { background-image: url("/piece-skins/chessnut/bP.svg"); }
+
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece {
+  filter: contrast(1.35) saturate(0.7);
+  background-size: 88%;
+}
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.king,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.king { background-image: url("/piece-skins/shapes/wK.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.queen,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.queen { background-image: url("/piece-skins/shapes/wQ.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.rook,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.rook { background-image: url("/piece-skins/shapes/wR.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.bishop,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.bishop { background-image: url("/piece-skins/shapes/wB.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.knight,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.knight { background-image: url("/piece-skins/shapes/wN.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.white.pawn,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.white.pawn { background-image: url("/piece-skins/shapes/wP.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.king,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.king { background-image: url("/piece-skins/shapes/bK.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.queen,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.queen { background-image: url("/piece-skins/shapes/bQ.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.rook,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.rook { background-image: url("/piece-skins/shapes/bR.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.bishop,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.bishop { background-image: url("/piece-skins/shapes/bB.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.knight,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.knight { background-image: url("/piece-skins/shapes/bN.svg"); }
+.app-layout[data-piece-skin="neo-angle"] .cg-wrap piece.black.pawn,
+.piece-skin-preview[data-piece-skin="neo-angle"] piece.black.pawn { background-image: url("/piece-skins/shapes/bP.svg"); }
+
 .piece-skin-preview.cg-wrap {
   display: grid;
   position: relative;
