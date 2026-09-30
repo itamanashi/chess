@@ -13,6 +13,7 @@ import { abortableSleep, isAbortError, warn } from '../utils/async';
 import { eloTargetLabel } from '../i18n';
 import { Chessboard } from './Chessboard';
 import { ConfirmDialog } from './ConfirmDialog';
+import { findVisibleRange } from '../utils/treeViewport';
 
 interface RepertoireGraphTreeProps {
   repertoire: RepertoireItem;
@@ -48,6 +49,17 @@ interface GNode {
   valueRealistic?: number;
   x: number;
   y: number;
+}
+
+interface GraphEntry {
+  node: GNode;
+  parent: GNode | null;
+}
+
+interface GraphIndex {
+  byDepth: Map<number, GraphEntry[]>;
+  parentByKey: Map<string, GNode | null>;
+  promising: Set<string>;
 }
 
 type WhiteMode = 'popular' | 'practical' | 'engine' | 'reward';
@@ -121,11 +133,8 @@ function buildGraph(
  */
 function moverOf(fen: string | undefined, depth: number, rootWhite: boolean): 'w' | 'b' {
   if (fen) {
-    try {
-      return new Chess(fen).turn() === 'w' ? 'b' : 'w';
-    } catch {
-      /* repli ci-dessous */
-    }
+    const turn = fen.trim().split(/\s+/, 2)[1];
+    if (turn === 'w' || turn === 'b') return turn === 'w' ? 'b' : 'w';
   }
   const firstWhite = rootWhite;
   return ((depth - 1) % 2 === 0) === firstWhite ? 'w' : 'b';
@@ -265,11 +274,13 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
   const nameAbort = useRef<AbortController | null>(null);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const panRef = useRef<{ sx: number; sy: number; cx: number; cy: number } | null>(null);
   const suppressClickRef = useRef(false);
 
   const rootChildren = repertoire.root?.children || [];
   const rootFen = repertoire.root?.fen || INITIAL_FEN;
+  const hasMoves = rootChildren.length > 0;
   const eloConfig = ELO_TARGET_OPTIONS.find((o) => o.key === repertoire.targetElo) || ELO_TARGET_OPTIONS[0];
 
   useEffect(() => {
@@ -385,6 +396,75 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
       height: Math.max(maxY + 100, 200),
     };
   }, [rootChildren, rootWhiteToMove, repertoire.color, rootFen, oneWhitePerLine, whiteMode, optimism, residual, selectedOpening]);
+
+  const graphIndex = useMemo<GraphIndex>(() => {
+    const byDepth = new Map<number, GraphEntry[]>();
+    const parentByKey = new Map<string, GNode | null>();
+    const promising = new Set<string>();
+    const index = (siblings: GNode[], parent: GNode | null): void => {
+      if (siblings.length > 1) {
+        let best = siblings[0];
+        for (const node of siblings) if (node.freq > best.freq) best = node;
+        promising.add(best.key);
+      }
+      for (const node of siblings) {
+        const depthEntries = byDepth.get(node.depth) ?? [];
+        depthEntries.push({ node, parent });
+        byDepth.set(node.depth, depthEntries);
+        parentByKey.set(node.key, parent);
+        index(node.children, node);
+      }
+    };
+    index(nodes, null);
+    for (const entries of byDepth.values()) entries.sort((a, b) => a.node.y - b.node.y);
+    return { byDepth, parentByKey, promising };
+  }, [nodes]);
+
+  useEffect(() => {
+    if (!hasMoves) return;
+    const element = viewportRef.current;
+    if (!element) return;
+    const updateSize = (): void => {
+      const { clientWidth: width, clientHeight: height } = element;
+      setViewportSize((previous) =>
+        previous.width === width && previous.height === height ? previous : { width, height },
+      );
+    };
+    updateSize();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateSize);
+      return () => window.removeEventListener('resize', updateSize);
+    }
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasMoves]);
+
+  const visibleEntries = useMemo(() => {
+    if (!viewportSize.width || !viewportSize.height) return [];
+    const padding = 120 / cam.scale;
+    const left = -cam.x / cam.scale - padding;
+    const right = (viewportSize.width - cam.x) / cam.scale + padding;
+    const top = -cam.y / cam.scale - padding;
+    const bottom = (viewportSize.height - cam.y) / cam.scale + padding;
+    const visible: GraphEntry[] = [];
+    for (const [depth, entries] of graphIndex.byDepth) {
+      const x = depth * (NODE_W + H_GAP);
+      if (x + NODE_W < left || x > right) continue;
+      const [start, end] = findVisibleRange(entries, top, bottom, (entry) => entry.node.y, NODE_H);
+      for (let i = start; i < end; i++) visible.push(entries[i]);
+    }
+    return visible;
+  }, [graphIndex, cam, viewportSize]);
+
+  const visibleEdgeNodes = useMemo(() => {
+    const edgeNodes = new Set<GNode>();
+    for (const { node } of visibleEntries) {
+      edgeNodes.add(node);
+      for (const child of node.children) edgeNodes.add(child);
+    }
+    return [...edgeNodes];
+  }, [visibleEntries]);
 
   const nodeByKey = useMemo(() => {
     const map = new Map<string, GNode>();
@@ -728,14 +808,6 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
 
   const evalShown = viewerEval && viewerEval.fen === viewerFen ? viewerEval : null;
 
-  if (rootChildren.length === 0) {
-    return (
-      <div className="empty-history">
-        Répertoire vide pour l'instant — ouvre-le avec « Étudier » et joue des coups pour le remplir.
-      </div>
-    );
-  }
-
   const displayShare = (n: GNode): { share: number; fromLichess: boolean } => {
     const ls = lichessShares.get(n.key);
     if (ls !== undefined) return { share: ls, fromLichess: true };
@@ -744,25 +816,26 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
 
   // Coup prometteur par fratrie (étoile) : fréquence locale max.
   // Calculé DANS le bloc mémorisé ci-dessous (ne dépend que de `nodes`).
-  const handleNodeClick = (key: string): void => {
+  const handleNodeClick = useCallback((key: string): void => {
     if (suppressClickRef.current) {
       suppressClickRef.current = false;
       return;
     }
     setSelectedId(key);
     setPinnedKey((prev) => (prev === key ? null : key));
-  };
+  }, []);
 
   const viewerUci = shown?.path[shown.path.length - 1];
   const viewerLastMove: [string, string] | undefined = viewerUci
     ? [viewerUci.slice(0, 2), viewerUci.slice(2, 4)]
     : undefined;
 
-  const renderEdges = (ns: GNode[], px: number, py: number): React.ReactNode[] => {
+  const renderEdges = useCallback((edgeNodes: GNode[]): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
-    for (const n of ns) {
-      const x1 = px + NODE_W;
-      const y1 = py + NODE_H / 2;
+    for (const n of edgeNodes) {
+      const parent = graphIndex.parentByKey.get(n.key);
+      const x1 = parent ? parent.x + NODE_W : 0;
+      const y1 = parent ? parent.y + NODE_H / 2 : rootPos.y + NODE_H / 2;
       const x2 = n.x;
       const y2 = n.y + NODE_H / 2;
       const mx = (x1 + x2) / 2;
@@ -777,14 +850,13 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
           markerEnd={n.transposition ? 'url(#arrow-transpo)' : 'url(#arrow)'}
         />,
       );
-      out.push(...renderEdges(n.children, n.x, n.y));
     }
     return out;
-  };
+  }, [graphIndex.parentByKey, rootPos.y]);
 
-  const renderNodes = (ns: GNode[], promising: Set<string>): React.ReactNode[] => {
+  const renderNodes = useCallback((visible: GraphEntry[], promising: Set<string>): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
-    for (const n of ns) {
+    for (const { node: n } of visible) {
       const lv = n.lineValue;
       out.push(
         <div
@@ -835,35 +907,26 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
           </div>
         </div>,
       );
-      out.push(...renderNodes(n.children, promising));
     }
     return out;
-  };
+  }, [handleNodeClick, selectedId, whiteMode]);
 
-  /**
-   * Bloc statique du graphe (nœuds + arêtes) : mémorisé car la caméra est un
-   * transform CSS du conteneur. Pan/zoom/survol/tooltip ne re-rendent plus les
-   * milliers de nœuds (mesuré : 2 s de blocage à 9000 nœuds avant ce cache).
-   */
   const graphStatic = useMemo(() => {
-    const promising = new Set<string>();
-    const mark = (ns: GNode[]): void => {
-      if (ns.length >= 2) {
-        let best = ns[0];
-        for (const s of ns) if (s.freq > best.freq) best = s;
-        promising.add(best.key);
-      }
-      for (const n of ns) mark(n.children);
-    };
-    mark(nodes);
     return {
-      edges: renderEdges(nodes, rootPos.x, rootPos.y),
-      nodeList: renderNodes(nodes, promising),
+      edges: renderEdges(visibleEdgeNodes),
+      nodeList: renderNodes(visibleEntries, graphIndex.promising),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, rootPos, selectedId, whiteMode]);
+  }, [visibleEdgeNodes, visibleEntries, graphIndex.promising, renderEdges, renderNodes]);
 
   const tipNode = hoverKey ? nodeByKey.get(hoverKey) : undefined;
+
+  if (!hasMoves) {
+    return (
+      <div className="empty-history">
+        Répertoire vide pour l'instant — ouvre-le avec « Étudier » et joue des coups pour le remplir.
+      </div>
+    );
+  }
 
   return (
     <div className="graph-wrap">
