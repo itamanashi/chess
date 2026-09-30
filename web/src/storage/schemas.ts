@@ -42,9 +42,9 @@ import {
 /** Current library schema version (stored on every item). */
 export const LIBRARY_SCHEMA_VERSION = 1;
 
-/** Guardrails: a legitimate import is far below these ceilings. */
+/** Guardrails: enough headroom for the auto-generator's 5,000 × 12 move budget. */
 export const MAX_TREE_DEPTH = 200;
-export const MAX_TREE_NODES = 20000;
+export const MAX_TREE_NODES = 100000;
 export const MAX_CHILDREN_PER_NODE = 128;
 const MAX_ERROR_DETAILS = 25;
 const MAX_FEN_LENGTH = 200;

@@ -10,7 +10,7 @@ afterEach(() => {
 
 describe('repertoire library IndexedDB persistence', () => {
   it('round-trips a library larger than the localStorage quota', async () => {
-    vi.stubGlobal('indexedDB', createFakeIndexedDB({ maxValueBytes: 10 * 1024 * 1024 }).fake);
+    vi.stubGlobal('indexedDB', createFakeIndexedDB({ maxValueBytes: 20 * 1024 * 1024 }).fake);
     const { idbLoadLibrary, idbSaveLibrary } = await import('./libraryDb');
     const makeChain = (length: number): RepertoireMove[] => {
       const nodes: RepertoireMove[] = [];
@@ -44,7 +44,7 @@ describe('repertoire library IndexedDB persistence', () => {
       root: {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         children: Array.from({ length: 128 }, (_, index) => ({
-          ...makeChain(index === 0 ? 159 : 122)[0]!,
+          ...makeChain(index === 0 ? 180 : 160)[0]!,
         })),
       },
     };
@@ -65,7 +65,7 @@ describe('repertoire library IndexedDB persistence', () => {
       }
       return total + count;
     }, 0);
-    expect(savedNodes).toBe(15653);
+    expect(savedNodes).toBe(20500);
   });
 
   it('reports a failed durable write to the caller', async () => {

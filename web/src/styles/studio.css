@@ -631,7 +631,7 @@
 .miniboard-sq { display: flex; align-items: center; justify-content: center; }
 .miniboard-sq.is-light { background: var(--board-light); }
 .miniboard-sq.is-dark { background: var(--board-dark); }
-.miniboard.cg-wrap piece {
+.miniboard.cg-wrap .cg-piece {
   position: static;
   display: block;
   width: 82%;
