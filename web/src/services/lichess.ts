@@ -67,6 +67,8 @@ let cacheReadFailureLogged = false;
 export interface LichessMovesCacheResult {
   data: LichessApiResponse;
   source: 'memory' | 'indexeddb' | 'network';
+  /** Timestamp of the most recent HTTP attempt; used to pace retries safely. */
+  networkStartedAtMs?: number;
 }
 
 function markCacheReadFailed(err: unknown): void {
@@ -401,7 +403,7 @@ export async function fetchLichessMovesWithCacheStatus(
     return flying;
   }
   const p = fetchWithRetry(fen, token, db, ratings, speeds, opts).then(
-    (data) => {
+    ({ data, lastRequestStartedAtMs }) => {
       // Tout succès entre au cache, y compris moves:[] : un 200 vide est
       // une réponse autoritaire ("aucune partie"), pas une erreur (seules
       // les erreurs sont exclues, comme db_cache.py). Ne pas le mettre en
@@ -417,7 +419,11 @@ export async function fetchLichessMovesWithCacheStatus(
         void flushLichessPersist();
       }
       INFLIGHT.delete(cacheKey);
-      return { data, source: 'network' as const };
+      return {
+        data,
+        source: 'network' as const,
+        networkStartedAtMs: lastRequestStartedAtMs,
+      };
     },
     (err: unknown) => {
       INFLIGHT.delete(cacheKey);
@@ -440,7 +446,7 @@ async function fetchWithRetry(
   ratings: string | undefined,
   speeds: string,
   opts: LichessFetchOptions | undefined,
-): Promise<LichessApiResponse> {
+): Promise<{ data: LichessApiResponse; lastRequestStartedAtMs: number }> {
   const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxRetries = opts?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const backoffBaseMs = opts?.backoffBaseMs ?? DEFAULT_BACKOFF_BASE_MS;
@@ -469,10 +475,12 @@ async function fetchWithRetry(
   }
 
   let attempt = 0;
+  let lastRequestStartedAtMs = Date.now();
   for (;;) {
     throwIfAborted(signal);
     let response: Response;
     try {
+      lastRequestStartedAtMs = Date.now();
       response = await fetchWithTimeout(url, { headers, signal }, timeoutMs);
     } catch (err) {
       // Annulation volontaire : on la propage telle quelle (les appelants l'ignorent).
@@ -512,7 +520,7 @@ async function fetchWithRetry(
 
     try {
       const data = (await response.json()) as LichessApiResponse;
-      return data;
+      return { data, lastRequestStartedAtMs };
     } catch (err) {
       if (signal?.aborted || isAbortError(err)) throw err;
       throw new Error(LICHESS_BAD_JSON);

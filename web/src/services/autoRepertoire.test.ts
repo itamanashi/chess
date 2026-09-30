@@ -15,6 +15,8 @@ import {
   spreadPenalty,
   cloneSubtreeCycleSafe,
   isHigherHeapItem,
+  isHigherHeapItemCoverage,
+  remainingRequestGapMs,
   type AutoGenNode,
 } from './autoRepertoire';
 import {
@@ -25,7 +27,7 @@ import {
 } from './lichess';
 import { Chess } from 'chess.js';
 import { computeLineValues, type LineValueNode } from '../utils/lineValue';
-import { INITIAL_FEN, normalizeFen } from '../utils/repertoire';
+import { fenAfterUci, INITIAL_FEN, normalizeFen } from '../utils/repertoire';
 import type { EngineMove, LichessMove, RepertoireMove, RepertoireRoot } from '../types/chess';
 
 vi.mock('./lichess', () => ({
@@ -708,6 +710,56 @@ describe('Améliorations BFS : Quiescence, Transpositions, Cache Moteur', () => 
     expect(isHigherHeapItem(item2, item1)).toBe(true); // priorité 20 > 10
     expect(isHigherHeapItem(item1, item3)).toBe(true); // profondeur 1 < 3
     expect(isHigherHeapItem(item1, item4)).toBe(true); // ordre 2 < 3
+  });
+
+  it('l’ordre couverture termine le pli courant et le gap réseau ne double pas une requête lente', () => {
+    const shallow = { priority: 1, depth: 1, order: 2, fen: '', pathSans: [], pathUcis: [], pathFens: [], parentId: '', popularity: 0.1 };
+    const deep = { ...shallow, priority: 9, depth: 2, order: 1, popularity: 0.9 };
+    expect(isHigherHeapItem(deep, shallow)).toBe(true);
+    expect(isHigherHeapItemCoverage(shallow, deep)).toBe(true);
+
+    expect(remainingRequestGapMs(1000, 600, 1500)).toBe(100);
+    expect(remainingRequestGapMs(1000, 600, 1700)).toBe(0);
+    expect(remainingRequestGapMs(1000, 0, 1000)).toBe(0);
+  });
+
+  it('ordre couverture : avec un petit budget, interroge le pli suivant avant la ligne populaire plus profonde', async () => {
+    const start = INITIAL_FEN;
+    const afterE4 = fenAfterUci(start, 'e2e4')!;
+    const afterD4 = fenAfterUci(start, 'd2d4')!;
+    const afterE4E5 = fenAfterUci(afterE4, 'e7e5')!;
+    const rootData = {
+      white: 90, draws: 0, black: 10,
+      moves: [
+        { san: 'e4', uci: 'e2e4', white: 81, draws: 0, black: 9 },
+        { san: 'd4', uci: 'd2d4', white: 9, draws: 0, black: 1 },
+      ],
+    };
+    const e4Data = {
+      white: 90, draws: 0, black: 10,
+      moves: [
+        { san: 'e5', uci: 'e7e5', white: 81, draws: 0, black: 9 },
+        { san: 'c5', uci: 'c7c5', white: 9, draws: 0, black: 1 },
+      ],
+    };
+    const empty = { white: 0, draws: 0, black: 0, moves: [] };
+    const run = async (explorationOrder: 'popular' | 'coverage'): Promise<string[]> => {
+      const queried: string[] = [];
+      mockFetch.mockImplementation(async (fen: string) => {
+        queried.push(fen);
+        if (fen === start) return rootData;
+        if (fen === afterE4) return e4Data;
+        return empty;
+      });
+      await generateAutoRepertoire(start, {
+        maxDepth: 3, maxBranching: 2, minFreq: 0, maxPositions: 3, gapMs: 0,
+        repertoireColor: 'both', explorationOrder, pruneMinLineValue: 0,
+      });
+      return queried;
+    };
+
+    expect((await run('popular'))[2]).toBe(afterE4E5);
+    expect((await run('coverage'))[2]).toBe(afterD4);
   });
 
   it('Quiescence : prolonge les lignes instables (capture en cours)', async () => {
