@@ -2,9 +2,11 @@
  * Génération automatique de répertoire par BFS prioritaire.
  * Port TS de `auto_repertoire.py` (lui-même port de `répertoire/server/explorer.py`).
  *
- * File de priorité : les positions les plus probables d'atteinte sont
- * explorées en premier (probabilité = produit des fréquences adverses ;
+ * File de priorité : par défaut, les positions les plus probables d'atteinte
+ * sont explorées en premier (probabilité = produit des fréquences adverses ;
  * à notre tour on suit le répertoire donc facteur 1, pas la fréquence).
+ * L'ordre « couverture » opt-in explore les profondeurs plus faibles d'abord,
+ * puis départage par cette même probabilité.
  * Sélection par couverture, profondeur adaptative (moyenne géométrique),
  * transpositions en graphe (masse sommée sur tous les chemins, profondeur
  * minimale, repriorisation des positions en attente), réplication récursive
@@ -59,13 +61,15 @@ export interface AutoGenConfig {
    * sont comptées à part (refCached/refApi) mais coûtent la même pause.
    */
   maxPositions?: number;
+  /** Ordre de parcours de la file ; 'popular' conserve l'ordre historique. */
+  explorationOrder?: 'popular' | 'coverage';
   endpoint?: 'masters' | 'lichess';
   ratingsParam?: string;
   since?: number;
   /**
-   * Pause entre requêtes réseau (ms, défaut 600 ≈ 100 req/min en pointe).
-   * Le vrai garde-fou cadence est le 429 + `Retry-After` de `lichess.ts`
-   * (fetchWithRetry) : la pause seule ne garantit pas 25 req/min.
+   * Intervalle minimum entre débuts de requêtes réseau (ms, défaut 600).
+   * La durée du fetch compte déjà dans cet intervalle ; les 429 et
+   * `Retry-After` restent gérés par `lichess.ts` (fetchWithRetry).
    */
   gapMs?: number;
   /** Tentatives supplémentaires par position après un échec transient (défaut 1). */
@@ -113,6 +117,14 @@ export interface AutoGenStats {
   branchesTotal: number;
   emptyPositions: number;
   positionsInterrogees: number;
+  /** Temps cumulé des consultations principales, classées par source. */
+  apiWaitMs: number;
+  cacheWaitMs: number;
+  /** Temps cumulé des lectures de référence, classées par source. */
+  refApiWaitMs: number;
+  refCacheWaitMs: number;
+  /** Temps cumulé dans le juge moteur, cache compris. */
+  engineWaitMs: number;
   /** Positions abandonnées après épuisement des réessais. */
   failed: number;
   /** FEN normalisés en échec (plafonné à 20, pour affichage). */
@@ -172,6 +184,7 @@ const DEFAULTS: Required<Omit<AutoGenConfig, 'ratingsParam' | 'since' | 'engineJ
   repertoireColor: 'both',
   maxPositions: 200,
   endpoint: 'masters',
+  explorationOrder: 'popular',
   gapMs: 600,
   extraFetchRetries: 1,
   pruneMinLineValue: 0,
@@ -740,6 +753,24 @@ export function isHigherHeapItem(a: HeapItem, b: HeapItem): boolean {
   return a.order < b.order;
 }
 
+/** Termine une couche avant de creuser la suivante, avec popularité en départage. */
+export function isHigherHeapItemCoverage(a: HeapItem, b: HeapItem): boolean {
+  if (a.depth !== b.depth) return a.depth < b.depth;
+  return isHigherHeapItem(a, b);
+}
+
+/** Attend seulement le reliquat de l'intervalle configuré depuis le début du fetch. */
+export function remainingRequestGapMs(
+  startedAtMs: number,
+  gapMs: number,
+  nowMs = Date.now(),
+): number {
+  if (!Number.isFinite(gapMs) || gapMs <= 0) return 0;
+  return Math.max(0, gapMs - Math.max(0, nowMs - startedAtMs));
+}
+
+const CACHED_UI_YIELD_INTERVAL = 8;
+
 /**
  * Clone récursivement un sous-arbre de répertoire en garantissant l'absence de cycles
  * (protection contre les répétitions triples / manœuvres de pièces).
@@ -815,13 +846,16 @@ export async function generateAutoRepertoire(
     engineCached: 0, pruned: 0, transpositions: 0, explored: 0,
     depthPruned: 0, popPruned: 0, bookPenalized: 0, cacheBoostedChildren: 0,
     maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
-    positionsInterrogees: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
+    positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0, refApiWaitMs: 0,
+    refCacheWaitMs: 0, engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
     quiescenceExtended: 0,
   };
   let completed = true;
 
   const initialFenKey = normalizeFen(rootFen);
-  const heap = new PriorityQueue<HeapItem>(isHigherHeapItem);
+  const heap = new PriorityQueue<HeapItem>(
+    cfg.explorationOrder === 'coverage' ? isHigherHeapItemCoverage : isHigherHeapItem,
+  );
   // Graphe des probabilités d'atteinte : masse cumulée par FEN normalisé
   // (somme sur tous les chemins d'arrivée). La file ordonne sur cette masse,
   // pas sur la probabilité du premier chemin seul.
@@ -848,6 +882,7 @@ export async function generateAutoRepertoire(
   const canonicalNodesByFen = new Map<string, AutoGenNode>();
   const transpositionNodes: { node: AutoGenNode; fenKey: string; ancestorFens: Set<string> }[] = [];
   const engineCache = cfg.engineJudge?.cache ?? new Map<string, EngineMove[]>();
+  let cachedSinceYield = 0;
 
   const findParentList = (parentId: string): RepertoireMove[] => {
     const holder = emitted.get(parentId);
@@ -912,6 +947,7 @@ export async function generateAutoRepertoire(
     stats.maxDepthReached = Math.max(stats.maxDepthReached, depth);
 
     let data: Awaited<ReturnType<typeof fetchLichessMovesWithCacheStatus>> | null = null;
+    const lookupStartedAt = Date.now();
     const extraRetries = cfg.extraFetchRetries as number;
     for (let attempt = 0; attempt <= extraRetries; attempt++) {
       try {
@@ -933,31 +969,42 @@ export async function generateAutoRepertoire(
           continue;
         }
         // Épuisé : la branche est abandonnée MAIS comptée et visible.
+        stats.apiWaitMs += Date.now() - lookupStartedAt;
         stats.failed++;
         if (stats.failedFens.length < 20) stats.failedFens.push(fenKey);
         events.onProgress?.({ ...stats });
       }
     }
     if (!data) continue;
+    const lookupMs = Date.now() - lookupStartedAt;
     stats.positionsInterrogees++;
     const wasCached = data.source !== 'network';
-    if (wasCached) stats.cached++;
+    let lastNetworkStartedAtMs = wasCached
+      ? undefined
+      : data.networkStartedAtMs ?? lookupStartedAt;
+    if (wasCached) {
+      stats.cached++;
+      stats.cacheWaitMs += lookupMs;
+      cachedSinceYield++;
+    }
     else {
       stats.api++;
+      stats.apiWaitMs += lookupMs;
+      cachedSinceYield = 0;
       if (stats.positionsInterrogees < (cfg.maxPositions as number) && (cfg.gapMs as number) > 0) {
         try {
-          await abortableSleep(cfg.gapMs as number, events.signal);
+          const remaining = remainingRequestGapMs(lastNetworkStartedAtMs ?? lookupStartedAt, cfg.gapMs as number);
+          if (remaining > 0) await abortableSleep(remaining, events.signal);
         } catch (err) {
           if (isAbortError(err)) throw err;
         }
       }
     }
-    if (wasCached) {
-      // Chemin 100 % cache : aucune pause réseau ni fetch macrotask, la
-      // boucle n'était qu'une chaîne de microtasks qui gelait l'onglet
-      // (aucune peinture, Arrêter inerte). On rend la main à chaque
-      // position en cache : l'UI reste fluide et l'arrêt est immédiat.
+    if (wasCached && cachedSinceYield >= CACHED_UI_YIELD_INTERVAL) {
+      // Les lectures cache sont des microtasks. Céder par petits lots garde
+      // l'interface fluide sans imposer un timer à chaque position.
       await yieldToUI(events.signal);
+      cachedSinceYield = 0;
     }
 
     const moves = data.data.moves || [];
@@ -994,6 +1041,15 @@ export async function generateAutoRepertoire(
     let refTotal = 0;
     const refGamesByKey = new Map<string, number>();
     if (isOwnTurnNode && !cfg.engineJudge && (cfg.endpoint as string) !== 'masters') {
+      if (lastNetworkStartedAtMs !== undefined && (cfg.gapMs as number) > 0) {
+        try {
+          const remaining = remainingRequestGapMs(lastNetworkStartedAtMs, cfg.gapMs as number);
+          if (remaining > 0) await abortableSleep(remaining, events.signal);
+        } catch (err) {
+          if (isAbortError(err)) throw err;
+        }
+      }
+      const refStartedAt = Date.now();
       try {
         const ref = await fetchLichessMovesWithCacheStatus(
           fen,
@@ -1009,12 +1065,18 @@ export async function generateAutoRepertoire(
           if (m.uci) refGamesByKey.set(`u:${normalizeCastleUci(fen, m.uci)}`, gamesOf(m));
           refGamesByKey.set(`s:${m.san}`, gamesOf(m));
         }
-        if (ref.source !== 'network') stats.refCached++;
+        if (ref.source !== 'network') {
+          stats.refCached++;
+          stats.refCacheWaitMs += Date.now() - refStartedAt;
+        }
         else {
           stats.refApi++;
-          if ((cfg.gapMs as number) > 0) {
+          stats.refApiWaitMs += Date.now() - refStartedAt;
+          lastNetworkStartedAtMs = ref.networkStartedAtMs ?? refStartedAt;
+          if (stats.positionsInterrogees < (cfg.maxPositions as number) && (cfg.gapMs as number) > 0) {
             try {
-              await abortableSleep(cfg.gapMs as number, events.signal);
+              const remaining = remainingRequestGapMs(lastNetworkStartedAtMs, cfg.gapMs as number);
+              if (remaining > 0) await abortableSleep(remaining, events.signal);
             } catch (err) {
               if (isAbortError(err)) throw err;
             }
@@ -1022,6 +1084,7 @@ export async function generateAutoRepertoire(
         }
       } catch (err) {
         if (isAbortError(err) || events.signal?.aborted) throw err;
+        stats.refApiWaitMs += Date.now() - refStartedAt;
         refTotal = 0;
         refGamesByKey.clear();
       }
@@ -1077,11 +1140,13 @@ export async function generateAutoRepertoire(
       if (mates.length > 0) {
         selected = [...mates];
       } else {
+        const engineStartedAt = Date.now();
         const judged = await judgeOwnReplies(
           fen, others.map((s) => s.move), cfg.engineJudge as EngineJudgeSettings | undefined,
           events.signal, stats, engineCache,
           events.onEnginePartial ? (ranked) => events.onEnginePartial?.(fen, ranked) : undefined,
         );
+        stats.engineWaitMs += Date.now() - engineStartedAt;
         if (judged) {
           // Le juge rend les équivalents classés (meilleur d'abord pour les
           // flèches live) mais l'arbre ne garde que le MEILLEUR : en mode

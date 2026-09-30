@@ -34,7 +34,8 @@ const DEFAULT_STATS: AutoGenStats = {
   engineCached: 0, pruned: 0, transpositions: 0, explored: 0,
   depthPruned: 0, popPruned: 0, bookPenalized: 0, cacheBoostedChildren: 0,
   maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
-  positionsInterrogees: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
+  positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0, refApiWaitMs: 0,
+  refCacheWaitMs: 0, engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
   quiescenceExtended: 0,
 };
 
@@ -111,6 +112,9 @@ function useUncontrolledNumber(
 const clampInt = (min: number, max: number) => (n: number): number =>
   Math.max(min, Math.min(max, Math.round(n)));
 
+const formatWait = (ms: number): string =>
+  `${(ms / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`;
+
 /**
  * Génération automatique de répertoire (BFS prioritaire).
  * Port de l'explorateur `répertoire` : couverture, profondeur adaptative,
@@ -158,6 +162,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   /** Profondeur adaptative : coché = lignes rares moins creusées (runs ciblés). */
   const [adaptiveDepth, setAdaptiveDepth] = useState(false);
   const [maxPositions, setMaxPositions] = useState(60);
+  const [explorationOrder, setExplorationOrder] = useState<NonNullable<AutoGenConfig['explorationOrder']>>('popular');
   /** Seuil Line Value de l'élagage final winrate (opt-in, 0 = désactivé). */
   const [minLV, setMinLV] = useState(0);
   /** Juge moteur OPT-IN : Stockfish local choisit ta réplique (1 seule, lent : ~secondes/position à nous). */
@@ -244,6 +249,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       adaptiveMinDepth: minDepth,
       repertoireColor,
       maxPositions,
+      explorationOrder,
       endpoint: elo.endpoint,
       ratingsParam: elo.ratingsParam,
       since: elo.since,
@@ -403,8 +409,10 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
         </p>
       )}
       <p className="text-muted" style={{ fontSize: 12 }}>
-        Explore les réponses les plus jouées en largeur d'abord (popularité,
-        couverture resserrée avec la profondeur, transpositions détectées).
+        Les coups retenus restent fréquentistes (popularité et couverture).
+        Par défaut, les positions les plus probables sont explorées en priorité ;
+        l'ordre par couverture traite un pli entier avant de creuser le suivant,
+        ce qui répartit mieux un petit budget entre les branches.
         Tes répliques sont choisies par gradient Elo (coups que les forts
         jouent), ou par Stockfish si la case moteur est cochée — l'adversaire
         vient toujours de ton pool uniquement. Le budget pilote l'ampleur :
@@ -505,6 +513,17 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
           ci-dessous que pour forcer la largeur.
         </p>
         <div className="auto-gen-grid">
+          <label className="auto-gen-field" title="Populaire : priorité aux positions les plus probables (comportement actuel). Couverture : explore les positions d'un même pli avant de passer au pli suivant ; utile pour répartir un budget limité entre les branches.">
+            <span>Ordre d'exploration</span>
+            <select
+              value={explorationOrder}
+              disabled={running}
+              onChange={(e) => setExplorationOrder(e.target.value === 'coverage' ? 'coverage' : 'popular')}
+            >
+              <option value="popular">Popularité (actuel)</option>
+              <option value="coverage">Couverture par largeur</option>
+            </select>
+          </label>
           <label className="auto-gen-field" title="Opt-in winrate : retire nos coups sous cette valeur de ligne (0 = désactivé, la génération reste fréquentiste)">
             <span>Qualité mini (LV, opt-in)</span>
             <input
@@ -565,6 +584,16 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
             {done.stats.prunedValue > 0 ? ` · ${done.stats.prunedValue} élagué(s) LV` : ''}
             {done.stats.emptyPositions > 0 ? ` · ${done.stats.emptyPositions} sans suite en base` : ''}
           </span>
+          {(done.stats.apiWaitMs + done.stats.cacheWaitMs + done.stats.refApiWaitMs + done.stats.refCacheWaitMs + done.stats.engineWaitMs) > 0 && (
+            <span
+              className="auto-gen-note"
+              title="Durées cumulées des attentes pendant ce run. Elles excluent le temps de calcul local et les pauses de cadence entre requêtes."
+            >
+              Attente mesurée : API {formatWait(done.stats.apiWaitMs)} + réf {formatWait(done.stats.refApiWaitMs)}
+              {' · '}cache {formatWait(done.stats.cacheWaitMs + done.stats.refCacheWaitMs)}
+              {' · '}moteur {formatWait(done.stats.engineWaitMs)}
+            </span>
+          )}
           {(done.stats.depthPruned + done.stats.popPruned) > 0 && (
             <span
               className="auto-gen-note"

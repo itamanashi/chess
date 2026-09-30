@@ -125,8 +125,10 @@ describe('source du cache', () => {
     const fen = fenN(14);
     const network = await fetchLichessMovesWithCacheStatus(fen);
     expect(network).toMatchObject({ source: 'network', data: { white: 10 } });
+    expect(network.networkStartedAtMs).toEqual(expect.any(Number));
     const memory = await fetchLichessMovesWithCacheStatus(fen);
     expect(memory).toMatchObject({ source: 'memory', data: network.data });
+    expect(memory.networkStartedAtMs).toBeUndefined();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await expect(fetchLichessMoves(fen)).resolves.toEqual(network.data);
   });
