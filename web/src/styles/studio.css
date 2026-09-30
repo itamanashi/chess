@@ -460,26 +460,20 @@
 .freecam-hint { left: 1rem; bottom: 1rem; }
 .freecam-status { right: 1rem; top: 1rem; font-family: var(--font-mono); font-size: 10px; color: var(--text-2); }
 .move-node {
-  position: absolute; background: var(--bg-raised); border: 1px solid var(--border-strong);
-  border-left: 4px solid var(--accent); border-radius: 6px;
-  padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;
-  cursor: pointer; font-family: var(--font-mono); color: var(--text);
+  position: absolute; border: 2px solid #fff; border-radius: 50%;
+  padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; font-family: var(--font-mono); text-align: center;
   user-select: none; box-sizing: border-box;
 }
-.move-node:hover { border-color: var(--accent); z-index: 10; }
+.move-node:hover { filter: brightness(1.15); z-index: 10; }
 .move-node.selected { outline: 2px solid var(--focus); outline-offset: 2px; }
-.move-node.is-root { background: var(--bg-overlay); border-left-color: var(--accent); }
-.move-node.is-promising { border-color: var(--promising); }
-.move-node.is-promising::before {
-  content: "★"; position: absolute; top: -10px; right: -8px;
-  color: var(--promising); font-size: 14px; pointer-events: none; z-index: 20;
-}
+.move-node.player-white { background: #fff; color: #171717; }
+.move-node.player-black, .move-node.is-root { background: #171717; color: #fff; }
 .move-node.is-transposition { border-style: dashed; }
-.move-label { font-size: 13px; font-weight: 700; line-height: 1.1; }
-.move-node.is-root .move-label { color: var(--accent-text); font-size: 16px; text-align: center; }
-.move-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 10px; color: var(--text-2); margin-top: 2px; }
-.move-freq { font-weight: 700; color: var(--accent-text); }
-.move-practical, .move-lv { font-weight: 700; }
+.move-label { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.move-node.is-root .move-label { font-size: 12px; }
+.move-freq { font-size: 14px; font-weight: 600; line-height: 1.2; opacity: .78; margin-top: 3px; }
+.tree-direction-toggle { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .freq-tooltip {
   z-index: 1000; background: rgba(22, 21, 18, 0.98); border: 1px solid var(--border-strong);
   border-radius: 10px; padding: 8px 10px; font-size: 11px; color: var(--text);

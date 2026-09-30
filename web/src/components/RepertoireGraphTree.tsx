@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Chess, type Square } from 'chess.js';
-import { Cpu, ChevronDown, ChevronRight, Eye, Pin, Scale, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Cpu, ChevronDown, ChevronRight, Eye, Pin, Scale, Trash2 } from 'lucide-react';
 import type { RepertoireItem, RepertoireMove } from '../types/chess';
 import { ELO_TARGET_OPTIONS } from '../types/chess';
 import { INITIAL_FEN, normalizeCastleUci, materialBalance, normalizeFen } from '../utils/repertoire';
@@ -13,7 +13,7 @@ import { abortableSleep, isAbortError, warn } from '../utils/async';
 import { eloTargetLabel } from '../i18n';
 import { Chessboard } from './Chessboard';
 import { ConfirmDialog } from './ConfirmDialog';
-import { findVisibleRange } from '../utils/treeViewport';
+import { edgeIntersectsRect, findVisibleRange, type PadRect } from '../utils/treeViewport';
 
 interface RepertoireGraphTreeProps {
   repertoire: RepertoireItem;
@@ -54,22 +54,23 @@ interface GNode {
 interface GraphEntry {
   node: GNode;
   parent: GNode | null;
+  x: number;
+  y: number;
 }
 
 interface GraphIndex {
   byDepth: Map<number, GraphEntry[]>;
   parentByKey: Map<string, GNode | null>;
-  promising: Set<string>;
 }
 
 type WhiteMode = 'popular' | 'practical' | 'engine' | 'reward';
+type VerticalDirection = 'top-down' | 'bottom-up';
 
-/* Layout style projet `répertoire` (tree.js) : cartes rectangulaires,
-   profondeur en abscisse, feuilles empilées en ordonnée. */
-const NODE_W = 150;
-const NODE_H = 48;
-const H_GAP = 70;
-const V_GAP = 26;
+/* Graphe circulaire : profondeur verticale, branches réparties horizontalement. */
+const NODE_W = 84;
+const NODE_H = 84;
+const H_GAP = 88;
+const V_GAP = 56;
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 3;
 /** Positions parentes max interrogées sur Lichess (limite requêtes). */
@@ -140,17 +141,17 @@ function moverOf(fen: string | undefined, depth: number, rootWhite: boolean): 'w
   return ((depth - 1) % 2 === 0) === firstWhite ? 'w' : 'b';
 }
 
-/** Tidy tree vertical : feuilles empilées, parents centrés, x = profondeur. */
-function layoutTidy(nodes: GNode[], cursor: { y: number }): void {
+/** Répartit les sous-arbres horizontalement et place chaque profondeur sur une rangée. */
+function layoutTidy(nodes: GNode[], cursor: { x: number }): void {
   for (const n of nodes) {
     if (n.children.length === 0) {
-      n.y = cursor.y;
-      cursor.y += NODE_H + V_GAP;
+      n.x = cursor.x;
+      cursor.x += NODE_W + H_GAP;
     } else {
       layoutTidy(n.children, cursor);
-      n.y = (n.children[0].y + n.children[n.children.length - 1].y) / 2;
+      n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
     }
-    n.x = n.depth * (NODE_W + H_GAP);
+    n.y = n.depth * (NODE_H + V_GAP);
   }
 }
 
@@ -185,15 +186,6 @@ function fmtShare(share: number): string {
   const p = share * 100;
   if (share > 0 && p < 1) return '<1 %';
   return `${Math.round(p)} %`;
-}
-
-/** Couleur d'accent par fréquence locale (port de core.js du projet `répertoire`). */
-function freqColor(f: number): string {
-  if (f >= 50) return 'var(--freq-5)';
-  if (f >= 25) return 'var(--freq-4)';
-  if (f >= 10) return 'var(--freq-3)';
-  if (f >= 4) return 'var(--freq-2)';
-  return 'var(--freq-1)';
 }
 
 /** FEN obtenu en rejouant un chemin UCI depuis le FEN racine (repli). */
@@ -253,6 +245,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
   const [residual, setResidual] = useState(0.5);
   // Caméra libre (port de camera.js).
   const [cam, setCam] = useState({ x: 0, y: 0, scale: 1 });
+  const [verticalDirection, setVerticalDirection] = useState<VerticalDirection>('top-down');
   const autoFitRef = useRef(true);
   const [tipPos, setTipPos] = useState<{ x: number; y: number } | null>(null);
   // Visualiseur : position survolée/épinglée ou liste des ouvertures.
@@ -315,7 +308,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     }
   }, [rootFen]);
 
-  const { nodes, rootPos, width, height } = useMemo(() => {
+  const { nodes, rootPos, treeBottom, width, height } = useMemo(() => {
     const built = buildGraph(rootChildren, 1, [], [], Number.POSITIVE_INFINITY, rootWhiteToMove, repertoire.color);
     const fenCounts = new Map<string, number>();
     const collectFen = (ns: GNode[]): void => {
@@ -373,52 +366,67 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
       return kept;
     };
     const visible = applyFilter(selectedOpening ? pruneToOpening(built, null, selectedOpening) : built);
-    layoutTidy(visible, { y: 0 });
+    layoutTidy(visible, { x: 0 });
     let maxX = 0;
-    let maxY = 0;
     let deepest = 1;
     const visit = (ns: GNode[]): void => {
       for (const n of ns) {
         deepest = Math.max(deepest, n.depth);
         maxX = Math.max(maxX, n.x + NODE_W);
-        maxY = Math.max(maxY, n.y + NODE_H);
         visit(n.children);
       }
     };
     visit(visible);
-    const rootY = visible.length > 0
-      ? (visible[0].y + visible[visible.length - 1].y) / 2
+    const rootX = visible.length > 0
+      ? (visible[0].x + visible[visible.length - 1].x) / 2
       : 0;
+    const treeBottom = deepest * (NODE_H + V_GAP) + NODE_H;
     return {
       nodes: visible,
-      rootPos: { x: 0, y: rootY },
+      rootPos: { x: rootX, y: 0 },
+      treeBottom,
       width: Math.max(maxX + 100, 320),
-      height: Math.max(maxY + 100, 200),
+      height: Math.max(treeBottom + 100, 200),
     };
   }, [rootChildren, rootWhiteToMove, repertoire.color, rootFen, oneWhitePerLine, whiteMode, optimism, residual, selectedOpening]);
+
+  const yByNode = useMemo(() => {
+    const nodesInLayout: GNode[] = [];
+    let treeBottom = 0;
+    const collect = (ns: GNode[]): void => {
+      for (const node of ns) {
+        nodesInLayout.push(node);
+        treeBottom = Math.max(treeBottom, node.y + NODE_H);
+        collect(node.children);
+      }
+    };
+    collect(nodes);
+    const positions = new Map<GNode, number>();
+    for (const node of nodesInLayout) {
+      positions.set(
+        node,
+        verticalDirection === 'bottom-up' ? treeBottom - node.y - NODE_H : node.y,
+      );
+    }
+    return positions;
+  }, [nodes, verticalDirection]);
 
   const graphIndex = useMemo<GraphIndex>(() => {
     const byDepth = new Map<number, GraphEntry[]>();
     const parentByKey = new Map<string, GNode | null>();
-    const promising = new Set<string>();
     const index = (siblings: GNode[], parent: GNode | null): void => {
-      if (siblings.length > 1) {
-        let best = siblings[0];
-        for (const node of siblings) if (node.freq > best.freq) best = node;
-        promising.add(best.key);
-      }
       for (const node of siblings) {
         const depthEntries = byDepth.get(node.depth) ?? [];
-        depthEntries.push({ node, parent });
+        depthEntries.push({ node, parent, x: node.x, y: yByNode.get(node) ?? node.y });
         byDepth.set(node.depth, depthEntries);
         parentByKey.set(node.key, parent);
         index(node.children, node);
       }
     };
     index(nodes, null);
-    for (const entries of byDepth.values()) entries.sort((a, b) => a.node.y - b.node.y);
-    return { byDepth, parentByKey, promising };
-  }, [nodes]);
+    for (const entries of byDepth.values()) entries.sort((a, b) => a.x - b.x);
+    return { byDepth, parentByKey };
+  }, [nodes, yByNode]);
 
   useEffect(() => {
     if (!hasMoves) return;
@@ -440,31 +448,63 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     return () => observer.disconnect();
   }, [hasMoves]);
 
-  const visibleEntries = useMemo(() => {
-    if (!viewportSize.width || !viewportSize.height) return [];
+  const displayRootY = verticalDirection === 'bottom-up'
+    ? treeBottom - NODE_H
+    : rootPos.y;
+
+  /* Rect monde du viewport + marge : culling des nœuds ET des arêtes. */
+  const padRect = useMemo<PadRect | null>(() => {
+    if (!viewportSize.width || !viewportSize.height) return null;
     const padding = 120 / cam.scale;
-    const left = -cam.x / cam.scale - padding;
-    const right = (viewportSize.width - cam.x) / cam.scale + padding;
-    const top = -cam.y / cam.scale - padding;
-    const bottom = (viewportSize.height - cam.y) / cam.scale + padding;
+    return {
+      left: -cam.x / cam.scale - padding,
+      right: (viewportSize.width - cam.x) / cam.scale + padding,
+      top: -cam.y / cam.scale - padding,
+      bottom: (viewportSize.height - cam.y) / cam.scale + padding,
+    };
+  }, [cam, viewportSize]);
+
+  const visibleEntries = useMemo(() => {
+    if (!padRect) return [];
     const visible: GraphEntry[] = [];
     for (const [depth, entries] of graphIndex.byDepth) {
-      const x = depth * (NODE_W + H_GAP);
-      if (x + NODE_W < left || x > right) continue;
-      const [start, end] = findVisibleRange(entries, top, bottom, (entry) => entry.node.y, NODE_H);
+      const y = depth * (NODE_H + V_GAP);
+      const displayedY = verticalDirection === 'bottom-up' ? treeBottom - y - NODE_H : y;
+      if (displayedY + NODE_H < padRect.top || displayedY > padRect.bottom) continue;
+      const [start, end] = findVisibleRange(entries, padRect.left, padRect.right, (entry) => entry.x, NODE_W);
       for (let i = start; i < end; i++) visible.push(entries[i]);
     }
     return visible;
-  }, [graphIndex, cam, viewportSize]);
+  }, [graphIndex, padRect, treeBottom, verticalDirection]);
 
+  /* Extrémités d'arête en coords monde/affichées (source unique, rendu + culling). */
+  const edgeEnds = useCallback((n: GNode): [number, number, number, number] => {
+    const parent = graphIndex.parentByKey.get(n.key);
+    const parentX = parent ? parent.x : rootPos.x;
+    const parentY = parent ? (yByNode.get(parent) ?? parent.y) : displayRootY;
+    const nodeY = yByNode.get(n) ?? n.y;
+    const fromY = parentY + (verticalDirection === 'bottom-up' ? 0 : NODE_H);
+    const toY = nodeY + (verticalDirection === 'bottom-up' ? NODE_H : 0);
+    return [parentX + NODE_W / 2, fromY, n.x + NODE_W / 2, toY];
+  }, [displayRootY, graphIndex.parentByKey, rootPos.x, verticalDirection, yByNode]);
+
+  /* Toute arête touchant le rect est dessinée, même si ses deux ronds sont
+     hors champ (arbre large + zoom : le lien traverse l'écran). */
   const visibleEdgeNodes = useMemo(() => {
-    const edgeNodes = new Set<GNode>();
-    for (const { node } of visibleEntries) {
-      edgeNodes.add(node);
-      for (const child of node.children) edgeNodes.add(child);
+    if (!padRect) return [];
+    const seen = new Set<GNode>();
+    const out: GNode[] = [];
+    for (const entries of graphIndex.byDepth.values()) {
+      for (const { node } of entries) {
+        if (seen.has(node)) continue;
+        const [x1, y1, x2, y2] = edgeEnds(node);
+        if (!edgeIntersectsRect(x1, y1, x2, y2, padRect)) continue;
+        seen.add(node);
+        out.push(node);
+      }
     }
-    return [...edgeNodes];
-  }, [visibleEntries]);
+    return out;
+  }, [graphIndex, padRect, edgeEnds]);
 
   const nodeByKey = useMemo(() => {
     const map = new Map<string, GNode>();
@@ -830,39 +870,46 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     ? [viewerUci.slice(0, 2), viewerUci.slice(2, 4)]
     : undefined;
 
+  /* Arêtes en coordonnées ÉCRAN (pas monde) : le SVG sort du calque
+     `.freecam-layer` zoomé en CSS. Un SVG vectoriel sous un ancêtre
+     `translate+scale` perd des traits au repaint (liens manquants alors
+     que les nœuds sont visibles, y compris dès qu'un rond sort de
+     l'écran). Ici l'épaisseur est constante (3,5 px) sans compensation. */
   const renderEdges = useCallback((edgeNodes: GNode[]): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
+    const s = cam.scale;
     for (const n of edgeNodes) {
-      const parent = graphIndex.parentByKey.get(n.key);
-      const x1 = parent ? parent.x + NODE_W : 0;
-      const y1 = parent ? parent.y + NODE_H / 2 : rootPos.y + NODE_H / 2;
-      const x2 = n.x;
-      const y2 = n.y + NODE_H / 2;
-      const mx = (x1 + x2) / 2;
+      const [wx1, wy1, wx2, wy2] = edgeEnds(n);
+      const x1 = wx1 * s + cam.x;
+      const y1 = wy1 * s + cam.y;
+      const x2 = wx2 * s + cam.x;
+      const y2 = wy2 * s + cam.y;
+      const my = (y1 + y2) / 2;
       out.push(
         <path
           key={`e-${n.key}`}
-          d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
+          d={`M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`}
           fill="none"
-          stroke={n.transposition ? '#b58863' : '#5c4632'}
-          strokeWidth={2}
-          strokeDasharray={n.transposition ? '5 4' : undefined}
-          markerEnd={n.transposition ? 'url(#arrow-transpo)' : 'url(#arrow)'}
+          stroke="#fff"
+          strokeWidth={3.5}
+          strokeDasharray={n.transposition ? '8 6' : undefined}
         />,
       );
     }
     return out;
-  }, [graphIndex.parentByKey, rootPos.y]);
+  }, [cam.scale, cam.x, cam.y, edgeEnds]);
 
-  const renderNodes = useCallback((visible: GraphEntry[], promising: Set<string>): React.ReactNode[] => {
+  const renderNodes = useCallback((visible: GraphEntry[]): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
-    for (const { node: n } of visible) {
-      const lv = n.lineValue;
+    for (const { node: n, y } of visible) {
+      const frequency = `${n.freq.toFixed(1)}%`;
       out.push(
         <div
           key={`n-${n.key}`}
-          className={`move-node${selectedId === n.key ? ' selected' : ''}${n.transposition ? ' is-transposition' : ''}${promising.has(n.key) ? ' is-promising' : ''}`}
-          style={{ left: n.x, top: n.y, width: NODE_W, height: NODE_H, ['--accent' as string]: freqColor(n.freq) }}
+          className={`move-node ${n.playedBy === 'w' ? 'player-white' : 'player-black'}${selectedId === n.key ? ' selected' : ''}${n.transposition ? ' is-transposition' : ''}`}
+          style={{ left: n.x, top: y, width: NODE_W, height: NODE_H }}
+          title={`${n.san} · ${frequency}${n.isMate ? ' · Mat' : ''}`}
+          aria-label={`${n.san}, fréquence ${frequency}${n.isMate ? ', mat' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             handleNodeClick(n.key);
@@ -881,42 +928,20 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
         >
           <div className="move-label">
             {n.san}
-            {n.isMate && (
-              <span className="mate-tag" title="Mat — fin forcée, toujours prioritaire à la génération">
-                MAT
-              </span>
-            )}
           </div>
-          <div className="move-meta">
-            <span className="move-freq">{`${n.freq.toFixed(1)}%`}</span>
-            {whiteMode === 'reward' && lv !== undefined && lv > 0 ? (
-              <span
-                className="move-lv"
-                style={{ color: lv >= 0.55 ? 'var(--eval-pos)' : lv >= 0.5 ? 'var(--promising)' : 'var(--eval-neg)' }}
-              >
-                {`LV ${(lv * 100).toFixed(0)}`}
-              </span>
-            ) : n.practical !== undefined ? (
-              <span
-                className="move-practical"
-                style={{ color: n.practical >= 55 ? 'var(--eval-pos)' : n.practical >= 50 ? 'var(--promising)' : 'var(--eval-neg)' }}
-              >
-                {`PS ${n.practical.toFixed(0)}`}
-              </span>
-            ) : null}
-          </div>
+          <span className="move-freq">{frequency}</span>
         </div>,
       );
     }
     return out;
-  }, [handleNodeClick, selectedId, whiteMode]);
+  }, [handleNodeClick, selectedId]);
 
   const graphStatic = useMemo(() => {
     return {
       edges: renderEdges(visibleEdgeNodes),
-      nodeList: renderNodes(visibleEntries, graphIndex.promising),
+      nodeList: renderNodes(visibleEntries),
     };
-  }, [visibleEdgeNodes, visibleEntries, graphIndex.promising, renderEdges, renderNodes]);
+  }, [visibleEdgeNodes, visibleEntries, renderEdges, renderNodes]);
 
   const tipNode = hoverKey ? nodeByKey.get(hoverKey) : undefined;
 
@@ -932,6 +957,15 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     <div className="graph-wrap">
       <div className="graph-controls">
         <span className="graph-zoom-group" title="Mode répertoire : un seul coup blanc par position">
+          <button
+            className={`icon-btn tree-direction-toggle${verticalDirection === 'bottom-up' ? ' active-toggle' : ''}`}
+            onClick={() => setVerticalDirection((direction) => direction === 'top-down' ? 'bottom-up' : 'top-down')}
+            title={verticalDirection === 'top-down' ? 'Orienter l’arbre de bas en haut' : 'Orienter l’arbre de haut en bas'}
+            aria-label={verticalDirection === 'top-down' ? 'Orienter l’arbre de bas en haut' : 'Orienter l’arbre de haut en bas'}
+          >
+            <ArrowUpDown size={15} />
+            <span>{verticalDirection === 'top-down' ? 'Vers le bas' : 'Vers le haut'}</span>
+          </button>
           <label className="graph-mode-toggle">
             <input
               type="checkbox"
@@ -1001,32 +1035,24 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             e.preventDefault();
           }}
         >
+          <svg
+            className="tree-edges"
+            width={viewportSize.width || width}
+            height={viewportSize.height || height}
+            style={{ position: 'absolute', top: 0, left: 0, overflow: 'hidden', pointerEvents: 'none' }}
+          >
+            {graphStatic.edges}
+          </svg>
           <div
             className="freecam-layer"
             style={{ transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})` }}
           >
-            <svg
-              className="tree-edges"
-              width={width}
-              height={height}
-              style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible', pointerEvents: 'none' }}
-            >
-              <defs>
-                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#5c4632" />
-                </marker>
-                <marker id="arrow-transpo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#b58863" />
-                </marker>
-              </defs>
-              {graphStatic.edges}
-            </svg>
             <div className="tree-nodes" style={{ position: 'absolute', top: 0, left: 0 }}>
               <div
                 className="move-node is-root"
-                style={{ left: rootPos.x, top: rootPos.y, width: NODE_W, height: NODE_H, ['--accent' as string]: '#d8d2c6' }}
+                style={{ left: rootPos.x, top: displayRootY, width: NODE_W, height: NODE_H }}
               >
-                <div className="move-label">🏁</div>
+                <div className="move-label">Début</div>
               </div>
               {graphStatic.nodeList}
             </div>
