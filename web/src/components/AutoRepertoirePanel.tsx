@@ -330,7 +330,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
     }
   };
 
-  /** Batch offline : le cache Explorer persistant (localStorage, sans expiration) évite de
+  /** Batch offline : le cache Explorer persistant (IndexedDB, sans expiration) évite de
    * repayer les positions ; l'arbre se télécharge en PGN (import Lichess
    * Étude) ou JSON brut. Aucun moteur/winrate : statistiques de jeu pures. */
   const handleExportPgn = (): void => {
@@ -460,17 +460,17 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       <p
         className="text-muted"
         style={{ fontSize: 12 }}
-        title="Positions Explorer conservées dans ce navigateur (mémoire + localStorage, sans expiration). Un autre Elo cible ou endpoint utilise d'autres entrées : ce n'est pas une suppression."
+        title="La taille affichée est celle de la mémoire (LRU 2000). IndexedDB conserve les réponses sans expiration et les relit au besoin. Chaque entrée dépend de l'endpoint, des cotes, des vitesses, du filtre temporel et de la position : un autre réglage utilise d'autres clés."
       >
-        Cache Explorer : {lichessCacheMemorySize()} position(s) — les runs réutilisent le cache au lieu de repayer.
+        Cache Explorer : {lichessCacheMemorySize()} position(s) en mémoire — IndexedDB conserve le cache durable.
       </p>
       {!lichessPersistHealthy() && (
         <p
           className="auto-gen-warn"
           style={{ fontSize: 12 }}
-          title="La sauvegarde locale du cache a échoué (stockage du navigateur plein le plus souvent). Le cache reste actif en mémoire pour cet onglet, mais tout sera re-téléchargé au prochain rechargement. Exportez vos répertoires en JSON par sécurité."
+          title="Le cache durable IndexedDB n'est pas entièrement accessible en lecture ou écriture. Le run continue avec la mémoire disponible, mais certaines positions pourront être re-téléchargées. Exportez vos répertoires en JSON par sécurité."
         >
-          Cache non persisté : stockage navigateur plein ? Exportez vos répertoires (JSON).
+          Cache durable indisponible : certaines positions pourront être re-téléchargées. Exportez vos répertoires (JSON).
         </p>
       )}
 

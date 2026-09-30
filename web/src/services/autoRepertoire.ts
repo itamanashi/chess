@@ -17,7 +17,12 @@ import { Chess } from 'chess.js';
 import type { EngineMove, LichessMove, RepertoireMove, RepertoireRoot } from '../types/chess';
 import { INITIAL_FEN, fenAfterUci, normalizeCastleUci, normalizeFen } from '../utils/repertoire';
 import { computeLineValues, type LineValueNode } from '../utils/lineValue';
-import { fetchLichessMoves, flushLichessPersist, hasLichessCache, explorerCacheReady } from './lichess';
+import {
+  fetchLichessMovesWithCacheStatus,
+  flushLichessPersist,
+  hasLichessCache,
+  explorerCacheReady,
+} from './lichess';
 import { abortableSleep, isAbortError } from '../utils/async';
 import { PriorityQueue } from '../utils/priorityQueue';
 import { engineEvalCacheKey, idbGetEngineEval, idbPutEngineEval } from '../storage/engineEvalCacheDb';
@@ -906,15 +911,18 @@ export async function generateAutoRepertoire(
     stats.explored++;
     stats.maxDepthReached = Math.max(stats.maxDepthReached, depth);
 
-    let data: Awaited<ReturnType<typeof fetchLichessMoves>> | null = null;
-    const wasCached = hasLichessCache(fen, cfg.endpoint, cfg.ratingsParam, undefined, cfg.since);
+    let data: Awaited<ReturnType<typeof fetchLichessMovesWithCacheStatus>> | null = null;
     const extraRetries = cfg.extraFetchRetries as number;
     for (let attempt = 0; attempt <= extraRetries; attempt++) {
       try {
-        data = await fetchLichessMoves(fen, undefined, cfg.endpoint, cfg.ratingsParam, undefined, {
-          signal: events.signal,
-          since: cfg.since,
-        });
+        data = await fetchLichessMovesWithCacheStatus(
+          fen,
+          undefined,
+          cfg.endpoint,
+          cfg.ratingsParam,
+          undefined,
+          { signal: events.signal, since: cfg.since },
+        );
         break;
       } catch (err) {
         if (isAbortError(err) || events.signal?.aborted) throw err;
@@ -932,6 +940,7 @@ export async function generateAutoRepertoire(
     }
     if (!data) continue;
     stats.positionsInterrogees++;
+    const wasCached = data.source !== 'network';
     if (wasCached) stats.cached++;
     else {
       stats.api++;
@@ -951,12 +960,13 @@ export async function generateAutoRepertoire(
       await yieldToUI(events.signal);
     }
 
-    const moves = data.moves || [];
+    const moves = data.data.moves || [];
     // Dénominateur = total réel de la position (white+draws+black), pas la
     // somme des 12 coups renvoyés (queue de distribution manquante : la
     // somme surestime les fréquences). Repli sur la somme si totaux absents.
     const movesSum = moves.reduce((s, m) => s + gamesOf(m), 0);
-    const positionTotal = (data.white || 0) + (data.draws || 0) + (data.black || 0);
+    const positionTotal =
+      (data.data.white || 0) + (data.data.draws || 0) + (data.data.black || 0);
     const total = positionTotal > 0 ? positionTotal : movesSum;
     if (!total || movesSum <= 0) {
       stats.emptyPositions++;
@@ -984,19 +994,22 @@ export async function generateAutoRepertoire(
     let refTotal = 0;
     const refGamesByKey = new Map<string, number>();
     if (isOwnTurnNode && !cfg.engineJudge && (cfg.endpoint as string) !== 'masters') {
-      const refWasCached = hasLichessCache(fen, 'masters', undefined, undefined, cfg.since);
       try {
-        const ref = await fetchLichessMoves(fen, undefined, 'masters', undefined, undefined, {
-          signal: events.signal,
-          since: cfg.since,
-        });
-        const refMoves = ref.moves || [];
+        const ref = await fetchLichessMovesWithCacheStatus(
+          fen,
+          undefined,
+          'masters',
+          undefined,
+          undefined,
+          { signal: events.signal, since: cfg.since },
+        );
+        const refMoves = ref.data.moves || [];
         refTotal = refMoves.reduce((s, m) => s + gamesOf(m), 0);
         for (const m of refMoves) {
           if (m.uci) refGamesByKey.set(`u:${normalizeCastleUci(fen, m.uci)}`, gamesOf(m));
           refGamesByKey.set(`s:${m.san}`, gamesOf(m));
         }
-        if (refWasCached) stats.refCached++;
+        if (ref.source !== 'network') stats.refCached++;
         else {
           stats.refApi++;
           if ((cfg.gapMs as number) > 0) {

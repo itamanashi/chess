@@ -60,13 +60,29 @@ interface CachedEntry {
 
 const CACHE_MEMORY_CAPACITY = 2000;
 const CACHE_LICHESS = new LruCache<string, CachedEntry>(CACHE_MEMORY_CAPACITY);
+let persistHealthy = true;
+let cacheReadHealthy = true;
+let cacheReadFailureLogged = false;
+
+export interface LichessMovesCacheResult {
+  data: LichessApiResponse;
+  source: 'memory' | 'indexeddb' | 'network';
+}
+
+function markCacheReadFailed(err: unknown): void {
+  cacheReadHealthy = false;
+  if (!cacheReadFailureLogged) {
+    cacheReadFailureLogged = true;
+    warn('lichess:read', err);
+  }
+}
 
 /**
  * Single-flight (audit A10) : les requêtes identiques en vol partagent UNE
  * promesse (builder + piège sur la même position = 1 seul appel réseau).
  * Erreurs non mises en cache : un nouvel appel retente.
  */
-const INFLIGHT = new Map<string, Promise<LichessApiResponse>>();
+const INFLIGHT = new Map<string, Promise<LichessMovesCacheResult>>();
 
 const DEFAULT_SPEEDS = 'blitz,rapid,classical';
 
@@ -108,20 +124,30 @@ async function preloadExplorerCache(): Promise<void> {
     /* stockage indisponible ou corrompu : on ignore */
   }
   if (migrated.length > 0) {
-    try {
-      // Normalise les clés du blob historique avant écriture (même canonique).
-      const canon = migrated.map((rec) => {
-        const key = canonicalExplorerKey(rec.key) ?? rec.key;
-        return key === rec.key ? rec : { key, data: rec.data, savedAt: rec.savedAt };
-      });
-      await idbPutMany(canon);
-    } catch {
-      /* IDB indisponible : mémoire seule */
+    const canon = migrated.map((rec) => {
+      const key = canonicalExplorerKey(rec.key) ?? rec.key;
+      return key === rec.key ? rec : { key, data: rec.data, savedAt: rec.savedAt };
+    });
+    for (const rec of canon) {
+      CACHE_LICHESS.set(rec.key, { data: rec.data, savedAt: rec.savedAt });
     }
-    removeRaw(LS_KEY);
+    try {
+      await idbPutMany(canon);
+      removeRaw(LS_KEY);
+    } catch (err) {
+      persistHealthy = false;
+      warn('lichess:migrate', err);
+    }
   }
   removeRaw('lichess_explorer_cache_v1');
-  const all = await idbLoadAll();
+  let all: ExplorerCacheRecord[];
+  try {
+    all = await idbLoadAll();
+    cacheReadHealthy = true;
+  } catch (err) {
+    markCacheReadFailed(err);
+    throw err;
+  }
   const rewrites: ExplorerCacheRecord[] = [];
   const staleKeys: string[] = [];
   for (const rec of all) {
@@ -151,7 +177,7 @@ let preloadPromise: Promise<void> | null = null;
 export function explorerCacheReady(): Promise<void> {
   if (!preloadPromise) {
     preloadPromise = preloadExplorerCache().catch((err: unknown) => {
-      warn('lichess:preload', err);
+      markCacheReadFailed(err);
     });
   }
   return preloadPromise;
@@ -222,15 +248,9 @@ export function lichessCacheMemorySize(): number {
   return CACHE_LICHESS.size;
 }
 
-/**
- * Santé de la persistance locale : passe à false quand un flush échoue
- * (IDB indisponible, quota extrême), repasse à true au premier flush réussi.
- * Exposée pour l'afficher dans le panneau : sans elle, un cache qui ne
- * survit pas au rechargement ressemble à un cache « non utilisé ».
- */
-let persistHealthy = true;
+/** Disponibilité des lectures et écritures durables, affichée dans le panneau. */
 export function lichessPersistHealthy(): boolean {
-  return persistHealthy;
+  return persistHealthy && cacheReadHealthy;
 }
 
 function lichessCacheKey(
@@ -324,10 +344,22 @@ export async function fetchLichessMoves(
   speeds: string = DEFAULT_SPEEDS,
   opts?: LichessFetchOptions
 ): Promise<LichessApiResponse> {
+  const result = await fetchLichessMovesWithCacheStatus(fen, token, db, ratings, speeds, opts);
+  return result.data;
+}
+
+export async function fetchLichessMovesWithCacheStatus(
+  fen: string,
+  token?: string,
+  db: 'masters' | 'lichess' = 'masters',
+  ratings?: string,
+  speeds: string = DEFAULT_SPEEDS,
+  opts?: LichessFetchOptions
+): Promise<LichessMovesCacheResult> {
   const cacheKey = lichessCacheKey(fen, db, ratings, speeds, opts?.since);
   const hit = CACHE_LICHESS.get(cacheKey);
   if (hit) {
-    return hit.data;
+    return { data: hit.data, source: 'memory' };
   }
   // Lecture différée durable : une entrée évincée de la LRU (ou arrivée
   // avant la fin du préchargement) reste disponible sans réseau. Le
@@ -336,11 +368,12 @@ export async function fetchLichessMoves(
   try {
     await explorerCacheReady();
     const stored = await idbGet(cacheKey);
+    cacheReadHealthy = true;
     if (stored) {
       if (!CACHE_LICHESS.has(cacheKey)) {
         CACHE_LICHESS.set(cacheKey, { data: stored.data, savedAt: stored.savedAt });
       }
-      return stored.data;
+      return { data: stored.data, source: 'indexeddb' };
     }
     // Repli migration : entrée écrite avant la normalisation des clés
     // (FEN complet). Promotion vers la clé canonique (persistée au prochain
@@ -350,14 +383,16 @@ export async function fetchLichessMoves(
     const legacyKey = legacyLichessCacheKey(fen, db, ratings, speeds, opts?.since);
     if (legacyKey !== cacheKey) {
       const legacy = await idbGet(legacyKey);
+      cacheReadHealthy = true;
       if (legacy) {
         CACHE_LICHESS.set(cacheKey, { data: legacy.data, savedAt: legacy.savedAt });
         dirtyKeys.add(cacheKey);
         markDirtyPersist();
-        return legacy.data;
+        return { data: legacy.data, source: 'indexeddb' };
       }
     }
-  } catch {
+  } catch (err) {
+    markCacheReadFailed(err);
     /* IDB indisponible : on passe au réseau */
   }
   // Single-flight : une clé en vol = une seule requête partagée.
@@ -382,7 +417,7 @@ export async function fetchLichessMoves(
         void flushLichessPersist();
       }
       INFLIGHT.delete(cacheKey);
-      return data;
+      return { data, source: 'network' as const };
     },
     (err: unknown) => {
       INFLIGHT.delete(cacheKey);
