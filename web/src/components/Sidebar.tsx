@@ -10,6 +10,7 @@ import {
   Globe,
   History,
   Library,
+  ScanSearch,
   RefreshCw,
   Link2,
   ShieldCheck,
@@ -57,6 +58,7 @@ const STUDIO_TABS: TabDef[] = [
   { key: 'trainer', label: 'Entraînement', hint: 'S\u2019entraîner activement contre les coups adverses', shortcut: '4', Icon: Target },
   { key: 'live', label: 'Lichess Live', hint: 'Interroger Lichess Live', shortcut: '5', Icon: Globe },
   { key: 'games', label: 'Mes parties', hint: "Mes parties Chess.com : historique, navigation et statistiques d'ouvertures", shortcut: '6', Icon: History },
+  { key: 'analysis', label: 'Analyse', hint: 'Analyser la position avec Stockfish et comparer les variantes', shortcut: '7', Icon: ScanSearch },
 ];
 
 const PIECE_PREVIEW: Array<'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn'> = [
@@ -125,13 +127,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onChangeStudioTab(tab);
   };
 
-  // Raccourcis Alt+0 (bibliothèque) … Alt+6 (onglets studio) : inactifs en
+  // Raccourcis Alt+0 (bibliothèque) … Alt+7 (onglets studio) : inactifs en
   // saisie et sur les onglets désactivés (même garde que le clic).
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (/^[0-6]$/.test(e.key)) {
+      if (/^[0-7]$/.test(e.key)) {
         e.preventDefault();
         if (e.key === '0') {
           if (inStudio) onBackToLibrary();
