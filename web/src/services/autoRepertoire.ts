@@ -1141,11 +1141,51 @@ export async function generateAutoRepertoire(
         selected = [...mates];
       } else {
         const engineStartedAt = Date.now();
-        const judged = await judgeOwnReplies(
+        const enginePromise = judgeOwnReplies(
           fen, others.map((s) => s.move), cfg.engineJudge as EngineJudgeSettings | undefined,
           events.signal, stats, engineCache,
           events.onEnginePartial ? (ranked) => events.onEnginePartial?.(fen, ranked) : undefined,
         );
+        // Recouvrement moteur/réseau : le Stockfish local tourne dans un
+        // worker pendant que le réseau précharge la prochaine position de
+        // la file (ressources indépendantes : CPU vs réseau). Sans ça,
+        // chaque nœud à nous payait `moteur + API` en série (~6 s + réseau).
+        // UNE seule requête (tête de file, cache manqué, budget non épuisé),
+        // avec le même `gapMs` (reliquat attendu avant d'émettre) ; best
+        // effort — un manqué/échec est re-demandé à son tour normal.
+        const prefetchNext = async (): Promise<void> => {
+          try {
+            if (!cfg.engineJudge) return;
+            const next = heap.peek();
+            if (!next) return;
+            const nextKey = next.fenKey ?? normalizeFen(next.fen);
+            if (visited.has(nextKey)) return;
+            if ((next.popularity ?? 1) < (cfg.minPopularity as number)) return;
+            const lim = effectiveMaxDepth(cfg.maxDepth as number, next.depth, next.popularity ?? 1, cfg);
+            const mq = (cfg.maxQuiescence ?? DEFAULTS.maxQuiescence) as number;
+            if (next.depth >= lim + mq) return;
+            if (stats.positionsInterrogees >= (cfg.maxPositions as number)) return;
+            if (hasLichessCache(next.fen, cfg.endpoint, cfg.ratingsParam, undefined, cfg.since)) return;
+            if (lastNetworkStartedAtMs !== undefined && (cfg.gapMs as number) > 0) {
+              const rem = remainingRequestGapMs(lastNetworkStartedAtMs, cfg.gapMs as number);
+              if (rem > 0) await abortableSleep(rem, events.signal);
+            }
+            throwIfAborted(events.signal);
+            await fetchLichessMovesWithCacheStatus(
+              next.fen,
+              undefined,
+              cfg.endpoint,
+              cfg.ratingsParam,
+              undefined,
+              { signal: events.signal, since: cfg.since },
+            );
+          } catch {
+            /* best effort : le tour normal réessaiera */
+          }
+        };
+        const prefetchPromise = prefetchNext();
+        const judged = await enginePromise;
+        await prefetchPromise;
         stats.engineWaitMs += Date.now() - engineStartedAt;
         if (judged) {
           // Le juge rend les équivalents classés (meilleur d'abord pour les

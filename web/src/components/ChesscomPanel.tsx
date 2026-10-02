@@ -78,6 +78,8 @@ import { analyzeGamePgn } from '../services/gameAnalysis';
 import { analyzeGameAccuracy } from '../services/stockfish';
 import { type GameReport } from '../utils/accuracy';
 import { GameReportView } from './GameReportView';
+import { RapportPanel } from './RapportPanel';
+import type { RapportInput } from '../services/rapport';
 import { CastlingPanel } from './CastlingPanel';
 import { DaytimePanel } from './DaytimePanel';
 import { WeekdayPanel } from './WeekdayPanel';
@@ -94,6 +96,7 @@ import {
   CalendarDays,
   Check,
   Crosshair,
+  FileText,
   History,
   LayoutDashboard,
   List,
@@ -1515,7 +1518,7 @@ export interface GameViewerState {
 }
 
 /** Onglets de la vue « Mes parties » (barre en haut, contenu en grille). */
-export type ChesscomStatsTab = 'parties' | 'overview' | 'precision' | 'shapes' | 'tactics' | 'theory';
+export type ChesscomStatsTab = 'parties' | 'overview' | 'precision' | 'shapes' | 'tactics' | 'theory' | 'rapport';
 
 const STATS_TABS: Array<{ key: ChesscomStatsTab; label: string; Icon: LucideIcon }> = [
   { key: 'parties', label: 'Parties', Icon: List },
@@ -1524,6 +1527,7 @@ const STATS_TABS: Array<{ key: ChesscomStatsTab; label: string; Icon: LucideIcon
   { key: 'shapes', label: 'Formes', Icon: Shapes },
   { key: 'tactics', label: 'Tactique', Icon: Zap },
   { key: 'theory', label: 'Théorie', Icon: BookOpen },
+  { key: 'rapport', label: 'Rapport', Icon: FileText },
 ];
 
 interface ChesscomPanelProps {
@@ -1997,6 +2001,64 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     window.addEventListener('scroll', clear, true);
     return () => window.removeEventListener('scroll', clear, true);
   }, [openingPreview]);
+
+  /** Entree pure de l'onglet Rapport (calculs dans services/rapport.ts). */
+  const rapportInput: RapportInput = useMemo(() => {
+    const totalGames = summary.total;
+    const whiteRow = sideRows.find((r) => r.side === 'w');
+    const blackRow = sideRows.find((r) => r.side === 'b');
+    const perfW = perfRows.filter((r) => r.games >= 3);
+    const byWin = [...perfW].sort((a, b) => (b.wins / b.games) - (a.wins / a.games));
+    const byLoss = [...perfW].sort((a, b) => (a.wins / a.games) - (b.wins / b.games));
+    const best = byWin[0] ?? null;
+    const worst = byLoss[0] ?? null;
+    const topShape = GAME_SHAPE_ORDER.slice().sort(
+      (a, b) => (shapeView.counts[b] ?? 0) - (shapeView.counts[a] ?? 0),
+    )[0];
+    return {
+      me,
+      totalGames,
+      wins: summary.wins,
+      draws: summary.draws,
+      losses: summary.losses,
+      score: summary.score,
+      whiteGames: whiteRow?.games ?? 0,
+      whiteWins: whiteRow?.wins ?? 0,
+      blackGames: blackRow?.games ?? 0,
+      blackWins: blackRow?.wins ?? 0,
+      botGamesCount,
+      overallAcc: accuracyStats.overallAvg,
+      analyzedCount: accuracyStats.overallCount,
+      accWin: accuracyStats.winAvg,
+      accWinCount: accuracyStats.winCount,
+      accLoss: accuracyStats.lossAvg,
+      accLossCount: accuracyStats.lossCount,
+      accDraw: accuracyStats.drawAvg,
+      accDrawCount: accuracyStats.drawCount,
+      brilliant: qualityTotals.total.brillant ?? 0,
+      best: (qualityTotals.total.genial ?? 0) + (qualityTotals.total.meilleur ?? 0),
+      excellent: qualityTotals.total['tres-bien'] ?? 0,
+      good: (qualityTotals.total.bon ?? 0) + (qualityTotals.total.theorique ?? 0),
+      inaccuracy: qualityTotals.total.imprecision ?? 0,
+      mistake: (qualityTotals.total.erreur ?? 0) + (qualityTotals.total['gain-manque'] ?? 0),
+      blunder: qualityTotals.total.gaffe ?? 0,
+      totalMoves: qualityTotals.moves,
+      matesFound: matesTotal.foundTotal,
+      matesMissed: matesTotal.missedTotal,
+      forksFound: forksTotal.foundTotal,
+      forksMissed: forksTotal.missedTotal,
+      hangs: hangsTotal.total,
+      freebiesFound: freebiesTotal.foundTotal,
+      freebiesMissed: freebiesTotal.missedTotal,
+      theoryAvg: masteryAvgTheoryMoves,
+      theoryCount: masteryDevFirst.length,
+      theoryAvailable: masteryTheory.size > 0,
+      topShape,
+      topShapePct: shapeView.total > 0 ? ((shapeView.counts[topShape] ?? 0) / shapeView.total) * 100 : 0,
+      bestOpening: best ? { name: best.name, eco: best.eco, wins: best.wins, games: best.games } : null,
+      worstOpening: worst && worst !== best ? { name: worst.name, eco: worst.eco, wins: worst.wins, games: worst.games } : null,
+    };
+  }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount]);
 
   const selectedGame = useMemo(
     () => (viewer ? (games.find((g) => g.url === viewer.url) ?? null) : null),
@@ -3412,6 +3474,9 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
           )}
         </div>
         </div>
+        )}
+        {statsTab === 'rapport' && (
+          <RapportPanel input={rapportInput} />
         )}
         </div>
         )}

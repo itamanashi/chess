@@ -4,6 +4,7 @@ Usage :
     python run_web.py
 """
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -11,6 +12,19 @@ import webbrowser
 from urllib.request import urlopen
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
+
+
+def port_occupe(port, hote_v4="127.0.0.1", hote_v6="::1"):
+    """True si quelque chose écoute déjà sur le port (IPv4 ou IPv6)."""
+    for famille, hote in ((socket.AF_INET, hote_v4), (socket.AF_INET6, hote_v6)):
+        try:
+            with socket.socket(famille, socket.SOCK_STREAM) as s:
+                s.settimeout(0.3)
+                if s.connect_ex((hote, port)) == 0:
+                    return True
+        except OSError:
+            pass
+    return False
 
 def main():
     print("=" * 60)
@@ -45,6 +59,22 @@ def main():
         raise RuntimeError("Délai dépassé au démarrage de la base SQLite locale.")
     print("Appuyez sur Ctrl+C pour arrêter le serveur.\n")
 
+    # Vite est en strictPort (vite.config.ts) : une 2e instance quitte
+    # immédiatement si 5173 est déjà pris (ancien serveur zombie). Mieux vaut
+    # réutiliser l'onglet existant que de crasher avec un traceback.
+    if port_occupe(5173):
+        print("Un serveur occupe déjà le port 5173 — réutilisez l'onglet ouvert")
+        print("sur http://localhost:5173/ au lieu d'en relancer un.")
+        print("(Si la page ne répond plus, tuez l'ancien processus node/Vite puis relancez.)")
+        webbrowser.open("http://localhost:5173/")
+        cache_server.terminate()
+        try:
+            cache_server.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            cache_server.kill()
+            cache_server.wait()
+        return
+
     try:
         web_env = os.environ.copy()
         web_env["VITE_SQLITE_CACHE_ENABLED"] = "true"
@@ -55,6 +85,15 @@ def main():
             shell=True,
             env=web_env,
         )
+    except subprocess.CalledProcessError as err:
+        print(
+            f"[ERREUR] Le serveur Vite s'est arrêté (code {err.returncode}).\n"
+            "Causes probables : port 5173 déjà occupé par un ancien serveur\n"
+            "(tuez le processus node restant), ou fenêtre console fermée pendant\n"
+            "le démarrage. Relancez après vérification.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     except KeyboardInterrupt:
         print("\nArrêt du serveur Web. À bientôt !")
     finally:

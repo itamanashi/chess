@@ -430,7 +430,7 @@
 .freecam-viewport {
   position: relative;
   overflow: hidden;
-  background: var(--tree-bg);
+  background: #212121;
   background-image: radial-gradient(circle, rgba(189,197,185,0.09) 1px, transparent 1px);
   background-size: 26px 26px;
   cursor: grab;
@@ -460,7 +460,7 @@
 .freecam-hint { left: 1rem; bottom: 1rem; }
 .freecam-status { right: 1rem; top: 1rem; font-family: var(--font-mono); font-size: 10px; color: var(--text-2); }
 .move-node {
-  position: absolute; border: 2px solid #fff; border-radius: 50%;
+  position: absolute; border: 2px solid transparent; border-radius: 50%;
   padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer; font-family: var(--font-mono); text-align: center;
   user-select: none; box-sizing: border-box;
@@ -469,7 +469,7 @@
 .move-node.selected { outline: 2px solid var(--focus); outline-offset: 2px; }
 .move-node.player-white { background: #fff; color: #171717; }
 .move-node.player-black, .move-node.is-root { background: #171717; color: #fff; }
-.move-node.is-transposition { border-style: dashed; }
+.move-node.is-transposition { border-style: dashed; border-color: #8a8a8a; }
 .move-label { font-size: 22px; font-weight: 700; line-height: 1.1; }
 .move-node.is-root .move-label { font-size: 12px; }
 .move-freq { font-size: 14px; font-weight: 600; line-height: 1.2; opacity: .78; margin-top: 3px; }
@@ -755,9 +755,290 @@
 
 /* (Colonnes Mes parties supprimées : liste centrée unique.) */
 
+/* ─── Onglet Rapport ───────────────────────────────────────────────────── */
+.rapport-card { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.rapport-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+.rapport-header-left { display: flex; align-items: center; gap: var(--sp-3); }
+.rapport-icon { color: var(--accent); flex-shrink: 0; }
+.rapport-title { font-size: var(--fs-heading); font-weight: 700; margin: 0; line-height: 1.2; }
+.rapport-subtitle { font-size: var(--fs-small); margin-top: 2px; }
+
+.rapport-accuracy-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.rapport-accuracy-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.rapport-accuracy-label { font-size: var(--fs-kicker); color: var(--text-3); margin-top: 2px; }
+
+.rapport-section { display: flex; flex-direction: column; gap: var(--sp-2); }
+.rapport-section-title {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.rapport-paragraph {
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  margin: 0;
+  color: var(--text-2);
+}
+.rapport-paragraph strong { color: var(--text); }
+
+.rapport-list {
+  margin: var(--sp-2) 0 0 0;
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rapport-list li { font-size: var(--fs-body); color: var(--text-2); }
+.rapport-list li strong { color: var(--text); }
+
+/* Axes d'amélioration */
+.rapport-axes { display: flex; flex-direction: column; gap: var(--sp-2); }
+.rapport-axe {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+}
+.rapport-axe-priority {
+  width: 4px;
+  min-width: 4px;
+  border-radius: 2px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.rapport-axe-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rapport-axe-title { font-size: var(--fs-body); font-weight: 600; color: var(--text); }
+.rapport-axe-detail { font-size: var(--fs-small); line-height: 1.55; }
+
+.rapport-footer {
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+.rapport-footer strong { color: var(--text); }
+
+/* ─── Rapport : hero (titre + gauges) ────────────────────────────────── */
+.rapport-hero {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+.rapport-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: min(280px, 100%);
+  flex: 1 1 280px;
+}
+.rapport-hero-title-block { display: flex; align-items: flex-start; gap: var(--sp-2); }
+.rapport-hero-icon { color: var(--accent-text); flex-shrink: 0; margin-top: 2px; }
+.rapport-hero-title { font-size: var(--fs-h3); font-weight: 700; margin: 0; line-height: 1.3; }
+.rapport-hero-meta { font-size: var(--fs-small); margin-top: 2px; }
+.rapport-level-badge {
+  align-self: flex-start;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: var(--r-control);
+  padding: 2px var(--sp-2);
+}
+.rapport-level-desc { font-size: var(--fs-small); margin: 0; line-height: 1.55; }
+.rapport-gauges { display: flex; gap: var(--sp-4); align-items: flex-start; flex-shrink: 0; }
+.rapport-gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rapport-gauge-legend { font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+
+/* ─── Rapport : mini-cartes de stats ─────────────────────────────────── */
+.rapport-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-2);
+}
+.rapport-stat-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rapport-stat-label { font-size: var(--fs-kicker); }
+.rapport-stat-value {
+  font-size: var(--fs-h3);
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.rapport-stat-sub { font-size: var(--fs-kicker); }
+
+/* ─── Rapport : barre de qualité des coups ───────────────────────────── */
+.rapport-quality-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+}
+.rapport-qbar-seg { height: 100%; min-width: 0; }
+.rapport-quality-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.rapport-quality-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+.rapport-quality-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── Rapport : tableau tactique ─────────────────────────────────────── */
+.rapport-tactic-grid { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
+.rapport-tactic-row { display: flex; align-items: center; gap: var(--sp-3); }
+.rapport-tactic-icon {
+  width: 24px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--text-2);
+}
+.rapport-tactic-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rapport-tactic-label { font-size: var(--fs-small); font-weight: 600; color: var(--text); }
+.rapport-tactic-bar-wrap { display: flex; align-items: center; gap: var(--sp-2); }
+.rapport-tactic-bar {
+  flex: 1 1 auto;
+  min-width: 40px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.rapport-tactic-fill { height: 100%; border-radius: 4px; }
+.rapport-tactic-rate {
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.rapport-tactic-counts {
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ─── Rapport : récit + points forts ─────────────────────────────────── */
+.rapport-narrative { gap: var(--sp-4); }
+.rapport-section-sub {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin: 0;
+}
+.rapport-strengths { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
+.rapport-strength-item { display: flex; gap: var(--sp-2); align-items: flex-start; }
+.rapport-strength-icon {
+  width: 24px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--text-2);
+  padding-top: 2px;
+}
+/* Titres de section du rapport : icône Lucide + texte alignés. */
+.rapport-grid .card-title-sm {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.rapport-strength-title { font-size: var(--fs-body); font-weight: 600; color: var(--text); }
+.rapport-strength-detail { font-size: var(--fs-small); line-height: 1.55; }
+
+/* ─── Rapport : plan de progression (structure neuve) ────────────────── */
+.rapport-axe-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.rapport-axe-icon { display: flex; justify-content: center; color: var(--text-2); }
+.rapport-axe-priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rapport-axe-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.rapport-axe-metric {
+  font-size: var(--fs-small);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rapport-axe-badge {
+  font-size: var(--fs-kicker);
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: var(--r-control);
+  padding: 2px var(--sp-2);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
 @media (max-width: 760px) {
   .stats-dashboard-grid { grid-template-columns: repeat(2, 1fr); }
   .castle-matrix-row { grid-template-columns: minmax(0, 1fr); }
   .robust-triptic { grid-template-columns: minmax(0, 1fr); }
   .promotion-pieces { grid-template-columns: repeat(2, 1fr); }
+  .rapport-header { flex-direction: column; }
+  .rapport-accuracy-badge { align-self: flex-start; flex-direction: row; gap: var(--sp-2); }
+  .rapport-hero { flex-direction: column; align-items: stretch; }
+  .rapport-gauges { justify-content: flex-start; flex-wrap: wrap; }
+  .rapport-axe-header { flex-direction: column; gap: 2px; }
+  .rapport-axe-badge { align-self: flex-start; }
 }

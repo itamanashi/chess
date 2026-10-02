@@ -14,6 +14,8 @@ import { eloTargetLabel } from '../i18n';
 import { Chessboard } from './Chessboard';
 import { ConfirmDialog } from './ConfirmDialog';
 import { edgeIntersectsRect, findVisibleRange, type PadRect } from '../utils/treeViewport';
+import { layoutTidyTree } from '../utils/treeLayout';
+import { mergeTranspositions, renormalizeShares, type TranspoLink } from '../utils/transpositions';
 
 interface RepertoireGraphTreeProps {
   repertoire: RepertoireItem;
@@ -69,8 +71,8 @@ type VerticalDirection = 'top-down' | 'bottom-up';
 /* Graphe circulaire : profondeur verticale, branches réparties horizontalement. */
 const NODE_W = 84;
 const NODE_H = 84;
-const H_GAP = 88;
-const V_GAP = 56;
+const H_GAP = 48;
+const V_GAP = 96;
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 3;
 /** Positions parentes max interrogées sur Lichess (limite requêtes). */
@@ -139,20 +141,6 @@ function moverOf(fen: string | undefined, depth: number, rootWhite: boolean): 'w
   }
   const firstWhite = rootWhite;
   return ((depth - 1) % 2 === 0) === firstWhite ? 'w' : 'b';
-}
-
-/** Répartit les sous-arbres horizontalement et place chaque profondeur sur une rangée. */
-function layoutTidy(nodes: GNode[], cursor: { x: number }): void {
-  for (const n of nodes) {
-    if (n.children.length === 0) {
-      n.x = cursor.x;
-      cursor.x += NODE_W + H_GAP;
-    } else {
-      layoutTidy(n.children, cursor);
-      n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
-    }
-    n.y = n.depth * (NODE_H + V_GAP);
-  }
 }
 
 export interface OpeningSelection {
@@ -308,7 +296,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     }
   }, [rootFen]);
 
-  const { nodes, rootPos, treeBottom, width, height } = useMemo(() => {
+  const { nodes, rootPos, treeBottom, width, height, transpoLinks } = useMemo(() => {
     const built = buildGraph(rootChildren, 1, [], [], Number.POSITIVE_INFINITY, rootWhiteToMove, repertoire.color);
     const fenCounts = new Map<string, number>();
     const collectFen = (ns: GNode[]): void => {
@@ -366,7 +354,11 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
       return kept;
     };
     const visible = applyFilter(selectedOpening ? pruneToOpening(built, null, selectedOpening) : built);
-    layoutTidy(visible, { x: 0 });
+    // Transpositions : une position = un seul rond, les routes secondaires
+    // deviennent des arcs rouges (aucune ligne perdue : greffe des enfants).
+    const { roots: merged, links: transpoLinks } = mergeTranspositions(visible);
+    renormalizeShares(merged);
+    layoutTidyTree(merged, NODE_W, NODE_H, H_GAP, V_GAP);
     let maxX = 0;
     let deepest = 1;
     const visit = (ns: GNode[]): void => {
@@ -376,17 +368,18 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
         visit(n.children);
       }
     };
-    visit(visible);
-    const rootX = visible.length > 0
-      ? (visible[0].x + visible[visible.length - 1].x) / 2
+    visit(merged);
+    const rootX = merged.length > 0
+      ? (merged[0].x + merged[merged.length - 1].x) / 2
       : 0;
     const treeBottom = deepest * (NODE_H + V_GAP) + NODE_H;
     return {
-      nodes: visible,
+      nodes: merged,
       rootPos: { x: rootX, y: 0 },
       treeBottom,
       width: Math.max(maxX + 100, 320),
       height: Math.max(treeBottom + 100, 200),
+      transpoLinks,
     };
   }, [rootChildren, rootWhiteToMove, repertoire.color, rootFen, oneWhitePerLine, whiteMode, optimism, residual, selectedOpening]);
 
@@ -505,6 +498,18 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     }
     return out;
   }, [graphIndex, padRect, edgeEnds]);
+
+  /* Arcs rouges de transposition : même culling que les arêtes (corde monde vs rect). */
+  const visibleTranspoLinks = useMemo(() => {
+    if (!padRect) return [];
+    return transpoLinks.filter(({ from, to }) => {
+      const fx = from.x + NODE_W / 2;
+      const fy = (yByNode.get(from) ?? from.y) + NODE_H / 2;
+      const tx = to.x + NODE_W / 2;
+      const ty = (yByNode.get(to) ?? to.y) + NODE_H / 2;
+      return edgeIntersectsRect(fx, fy, tx, ty, padRect);
+    });
+  }, [transpoLinks, padRect, yByNode]);
 
   const nodeByKey = useMemo(() => {
     const map = new Map<string, GNode>();
@@ -795,6 +800,21 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
     });
   };
 
+  /** Centre la caméra sur la racine (« Début »), au zoom courant. */
+  const goToStart = (): void => {
+    const el = viewportRef.current;
+    autoFitRef.current = false;
+    const vw = el?.clientWidth ?? viewportSize.width;
+    const vh = el?.clientHeight ?? viewportSize.height;
+    const wx = rootPos.x + NODE_W / 2;
+    const wy = displayRootY + NODE_H / 2;
+    setCam((c) => ({
+      scale: c.scale,
+      x: vw / 2 - wx * c.scale,
+      y: vh / 2 - wy * c.scale,
+    }));
+  };
+
   /* ---------- Visualiseur ---------- */
   const pinned = pinnedKey ? nodeByKey.get(pinnedKey) : undefined;
   const selectedNode = selectedId ? nodeByKey.get(selectedId) : undefined;
@@ -878,26 +898,62 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
   const renderEdges = useCallback((edgeNodes: GNode[]): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
     const s = cam.scale;
+    const dir = verticalDirection === 'bottom-up' ? -1 : 1;
     for (const n of edgeNodes) {
       const [wx1, wy1, wx2, wy2] = edgeEnds(n);
       const x1 = wx1 * s + cam.x;
       const y1 = wy1 * s + cam.y;
       const x2 = wx2 * s + cam.x;
       const y2 = wy2 * s + cam.y;
-      const my = (y1 + y2) / 2;
+      // Petit trait droit à chaque extrémité avant la courbe (style organigramme).
+      const stub = Math.min(14, Math.abs(y2 - y1) * 0.25);
+      const sy1 = y1 + dir * stub;
+      const sy2 = y2 - dir * stub;
+      const my = (sy1 + sy2) / 2;
       out.push(
         <path
           key={`e-${n.key}`}
-          d={`M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`}
+          d={`M ${x1} ${y1} L ${x1} ${sy1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${sy2} L ${x2} ${y2}`}
           fill="none"
           stroke="#fff"
           strokeWidth={3.5}
-          strokeDasharray={n.transposition ? '8 6' : undefined}
         />,
       );
     }
     return out;
-  }, [cam.scale, cam.x, cam.y, edgeEnds]);
+  }, [cam.scale, cam.x, cam.y, edgeEnds, verticalDirection]);
+
+  /* Arcs rouges de transposition (demi-arcs) : du centre du parent de
+     l'occurrence élaguée vers le centre du rond unique (extrémités masquées
+     sous les ronds, le SVG étant peint sous les nœuds). */
+  const renderTranspoArcs = useCallback((links: TranspoLink<GNode>[]): React.ReactNode[] => {
+    const out: React.ReactNode[] = [];
+    const s = cam.scale;
+    links.forEach(({ from, to }, i) => {
+      const fx = (from.x + NODE_W / 2) * s + cam.x;
+      const fy = ((yByNode.get(from) ?? from.y) + NODE_H / 2) * s + cam.y;
+      const tx = (to.x + NODE_W / 2) * s + cam.x;
+      const ty = ((yByNode.get(to) ?? to.y) + NODE_H / 2) * s + cam.y;
+      const dx = tx - fx;
+      const dy = ty - fy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1) return;
+      // Demi-arc : contrôle décalé perpendiculairement à la corde.
+      const bulge = Math.min(140, Math.max(30, dist * 0.3));
+      const cx = (fx + tx) / 2 + (-dy / dist) * bulge;
+      const cy = (fy + ty) / 2 + (dx / dist) * bulge;
+      out.push(
+        <path
+          key={`t-${i}-${from.key}`}
+          d={`M ${fx} ${fy} Q ${cx} ${cy}, ${tx} ${ty}`}
+          fill="none"
+          stroke="#ef4444"
+          strokeWidth={2.5}
+        />,
+      );
+    });
+    return out;
+  }, [cam.scale, cam.x, cam.y, yByNode]);
 
   const renderNodes = useCallback((visible: GraphEntry[]): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
@@ -939,9 +995,10 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
   const graphStatic = useMemo(() => {
     return {
       edges: renderEdges(visibleEdgeNodes),
+      transpoArcs: renderTranspoArcs(visibleTranspoLinks),
       nodeList: renderNodes(visibleEntries),
     };
-  }, [visibleEdgeNodes, visibleEntries, renderEdges, renderNodes]);
+  }, [visibleEdgeNodes, visibleTranspoLinks, visibleEntries, renderEdges, renderTranspoArcs, renderNodes]);
 
   const tipNode = hoverKey ? nodeByKey.get(hoverKey) : undefined;
 
@@ -1010,7 +1067,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             </>
           )}
         </span>
-          <span className="tree-hint">Glisser = déplacer • molette = zoom • survol = stats • clic = analyser.</span>
+          <span className="tree-hint">Glisser = déplacer • molette = zoom • survol = stats • clic = analyser.{transpoLinks.length > 0 ? ' • arc rouge = transposition.' : ''}</span>
       </div>
       {shareProgress && (
         <div className="graph-note">
@@ -1027,10 +1084,12 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
           className="freecam-viewport"
           ref={viewportRef}
           onMouseDown={(e) => {
+            // Toujours réarmer ici (avant le retour anticipé sur les nœuds) :
+            // sinon un drag terminé sur le fond fait avaler le clic suivant sur un rond.
+            suppressClickRef.current = false;
             if ((e.target as HTMLElement).closest('.move-node, .freecam-ui')) return;
             if (e.button !== 0 && e.button !== 1) return;
             autoFitRef.current = false;
-            suppressClickRef.current = false;
             panRef.current = { sx: e.clientX, sy: e.clientY, cx: cam.x, cy: cam.y };
             e.preventDefault();
           }}
@@ -1042,6 +1101,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             style={{ position: 'absolute', top: 0, left: 0, overflow: 'hidden', pointerEvents: 'none' }}
           >
             {graphStatic.edges}
+            {graphStatic.transpoArcs}
           </svg>
           <div
             className="freecam-layer"
@@ -1065,6 +1125,7 @@ export const RepertoireGraphTree: React.FC<RepertoireGraphTreeProps> = ({
             <button onClick={() => zoomAtCenter(1 / 1.25)} title="Zoom −">−</button>
             <button onClick={() => { autoFitRef.current = false; fit(); }} title="Ajuster à l'écran">⛶</button>
             <button onClick={() => { autoFitRef.current = true; setCam({ x: 0, y: 0, scale: 1 }); fit(); }} title="Recentrer">⟲</button>
+            <button onClick={goToStart} title="Aller au début (racine de l'arbre)">⇤</button>
           </div>
 
           {tipNode && tipPos && (
