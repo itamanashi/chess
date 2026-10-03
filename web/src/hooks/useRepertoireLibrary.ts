@@ -7,7 +7,6 @@ import type {
 } from '../types/chess';
 import { warn } from '../utils/async';
 import {
-  STORE_INIT_SAVE_FAILED,
   TOAST_LIBRARY_DURABLE_LOAD_FAILED,
   TOAST_LIBRARY_SAVE_FAILED,
   TOAST_LIBRARY_CORRUPT,
@@ -21,7 +20,6 @@ import {
   emptyRoot,
   loadLibrary,
   parseImport,
-  saveLibrary,
   type ImportParseResult,
 } from '../storage/libraryRepository';
 import { idbLoadLibrary, idbSaveLibrary } from '../storage/libraryDb';
@@ -51,10 +49,9 @@ export function useRepertoireLibrary() {
     setRepertoires(items);
   }, []);
 
-  /** localStorage reste le chemin synchrone; IndexedDB accepte les arbres volumineux. */
+  /** IndexedDB pour la bibliothèque (pas de quota localStorage). */
   const persist = useCallback((items: RepertoireItem[], isMutation = true) => {
     if (isMutation) mutationRevision.current++;
-    const localSaved = saveLibrary(items);
     const write = idbWriteQueue.current
       .catch(() => undefined)
       .then(() => idbSaveLibrary(items));
@@ -64,13 +61,12 @@ export function useRepertoireLibrary() {
       return true;
     }).catch((err: unknown) => {
       warn('library:idb-save', err);
-      if (!localSaved && !saveFailureNotified.current) {
+      if (!saveFailureNotified.current) {
         saveFailureNotified.current = true;
         toast.error(TOAST_LIBRARY_SAVE_FAILED);
       }
-      return localSaved;
+      return false;
     });
-    if (!localSaved) warn('library:local-save', STORE_INIT_SAVE_FAILED);
     return durableWrite;
   }, [toast]);
 
@@ -79,13 +75,13 @@ export function useRepertoireLibrary() {
   useEffect(() => {
     const loaded = loadLibrary();
     let initialItems: RepertoireItem[];
-    if (loaded.status === 'ready' || loaded.status === 'migrated') {
-      initialItems = loaded.items;
-      publish(initialItems);
-      if (loaded.status === 'migrated') {
-        // Réécrit sous forme canonique pour les prochains lancements.
-        saveLibrary(loaded.items);
-      }
+if (loaded.status === 'ready' || loaded.status === 'migrated') {
+        initialItems = loaded.items;
+        publish(initialItems);
+        if (loaded.status === 'migrated') {
+          // Réécrit sous forme canonique pour les prochains lancements (IndexedDB).
+          persist(loaded.items, false);
+        }
       if (!loadFeedbackSent.current && loaded.issues.length > 0) {
         loadFeedbackSent.current = true;
         toast.info(toastLibraryUpgraded(loaded.issues[0], LIBRARY_SCHEMA_VERSION));
@@ -100,13 +96,13 @@ export function useRepertoireLibrary() {
       toast.error(TOAST_STORAGE_UNAVAILABLE);
       initialItems = createDefaultOpenings();
       publish(initialItems);
-    } else {
-      initialItems = createDefaultOpenings();
-      publish(initialItems);
-      if (loaded.status === 'empty' && !saveLibrary(initialItems)) {
-        warn('library:init-save', STORE_INIT_SAVE_FAILED);
+} else {
+        initialItems = createDefaultOpenings();
+        publish(initialItems);
+        if (loaded.status === 'empty') {
+          persist(initialItems, false);
+        }
       }
-    }
 
     let cancelled = false;
     const startingRevision = mutationRevision.current;
@@ -134,8 +130,7 @@ export function useRepertoireLibrary() {
         return;
       }
       publish(checked.items);
-      if (checked.status === 'migrated') persist(checked.items, false);
-      else saveLibrary(checked.items);
+if (checked.status === 'migrated') persist(checked.items, false);
     }).catch((err: unknown) => {
       warn('library:idb-load', err);
       if (!loadFailureNotified.current) {

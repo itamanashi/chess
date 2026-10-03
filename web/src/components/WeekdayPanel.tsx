@@ -18,7 +18,7 @@ interface WeekdayPanelProps {
   me: string;
 }
 
-const OUTCOME_COLOR = { win: '#7d9a7e', draw: '#6f6a60', loss: '#c46b5a' } as const;
+const OUTCOME_COLOR = { win: '#8fb996', draw: '#8e887c', loss: '#d8816f' } as const;
 
 /** Camembert des parties par jour (SVG pur, même technique que le roque). */
 const WeekdayDonut: React.FC<{ stats: WeekdayStats }> = ({ stats }) => {

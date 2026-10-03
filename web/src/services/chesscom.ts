@@ -1831,16 +1831,16 @@ export const MOVE_QUALITY_LABELS: Record<MoveQuality, string> = {
 };
 
 export const MOVE_QUALITY_COLORS: Record<MoveQuality, string> = {
-  brillant: '#7d9a7e',
+  brillant: '#8fb996',
   genial: '#d8d2c6',
-  meilleur: '#7d9a7e',
-  'tres-bien': '#7d9a7e',
+  meilleur: '#8fb996',
+  'tres-bien': '#8fb996',
   bon: '#9a9488',
-  theorique: '#b58863',
+  theorique: '#d29e6a',
   imprecision: '#ead9b5',
-  erreur: '#b58863',
-  gaffe: '#c46b5a',
-  'gain-manque': '#b58863',
+  erreur: '#d29e6a',
+  gaffe: '#d8816f',
+  'gain-manque': '#d29e6a',
 };
 
 /** Premiers plis considérés comme théorie (livre d'ouvertures). */
@@ -2090,10 +2090,10 @@ export const PIECE_GLYPHS: Record<PieceKind, string> = {
 
 export const PIECE_COLORS: Record<PieceKind, string> = {
   p: '#9a9488',
-  n: '#b58863',
-  b: '#7d9a7e',
-  r: '#b58863',
-  q: '#c46b5a',
+  n: '#d29e6a',
+  b: '#8fb996',
+  r: '#d29e6a',
+  q: '#d8816f',
   k: '#d8d2c6',
 };
 

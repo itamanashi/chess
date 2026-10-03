@@ -422,12 +422,12 @@ export function evaluateMoveAnnotation(
 
 /** Couleur d'affichage d'une précision (pastilles et tableaux). */
 export function accuracyColor(v: number | null | undefined): string {
-  if (v === null || v === undefined) return '#6f6a60';
-  if (v >= 90) return '#7d9a7e';
+  if (v === null || v === undefined) return '#8e887c';
+  if (v >= 90) return '#8fb996';
   if (v >= 80) return '#9a9488';
   if (v >= 70) return '#ead9b5';
-  if (v >= 50) return '#b58863';
-  return '#c46b5a';
+  if (v >= 50) return '#d29e6a';
+  return '#d8816f';
 }
 
 /** Score par défaut d'une position neutre. */

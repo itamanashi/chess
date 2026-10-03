@@ -132,7 +132,7 @@ export const RepertoireLibrary: React.FC<RepertoireLibraryProps> = ({
 
                 <div className="rep-actions-footer">
                   <button 
-                    className="primary-btn open-btn"
+                    className="study-btn open-btn"
                     onClick={() => onOpenRepertoire(rep, 'builder')}
                     title="Étudier et construire ce répertoire"
                   >

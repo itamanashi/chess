@@ -46,6 +46,14 @@
 }
 .primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
 
+.study-btn {
+  background: var(--study);
+  border-color: var(--study);
+  color: var(--study-ink);
+  font-weight: 600;
+}
+.study-btn:hover:not(:disabled) { background: var(--study-hover); }
+
 .secondary-btn,
 .action-btn,
 .side-action-btn,
@@ -232,7 +240,7 @@
 .eco-badge, .eco-tag, .eco-pill { font-family: var(--font-mono); font-size: var(--fs-kicker); }
 .rep-color-tag, .rep-color-tag-sm { font-weight: 600; }
 .tag-white { background: var(--camp-white); border-color: var(--camp-white); color: #0e0d0b; }
-.tag-black { background: rgb(181 136 99 / 0.14); border-color: var(--camp-black); color: var(--board-light); }
+.tag-black { background: rgb(210 158 106 / 0.14); border-color: var(--camp-black); color: var(--board-light); }
 .san-text, .chip-san, .highlight-san, .gsan-in { font-family: var(--font-mono); }
 .highlight-san {
   background: var(--accent-tint);
@@ -267,6 +275,8 @@ table.stats-table thead th,
   font-size: var(--fs-small);
 }
 .chesscom-stats-table-wrap { overflow-x: auto; }
+/* Colonnes numériques : chasse fixe pour comparer d'un coup d'œil. */
+.chesscom-stats-table td.num { font-variant-numeric: tabular-nums; }
 
 /* Barres de répartition Blancs / Nuls / Noirs (une seule implémentation). */
 .result-bar,
@@ -286,7 +296,7 @@ table.stats-table thead th,
 }
 .result-bar { margin-top: var(--sp-2); }
 .bar-white { background: var(--camp-white); color: #0e0d0b; }
-.bar-draw { background: #6f6a60; color: #ece8df; }
+.bar-draw { background: #8e887c; color: #ece8df; }
 .bar-black { background: var(--bg-app); color: var(--text-2); }
 .advice-scorebar-fill,
 .frequency-progress-fill {
@@ -297,7 +307,7 @@ table.stats-table thead th,
 .chesscom-stats-table .chesscom-wdl-bar { margin-top: 0; min-width: 100px; height: 14px; line-height: 12px; font-size: 10px; }
 .chesscom-wdl-segment { display: flex; align-items: center; justify-content: center; }
 .chesscom-wdl-win { background: var(--accent); }
-.chesscom-wdl-draw { background: #6f6a60; }
+.chesscom-wdl-draw { background: #8e887c; }
 .chesscom-wdl-loss { background: var(--danger-fill); }
 
 /* Modales : une seule langue visuelle (backdrop + dialogue + actions). */

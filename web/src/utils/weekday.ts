@@ -39,12 +39,12 @@ export const WEEKDAY_SHORT: Record<Weekday, string> = {
 /** Une couleur par jour, dans la palette neutre de l'échiquier. */
 export const WEEKDAY_COLORS: Record<Weekday, string> = {
   mon: '#d8d2c6',
-  tue: '#b58863',
+  tue: '#d29e6a',
   wed: '#9a9488',
-  thu: '#5c4632',
+  thu: '#8a6a45',
   fri: '#ead9b5',
-  sat: '#7d9a7e',
-  sun: '#6f6a60',
+  sat: '#8fb996',
+  sun: '#8e887c',
 };
 
 /** getDay() (0 = dimanche) → jour semaine commençant lundi. */

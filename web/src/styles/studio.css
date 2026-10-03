@@ -395,7 +395,7 @@
   --tree-bg: var(--bg-app);
   --freq-1: #9a9488;
   --freq-2: #ead9b5;
-  --freq-3: #b58863;
+  --freq-3: #d29e6a;
   --freq-4: #d8d2c6;
   --freq-5: #f4efe4;
   --eval-pos: var(--success);
@@ -538,6 +538,7 @@
   border-bottom: 1px solid var(--border);
 }
 .chesscom-games-table thead th { color: var(--text-3); font-size: var(--fs-small); font-weight: 600; }
+.chesscom-games-table td.num { font-variant-numeric: tabular-nums; }
 .chesscom-games-table tbody tr { cursor: pointer; }
 .chesscom-games-table tbody tr:hover { background: var(--bg-raised); }
 .chesscom-games-table tbody tr:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
@@ -636,8 +637,8 @@
   will-change: auto;
 }
 /* Performance par ouverture (nom + ECO + total, coups, barre V/N/D). */
-.perf-rows { display: flex; flex-direction: column; gap: var(--sp-3); }
-.perf-row { display: flex; flex-direction: column; gap: var(--sp-1); }
+.perf-rows { display: flex; flex-direction: column; gap: var(--sp-3); list-style: none; margin: 0; padding: 0; }
+.perf-row { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
 .perf-row-head { display: flex; align-items: baseline; gap: var(--sp-2); min-width: 0; }
 .perf-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .perf-total { margin-left: auto; font-size: var(--fs-small); white-space: nowrap; }

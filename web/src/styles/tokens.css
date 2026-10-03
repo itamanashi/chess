@@ -19,7 +19,7 @@
   /* Ivoire et gris chauds, repris directement du studio de référence. */
   --text: #ece8df;
   --text-2: #9a9488;
-  --text-3: #6f6a60;
+  --text-3: #8e887c;
 
   /* Accent ivoire ; les tons noisette restent dédiés à l'échiquier. */
   --accent: #d8d2c6;
@@ -29,27 +29,33 @@
   --accent-text: #d8d2c6;
 
   /* Vert sauge réservé aux états positifs explicites. */
-  --success: #7d9a7e;
-  --success-text: #7d9a7e;
-  --success-tint: rgb(125 154 126 / 0.16);
+  --success: #8fb996;
+  --success-text: #8fb996;
+  --success-tint: rgb(143 185 150 / 0.16);
 
-  /* Cases et pièces : palette exacte de l'échiquier du studio. */
+  /* Vert étude pour les boutons "Étudier". */
+  --study: #5B9E51;
+  --study-hover: #6bc25f;
+  --study-ink: #ffffff;
+  --study-tint: rgb(91 158 81 / 0.16);
+
+/* Cases et pièces : palette exacte de l'échiquier du studio. */
   --camp-white: #f4efe4;
-  --camp-black: #b58863;
-  --board-light: #ead9b5;
-  --board-dark: #b58863;
+  --camp-black: #d29e6a;
+  --board-light: #FFFFDD;
+  --board-dark: #86A666;
   --board-coord: #5c4632;
   --piece-white: #f4efe4;
   --piece-black: #2a241c;
 
   /* Sémantiques : une couleur = un sens. */
-  --warn: #b58863;
+  --warn: #d29e6a;
   --warn-text: #ead9b5;
-  --warn-tint: rgb(181 136 99 / 0.16);
-  --danger: #c46b5a;
-  --danger-text: #c46b5a;
-  --danger-tint: rgb(196 107 90 / 0.16);
-  --danger-fill: #c46b5a;
+  --warn-tint: rgb(210 158 106 / 0.16);
+  --danger: #d8816f;
+  --danger-text: #d8816f;
+  --danger-tint: rgb(216 129 111 / 0.16);
+  --danger-fill: #d8816f;
   --info: #9a9488;
   --info-text: #9a9488;
   --info-tint: rgb(154 148 136 / 0.16);

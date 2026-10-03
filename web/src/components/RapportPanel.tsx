@@ -44,10 +44,10 @@ const ICONS: Record<RapportIconKind, LucideIcon> = {
 };
 
 const LEVEL_COLOR: Record<string, string> = {
-  success: '#7d9a7e',
-  warn: '#b58863',
-  danger: '#c46b5a',
-  neutral: '#6f6a60',
+  success: '#8fb996',
+  warn: '#d29e6a',
+  danger: '#d8816f',
+  neutral: '#8e887c',
 };
 
 /** Petite jauge circulaire SVG (score / précision), accessible. */
@@ -149,14 +149,14 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
       <div className="rapport-stat-cards" role="list" aria-label="Chiffres clés">
         <div className="rapport-stat-card" role="listitem">
           <div className="rapport-stat-label text-muted">Blancs</div>
-          <div className="rapport-stat-value" style={{ color: data.whiteWinPct >= 50 ? '#7d9a7e' : '#c46b5a' }}>
+          <div className="rapport-stat-value" style={{ color: data.whiteWinPct >= 50 ? '#8fb996' : '#d8816f' }}>
             {data.whiteWinPct.toFixed(0)}&nbsp;%
           </div>
           <div className="rapport-stat-sub text-muted">{input.whiteGames} parties</div>
         </div>
         <div className="rapport-stat-card" role="listitem">
           <div className="rapport-stat-label text-muted">Noirs</div>
-          <div className="rapport-stat-value" style={{ color: data.blackWinPct >= 50 ? '#7d9a7e' : '#c46b5a' }}>
+          <div className="rapport-stat-value" style={{ color: data.blackWinPct >= 50 ? '#8fb996' : '#d8816f' }}>
             {data.blackWinPct.toFixed(0)}&nbsp;%
           </div>
           <div className="rapport-stat-sub text-muted">{input.blackGames} parties</div>
@@ -165,14 +165,14 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
           <>
             <div className="rapport-stat-card" role="listitem">
               <div className="rapport-stat-label text-muted">Précision victoires</div>
-              <div className="rapport-stat-value" style={{ color: '#7d9a7e' }}>
+              <div className="rapport-stat-value" style={{ color: '#8fb996' }}>
                 {input.accWin !== null ? `${input.accWin.toFixed(1)} %` : '—'}
               </div>
               <div className="rapport-stat-sub text-muted">{input.accWinCount} partie{input.accWinCount > 1 ? 's' : ''}</div>
             </div>
             <div className="rapport-stat-card" role="listitem">
               <div className="rapport-stat-label text-muted">Précision défaites</div>
-              <div className="rapport-stat-value" style={{ color: '#c46b5a' }}>
+              <div className="rapport-stat-value" style={{ color: '#d8816f' }}>
                 {input.accLoss !== null ? `${input.accLoss.toFixed(1)} %` : '—'}
               </div>
               <div className="rapport-stat-sub text-muted">{input.accLossCount} partie{input.accLossCount > 1 ? 's' : ''}</div>
@@ -180,7 +180,7 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             {input.accDraw !== null && input.accDrawCount > 0 && (
               <div className="rapport-stat-card" role="listitem">
                 <div className="rapport-stat-label text-muted">Précision nulles</div>
-                <div className="rapport-stat-value" style={{ color: '#b58863' }}>
+                <div className="rapport-stat-value" style={{ color: '#d29e6a' }}>
                   {input.accDraw.toFixed(1)}&nbsp;%
                 </div>
                 <div className="rapport-stat-sub text-muted">{input.accDrawCount} partie{input.accDrawCount > 1 ? 's' : ''}</div>
@@ -191,7 +191,7 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
         {input.theoryAvg !== null && (
           <div className="rapport-stat-card" role="listitem">
             <div className="rapport-stat-label text-muted">Théorie (coups moy.)</div>
-            <div className="rapport-stat-value" style={{ color: input.theoryAvg >= 8 ? '#7d9a7e' : '#b58863' }}>
+            <div className="rapport-stat-value" style={{ color: input.theoryAvg >= 8 ? '#8fb996' : '#d29e6a' }}>
               {input.theoryAvg.toFixed(1)}
             </div>
             <div className="rapport-stat-sub text-muted">avant déviation</div>
@@ -237,9 +237,9 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             ))}
           </div>
           <p className="rapport-paragraph" style={{ marginTop: 'var(--sp-2)' }}>
-            <strong style={{ color: '#7d9a7e' }}>{data.goodMoves}</strong> coup{data.goodMoves > 1 ? 's' : ''} de
+            <strong style={{ color: '#8fb996' }}>{data.goodMoves}</strong> coup{data.goodMoves > 1 ? 's' : ''} de
             qualité ({(data.goodMoves / input.totalMoves * 100).toFixed(0)}&nbsp;%) contre{' '}
-            <strong style={{ color: '#c46b5a' }}>{data.badMoves}</strong> coup{data.badMoves > 1 ? 's' : ''}{' '}
+            <strong style={{ color: '#d8816f' }}>{data.badMoves}</strong> coup{data.badMoves > 1 ? 's' : ''}{' '}
             négatif{data.badMoves > 1 ? 's' : ''} ({(data.badMoves / input.totalMoves * 100).toFixed(0)}&nbsp;%).
           </p>
         </div>
@@ -260,10 +260,10 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             {data.tacticRows.map((row) => {
               const Icon = row.key === 'mates' ? Crown : row.key === 'forks' ? Zap : row.key === 'hangs' ? ShieldAlert : Gift;
               const barColor = row.rate === null
-                ? '#6f6a60'
+                ? '#8e887c'
                 : row.invert
-                  ? row.missed > 0 ? '#c46b5a' : '#7d9a7e'
-                  : row.rate >= 70 ? '#7d9a7e' : row.rate >= 40 ? '#b58863' : '#c46b5a';
+                  ? row.missed > 0 ? '#d8816f' : '#8fb996'
+                  : row.rate >= 70 ? '#8fb996' : row.rate >= 40 ? '#d29e6a' : '#d8816f';
               return (
                 <div key={row.key} className="rapport-tactic-row">
                   <span className="rapport-tactic-icon"><Icon size={15} aria-hidden="true" /></span>
@@ -287,8 +287,8 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
                   <div className="rapport-tactic-counts text-muted">
                     {row.found + row.missed > 0 ? (
                       row.invert
-                        ? <span style={{ color: row.missed > 0 ? '#c46b5a' : '#7d9a7e' }}>{row.missed}</span>
-                        : <><span style={{ color: '#7d9a7e' }}>{row.found}</span> / {row.found + row.missed}</>
+                        ? <span style={{ color: row.missed > 0 ? '#d8816f' : '#8fb996' }}>{row.missed}</span>
+                        : <><span style={{ color: '#8fb996' }}>{row.found}</span> / {row.found + row.missed}</>
                     ) : '—'}
                   </div>
                 </div>
@@ -341,13 +341,13 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             <p className="rapport-paragraph">
               {input.bestOpening && (
                 <>Votre meilleure ouverture (3 parties min.) est{' '}
-                <strong style={{ color: '#7d9a7e' }}>{frenchOpeningName(input.bestOpening.name || 'Inconnue')}</strong>{' '}
+                <strong style={{ color: '#8fb996' }}>{frenchOpeningName(input.bestOpening.name || 'Inconnue')}</strong>{' '}
                 {input.bestOpening.eco !== '?' ? `(${input.bestOpening.eco}) ` : ''}avec{' '}
                 <strong>{((input.bestOpening.wins / input.bestOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
                 victoires sur {input.bestOpening.games} parties.</>
               )}{' '}
               {input.worstOpening && input.worstOpening !== input.bestOpening && (
-                <>À l&apos;inverse, <strong style={{ color: '#c46b5a' }}>{frenchOpeningName(input.worstOpening.name || 'Inconnue')}</strong>{' '}
+                <>À l&apos;inverse, <strong style={{ color: '#d8816f' }}>{frenchOpeningName(input.worstOpening.name || 'Inconnue')}</strong>{' '}
                 ne récolte que <strong>{((input.worstOpening.wins / input.worstOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
                 victoires — piste à retravailler.</>
               )}

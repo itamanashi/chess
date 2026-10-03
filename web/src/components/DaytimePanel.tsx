@@ -18,7 +18,7 @@ interface DaytimePanelProps {
   me: string;
 }
 
-const OUTCOME_COLOR = { win: '#7d9a7e', draw: '#6f6a60', loss: '#c46b5a' } as const;
+const OUTCOME_COLOR = { win: '#8fb996', draw: '#8e887c', loss: '#d8816f' } as const;
 
 /** 4 barres verticales de précision moyenne, côte à côte, axe fixe 0–100. */
 const DaytimeAccuracyChart: React.FC<{ stats: DaytimeStats }> = ({ stats }) => {

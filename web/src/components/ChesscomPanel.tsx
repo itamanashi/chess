@@ -27,15 +27,12 @@ import {
   detectUserPins,
   emptyMoveAccuracy,
   emptyPieceStats,
-  FORK_PIECE_LABELS,
   FORK_PIECE_ORDER,
   GAME_SHAPE_DESCRIPTIONS,
   GAME_SHAPE_LABELS,
   GAME_SHAPE_ORDER,
-  HUNG_PIECE_LABELS,
   HUNG_PIECE_ORDER,
   isBotGame,
-  MATE_DISTANCE_LABELS,
   MATE_DISTANCE_ORDER,
   MOVE_QUALITY_COLORS,
   MOVE_QUALITY_LABELS,
@@ -47,7 +44,6 @@ import {
   PIECE_LABELS,
   PIECE_ORDER,
   PIECE_PHASE_ORDER,
-  PIN_PIECE_LABELS,
   PIN_PIECE_ORDER,
   type AccuracyPeriodRow,
   type ChesscomGame,
@@ -58,13 +54,11 @@ import {
   type GameShape,
   type HungCounts,
   type HungPiece,
-  type MasteryTrendRow,
   type MateCounts,
   type MateDistance,
   type MoveAccuracyByNumber,
   type MoveQuality,
   type MoveQualityCounts,
-  type OpeningPerformanceRow,
   type OpponentRatingRow,
   type PeriodStatRow,
   type PhaseStatRow,
@@ -80,19 +74,19 @@ import { type GameReport } from '../utils/accuracy';
 import { GameReportView } from './GameReportView';
 import { RapportPanel } from './RapportPanel';
 import type { RapportInput } from '../services/rapport';
+import { TheoryPanel } from './TheoryPanel';
+import { TacticsPanel } from './TacticsPanel';
+import { GamesPanel } from './GamesPanel';
 import { CastlingPanel } from './CastlingPanel';
 import { DaytimePanel } from './DaytimePanel';
 import { WeekdayPanel } from './WeekdayPanel';
 import { GeographyPanel } from './GeographyPanel';
 import { frenchOpeningName } from '../utils/openingsFr';
-import { MiniBoard, fenAfterSans } from './MiniBoard';
 import type { ChesscomAccount } from '../hooks/useChesscomAccount';
 import {
   ArrowLeft,
   Award,
-  BarChart3,
   BookOpen,
-  Bot,
   CalendarDays,
   Check,
   Crosshair,
@@ -123,9 +117,6 @@ type ResultFilter = 'all' | ChesscomOutcome;
 type ColorFilter = 'all' | 'w' | 'b';
 
 const PAGE_SIZE = 100;
-/** Lignes affichées par table d'ouvertures avant « Tout afficher ». */
-const OPENINGS_TOP_N = 10;
-
 const OUTCOME_LABEL: Record<ChesscomOutcome, string> = {
   win: 'Victoire',
   draw: 'Nulle',
@@ -139,24 +130,24 @@ const OUTCOME_SHORT: Record<ChesscomOutcome, string> = {
 };
 
 const OUTCOME_COLOR: Record<ChesscomOutcome, string> = {
-  win: '#7d9a7e',
-  draw: '#6f6a60',
-  loss: '#c46b5a',
+  win: '#8fb996',
+  draw: '#8e887c',
+  loss: '#d8816f',
 };
 
 /** Couleurs des formes narratives (une teinte par récit). */
 const SHAPE_COLORS: Record<GameShape, string> = {
-  gachee: '#c46b5a',
-  intense: '#5c4632',
-  abrupte: '#b58863',
+  gachee: '#d8816f',
+  intense: '#8a6a45',
+  abrupte: '#d29e6a',
   tendue: '#ead9b5',
   tranquille: '#9a9488',
   mouvementee: '#d8d2c6',
-  equilibree: '#6f6a60',
+  equilibree: '#8e887c',
 };
 
 /** Couleur UNIQUE d'une case d'activité : score interpolé entre les tons du thème. */
-const ACTIVITY_MID_RGB: [number, number, number] = [181, 136, 99]; // #b58863
+const ACTIVITY_MID_RGB: [number, number, number] = [210, 158, 106]; // #d29e6a
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
@@ -189,7 +180,7 @@ function formatActivityDay(isoDate: string): string {
 }
 
 /** Une couleur par cadence (ordre = volume décroissant, stable par rendu). */
-const RATING_COLORS = ['#d8d2c6', '#b58863', '#7d9a7e', '#c46b5a', '#9a9488'];
+const RATING_COLORS = ['#d8d2c6', '#d29e6a', '#8fb996', '#d8816f', '#9a9488'];
 
 /** Graphique à barres pour les parties par période (jour / mois / an, SVG pur). */
 const PeriodGamesChart: React.FC<{ rows: PeriodStatRow[] }> = ({ rows }) => {
@@ -322,7 +313,7 @@ const MoveNumberChart: React.FC<{ agg: MoveAccuracyByNumber; mode: 'total' | 'co
     if (mode === 'colors') {
       return [
         { label: 'Blancs', color: '#f4efe4', points: toPoints(agg.white) },
-        { label: 'Noirs', color: '#b58863', points: toPoints(agg.black) },
+        { label: 'Noirs', color: '#d29e6a', points: toPoints(agg.black) },
       ].filter((s) => s.points.length > 0);
     }
     const points = toPoints(agg.total);
@@ -434,8 +425,8 @@ const OpponentRatingChart: React.FC<{ rows: OpponentRatingRow[] }> = ({ rows }) 
   // Étiquettes échantillonnées (max ~8) quand il y a beaucoup de tranches.
   const labelStep = Math.max(1, Math.ceil(rows.length / 8));
   const SEGMENTS = [
-    { key: 'losses', color: '#c46b5a', name: 'Défaites' },
-    { key: 'draws', color: '#6f6a60', name: 'Nulles' },
+    { key: 'losses', color: '#d8816f', name: 'Défaites' },
+    { key: 'draws', color: '#8e887c', name: 'Nulles' },
     { key: 'wins', color: 'var(--success)', name: 'Victoires' },
   ] as const;
   return (
@@ -492,11 +483,11 @@ const OpponentRatingChart: React.FC<{ rows: OpponentRatingRow[] }> = ({ rows }) 
           <span>Victoires</span>
         </span>
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#6f6a60' }} />
+          <span className="rating-dot" style={{ background: '#8e887c' }} />
           <span>Nulles</span>
         </span>
         <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#c46b5a' }} />
+          <span className="rating-dot" style={{ background: '#d8816f' }} />
           <span>Défaites</span>
         </span>
       </div>
@@ -685,13 +676,13 @@ const PHASE_SHORT_LABELS: Record<string, string> = {
 
 /** Couleurs Blancs/Noirs (mêmes teintes que la précision par coup). */
 const PIECE_WHITE = '#f4efe4';
-const PIECE_BLACK = '#b58863';
+const PIECE_BLACK = '#d29e6a';
 
 /** Couleurs des phases (teinte = phase, clarté = couleur jouée). */
 const PHASE_BAR_COLORS: Record<string, { total: string; white: string; black: string }> = {
-  opening: { total: '#d8d2c6', white: '#f4efe4', black: '#b58863' },
-  middlegame: { total: '#b58863', white: '#ead9b5', black: '#5c4632' },
-  endgame: { total: '#7d9a7e', white: '#9a9488', black: '#6f6a60' },
+  opening: { total: '#d8d2c6', white: '#f4efe4', black: '#d29e6a' },
+  middlegame: { total: '#d29e6a', white: '#ead9b5', black: '#8a6a45' },
+  endgame: { total: '#8fb996', white: '#9a9488', black: '#8e887c' },
 };
 
 /** Une seule barre horizontale des fins en phase Ouverture/Milieu/Finale. */
@@ -904,138 +895,6 @@ const PhaseResultsChart: React.FC<{ rows: PhaseStatRow[]; mode: 'total' | 'color
         </span>
       </div>
       <div className="activity-subtitle text-muted">En bas : défaites · au milieu : nulles · en haut : victoires</div>
-    </div>
-  );
-};
-
-/** Barres des coups théoriques moyens par période, jusque-là joués (SVG pur). */
-const MasteryTrendChart: React.FC<{ rows: MasteryTrendRow[] }> = ({ rows }) => {
-  if (rows.length === 0) {
-    return <div className="empty-state">Aucune donnée sur la période.</div>;
-  }
-  const W = 560;
-  const H = 150;
-  const padL = 40;
-  const padR = 10;
-  const padT = 10;
-  const padB = 30;
-  const maxAvg = Math.max(...rows.map((r) => r.avg));
-  const yMax = Math.max(5, Math.ceil(maxAvg));
-  const barWidth = (W - padL - padR) / rows.length;
-  const x = (i: number): number => padL + i * barWidth;
-  const y = (v: number): number => padT + (1 - v / yMax) * (H - padT - padB);
-  const base = H - padB;
-  const labelStep = Math.max(1, Math.ceil(rows.length / 8));
-  const gridSteps = yMax <= 8 ? yMax : 4;
-  return (
-    <div>
-      <svg className="rating-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Coups théoriques moyens par période">
-        {Array.from({ length: gridSteps + 1 }, (_, k) => (yMax * k) / gridSteps).map((v) => (
-          <g key={v}>
-            <line x1={padL} x2={W - padR} y1={y(v)} y2={y(v)} className="rating-grid" />
-            <text x={padL - 5} y={y(v) + 3.5} textAnchor="end" className="rating-axis">
-              {Number.isInteger(v) ? v : v.toFixed(1)}
-            </text>
-          </g>
-        ))}
-        {rows.map((r, i) => (
-          <g key={r.key}>
-            <rect
-              x={x(i)}
-              y={y(r.avg)}
-              width={barWidth}
-              height={Math.max(0, base - y(r.avg))}
-              fill="var(--accent)"
-            >
-              <title>{`${r.label} : ${r.avg.toFixed(1)} coups (${r.count} partie(s))`}</title>
-            </rect>
-            {(i % labelStep === 0 || i === rows.length - 1) && (
-              <text x={x(i) + barWidth / 2} y={H - 8} textAnchor="middle" className="rating-axis">
-                {r.shortLabel}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-};
-
-/** Icônes des pièces (glyphes clairs, fond sombre). */
-const FORK_PIECE_GLYPHS: Record<ForkPiece, string> = {
-  p: '♙',
-  n: '♘',
-  b: '♗',
-  r: '♖',
-  q: '♕',
-  k: '♔',
-};
-
-const PIN_PIECE_GLYPHS: Record<PinPiece, string> = {
-  b: '♗',
-  r: '♖',
-  q: '♕',
-};
-
-export interface TacticRowDatum {
-  key: string;
-  glyph: string;
-  label: string;
-  found: number;
-  missed: number;
-}
-
-/** Lignes horizontales Trouvées (vert) / Manquées (rouge) par pièce tactique. */
-const TacticRowsChart: React.FC<{ rows: TacticRowDatum[] }> = ({ rows }) => {
-  return (
-    <div>
-      <div className="forks-hbars">
-        {rows.map((r) => {
-          const total = r.found + r.missed;
-          return (
-            <div
-              key={r.key}
-              className="forks-hbar-row"
-              title={`${r.label} : ${r.found} trouvée(s) / ${r.missed} manquée(s)`}
-            >
-              <span className="forks-piece-icon" aria-hidden="true">
-                {r.glyph}
-              </span>
-              <span className="forks-hbar-label">{r.label}</span>
-              <div
-                className="chesscom-wdl-bar forks-hbar-track"
-                role="img"
-                aria-label={`${r.label} : ${r.found} trouvées, ${r.missed} manquées`}
-              >
-                {total > 0 && (
-                  <>
-                    {r.found > 0 && (
-                      <div className="chesscom-wdl-segment" style={{ width: `${(r.found / total) * 100}%`, background: 'var(--success)' }} />
-                    )}
-                    {r.missed > 0 && (
-                      <div className="chesscom-wdl-segment" style={{ width: `${(r.missed / total) * 100}%`, background: '#c46b5a' }} />
-                    )}
-                  </>
-                )}
-              </div>
-              <strong className="forks-hbar-value">
-                {r.found} <span className="text-muted">/ {r.missed}</span>
-              </strong>
-            </div>
-          );
-        })}
-      </div>
-      <div className="rating-legend">
-        <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: 'var(--success)' }} />
-          <span>Trouvées</span>
-        </span>
-        <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#c46b5a' }} />
-          <span>Manquées</span>
-        </span>
-      </div>
-      <div className="activity-subtitle text-muted">À gauche : trouvées · à droite : manquées</div>
     </div>
   );
 };
@@ -1573,7 +1432,6 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
   repertoires,
 }) => {
   const { games, linkedUser } = account;
-  const [openingsExpanded, setOpeningsExpanded] = useState(false);
   const [resultFilter, setResultFilter] = useState<ResultFilter>('all');
   const [colorFilter, setColorFilter] = useState<ColorFilter>('all');
   const [classFilter, setClassFilter] = useState<string>('all');
@@ -1677,9 +1535,9 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.wins.total,
         other: ending.wins.total - ending.wins.resign - ending.wins.mate - ending.wins.clock,
         items: [
-          { key: 'v-resign', label: 'Abandon', color: '#7d9a7e', count: ending.wins.resign },
-          { key: 'v-mate', label: 'Échec et mat', color: '#7d9a7e', count: ending.wins.mate },
-          { key: 'v-clock', label: 'Temps', fullLabel: "Temps expiré (l'adversaire)", color: '#7d9a7e', count: ending.wins.clock },
+          { key: 'v-resign', label: 'Abandon', color: '#8fb996', count: ending.wins.resign },
+          { key: 'v-mate', label: 'Échec et mat', color: '#8fb996', count: ending.wins.mate },
+          { key: 'v-clock', label: 'Temps', fullLabel: "Temps expiré (l'adversaire)", color: '#8fb996', count: ending.wins.clock },
         ],
       },
       {
@@ -1687,11 +1545,11 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.draws.total,
         other: ending.draws.other,
         items: [
-          { key: 'd-agreed', label: 'Accord', color: '#5c4632', count: ending.draws.agreed },
-          { key: 'd-repetition', label: 'Répétition', color: '#6f6a60', count: ending.draws.repetition },
+          { key: 'd-agreed', label: 'Accord', color: '#8a6a45', count: ending.draws.agreed },
+          { key: 'd-repetition', label: 'Répétition', color: '#8e887c', count: ending.draws.repetition },
           { key: 'd-stalemate', label: 'Pat', color: '#9a9488', count: ending.draws.stalemate },
           { key: 'd-fifty', label: '50 coups', fullLabel: 'Règle des 50 coups', color: '#d8d2c6', count: ending.draws.fiftyMove },
-          { key: 'd-insufficient', label: 'Manque de matériel', color: '#b58863', count: ending.draws.insufficient },
+          { key: 'd-insufficient', label: 'Manque de matériel', color: '#d29e6a', count: ending.draws.insufficient },
           { key: 'd-timevsinsufficient', label: 'Temps vs matériel', fullLabel: 'Hors délai contre manque de matériel', color: '#ead9b5', count: ending.draws.timeVsInsufficient },
         ],
       },
@@ -1700,9 +1558,9 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         total: ending.losses.total,
         other: ending.losses.total - ending.losses.resign - ending.losses.mate - ending.losses.clock,
         items: [
-          { key: 'l-resign', label: 'Abandon', color: '#c46b5a', count: ending.losses.resign },
-          { key: 'l-mate', label: 'Échec et mat', color: '#c46b5a', count: ending.losses.mate },
-          { key: 'l-clock', label: 'Temps', fullLabel: 'Temps expiré', color: '#c46b5a', count: ending.losses.clock },
+          { key: 'l-resign', label: 'Abandon', color: '#d8816f', count: ending.losses.resign },
+          { key: 'l-mate', label: 'Échec et mat', color: '#d8816f', count: ending.losses.mate },
+          { key: 'l-clock', label: 'Temps', fullLabel: 'Temps expiré', color: '#d8816f', count: ending.losses.clock },
         ],
       },
     ];
@@ -1926,7 +1784,6 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
 
   /** Maîtrise : livre fusionné, déviations, tendance et table par ouverture. */
   const [masteryColor, setMasteryColor] = useState<'w' | 'b'>('w');
-  const [masteryExpanded, setMasteryExpanded] = useState(false);
   const masteryTheory = useMemo(
     () => buildMasteryTheory(repertoires.map((r) => r.root)),
     [repertoires],
@@ -1955,52 +1812,6 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     [masteryGames, masteryColor],
   );
 
-  /** Aperçu de position au survol d'une ouverture (mini-planche curseur). */
-  const [openingPreview, setOpeningPreview] = useState<{
-    key: string;
-    fen: string;
-    name: string;
-    moves: string;
-    x: number;
-    y: number;
-  } | null>(null);
-
-  const showOpeningPreview = useCallback((r: OpeningPerformanceRow, clientX: number, clientY: number): void => {
-    if (r.sansPrefix.length === 0) return;
-    const fen = fenAfterSans(r.sansPrefix);
-    if (!fen) return;
-    const POP_W = 232;
-    const POP_H = 300;
-    setOpeningPreview({
-      key: r.key,
-      fen,
-      name: r.name ? frenchOpeningName(r.name) : 'Inconnue',
-      moves: r.movesLabel,
-      x: Math.max(8, Math.min(clientX + 16, window.innerWidth - POP_W)),
-      y: Math.max(8, Math.min(clientY + 16, window.innerHeight - POP_H)),
-    });
-  }, []);
-
-  const moveOpeningPreview = useCallback((key: string, clientX: number, clientY: number): void => {
-    setOpeningPreview((prev) => {
-      if (!prev || prev.key !== key) return prev;
-      const POP_W = 232;
-      const POP_H = 300;
-      return {
-        ...prev,
-        x: Math.max(8, Math.min(clientX + 16, window.innerWidth - POP_W)),
-        y: Math.max(8, Math.min(clientY + 16, window.innerHeight - POP_H)),
-      };
-    });
-  }, []);
-
-  // Le popover est fixe : le moindre défilement le ferait flotter seul.
-  useEffect(() => {
-    if (!openingPreview) return;
-    const clear = (): void => setOpeningPreview(null);
-    window.addEventListener('scroll', clear, true);
-    return () => window.removeEventListener('scroll', clear, true);
-  }, [openingPreview]);
 
   /** Entree pure de l'onglet Rapport (calculs dans services/rapport.ts). */
   const rapportInput: RapportInput = useMemo(() => {
@@ -2339,182 +2150,36 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
           ))}
         </div>
         {statsTab === 'parties' && (
-        <div className="chesscom-left-column">
-          <div className="panel-card">
-            <div className="card-title-row">
-              <h3 className="card-title">
-                <List size={16} className="title-icon" />
-                Parties ({filteredGames.length})
-              </h3>
-            </div>
-
-            <div className="chesscom-summary">
-              <span><strong>{summary.total.toLocaleString('fr-FR')}</strong> parties</span>
-              <span aria-hidden="true">•</span>
-              <span>{summary.wins}V / {summary.draws}N / {summary.losses}D</span>
-              <span aria-hidden="true">•</span>
-              <span>Score {summary.score.toFixed(1)} %</span>
-              {account.failedArchives > 0 && (
-                <span className="text-muted" title="Archives mensuelles inaccessibles : leurs parties manquent">({account.failedArchives} archive(s) ignorée(s))</span>
-              )}
-              {!analyzing ? (
-                <button
-                  className="action-btn"
-                  onClick={analyzeAccuracy}
-                  title="Précision en-croissant de chaque partie (Stockfish local, Win% Lichess). Long sur un gros historique — annulable à tout moment."
-                >
-                  Analyser précision
-                </button>
-              ) : (
-                <button
-                  className="action-btn"
-                  onClick={cancelAnalyze}
-                  title="Interrompre l'analyse batch (les parties déjà traitées sont conservées)"
-                >
-                  Annuler ({analyzeProgress.current}/{analyzeProgress.total})
-                </button>
-              )}
-            </div>
-            {analyzeStatus && (
-              <div className="chesscom-analyze-status text-muted" role="status">
-                {analyzeStatus}
-              </div>
-            )}
-
-            {/* Filtres de la liste */}
-            <div className="chesscom-filters">
-              <div className="chesscom-filter-group" title="Filtrer par issue">
-                {(['all', 'win', 'draw', 'loss'] as ResultFilter[]).map((r) => (
-                  <button
-                    key={r}
-                    className={`db-toggle-btn ${resultFilter === r ? 'active' : ''}`}
-                    onClick={() => { setResultFilter(r); setVisibleCount(PAGE_SIZE); }}
-                  >
-                    <span>{r === 'all' ? 'Toutes' : OUTCOME_LABEL[r]}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="chesscom-filter-group" title="Filtrer par couleur jouée">
-                {(['all', 'w', 'b'] as ColorFilter[]).map((c) => (
-                  <button
-                    key={c}
-                    className={`db-toggle-btn ${colorFilter === c ? 'active' : ''}`}
-                    onClick={() => { setColorFilter(c); setVisibleCount(PAGE_SIZE); }}
-                  >
-                    <span>{c === 'all' ? 'Deux couleurs' : c === 'w' ? 'Blancs' : 'Noirs'}</span>
-                  </button>
-                ))}
-              </div>
-              {classOptions.length > 1 && (
-                <div className="chesscom-filter-group" title="Filtrer par cadence">
-                  {['all', ...classOptions].map((c) => (
-                    <button
-                      key={c}
-                      className={`db-toggle-btn ${classFilter === c ? 'active' : ''}`}
-                      onClick={() => { setClassFilter(c); setVisibleCount(PAGE_SIZE); }}
-                    >
-                      <span>{c === 'all' ? 'Toutes cadences' : (CLASS_LABELS[c] ?? c)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {botGamesCount > 0 && (
-                <div className="chesscom-filter-group" title="Parties d'entraînement contre les robots (Coach-…, Mittens) : exclues par défaut">
-                  <button
-                    className={`db-toggle-btn ${showBots ? 'active' : ''}`}
-                    onClick={() => { setShowBots((s) => !s); setVisibleCount(PAGE_SIZE); }}
-                  >
-                    <Bot size={14} />
-                    <span>Robots ({botGamesCount})</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {filteredGames.length === 0 ? (
-              <div className="empty-state">Aucune partie avec ces filtres.</div>
-            ) : (
-              <>
-                <div className="table-scroll">
-                <table className="chesscom-games-table">
-                  <thead>
-                    <tr>
-                      <th>Résultat</th>
-                      <th>Adversaire</th>
-                      <th>Couleur</th>
-                      <th>Cadence</th>
-                      <th title="Nombre de coups (les deux camps)">Coups</th>
-                      <th>Date</th>
-                      <th title="Précision en-croissant (Win% Lichess) de votre camp">Précision</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredGames.slice(0, visibleCount).map((g) => {
-                      const outcome = outcomeFor(g, me);
-                      const mine = colorOf(g, me);
-                      const opp = mine === 'w' ? g.black : g.white;
-                      const myRating = mine === 'w' ? g.white.rating : g.black.rating;
-                      const myAcc = g.accuracy;
-                      const openThisGame = (): void => openGame(g.url);
-                      return (
-                        <tr
-                          key={g.url}
-                          onClick={openThisGame}
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              openThisGame();
-                            }
-                          }}
-                          aria-label={`Rejouer contre ${opp.username} (${OUTCOME_LABEL[outcome]})`}
-                        >
-                          <td>
-                            <span style={{ color: OUTCOME_COLOR[outcome], fontWeight: 600 }}>
-                              {OUTCOME_LABEL[outcome]}
-                            </span>
-                          </td>
-                          <td>
-                            <strong>{opp.username}</strong>
-                            <span className="text-muted"> ({opp.rating || '?'})</span>
-                          </td>
-                          <td>{mine === 'w' ? 'Blancs' : 'Noirs'} ({myRating || '?'})</td>
-                          <td>{formatCadence(g)}</td>
-                          <td>{g.sans.length > 0 ? Math.ceil(g.sans.length / 2) : '—'}</td>
-                          <td>{formatDate(g.end_time)}</td>
-                          <td>
-                            {typeof myAcc === 'number' ? (
-                              <span
-                                title={
-                                  `Vous : ${myAcc.toFixed(1)} %` +
-                                  (typeof g.whiteAccuracy === 'number' ? ` · Blancs ${g.whiteAccuracy.toFixed(1)} %` : '') +
-                                  (typeof g.blackAccuracy === 'number' ? ` · Noirs ${g.blackAccuracy.toFixed(1)} %` : '')
-                                }
-                              >
-                                {myAcc.toFixed(0)}
-                              </span>
-                            ) : (
-                              <span className="text-muted">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                </div>
-                  {visibleCount < filteredGames.length && (
-                    <button
-                      className="primary-btn full-width"
-                      onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-                    >
-                      <span>Afficher plus ({filteredGames.length - visibleCount} restantes)</span>
-                    </button>
-                  )}
-              </>
-            )}
-          </div>
-        </div>
+          <GamesPanel
+            me={me}
+            summary={summary}
+            failedArchives={account.failedArchives}
+            analyzing={analyzing}
+            analyzeProgress={analyzeProgress}
+            analyzeStatus={analyzeStatus}
+            onAnalyze={analyzeAccuracy}
+            onCancelAnalyze={cancelAnalyze}
+            resultFilter={resultFilter}
+            onResultFilter={setResultFilter}
+            colorFilter={colorFilter}
+            onColorFilter={setColorFilter}
+            classFilter={classFilter}
+            onClassFilter={setClassFilter}
+            classOptions={classOptions}
+            showBots={showBots}
+            onToggleBots={() => setShowBots((s) => !s)}
+            botGamesCount={botGamesCount}
+            games={filteredGames}
+            visibleCount={visibleCount}
+            onShowMore={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            onOpenGame={openGame}
+            onFilterApplied={() => setVisibleCount(PAGE_SIZE)}
+            outcomeLabel={OUTCOME_LABEL}
+            outcomeColor={OUTCOME_COLOR}
+            classLabels={CLASS_LABELS}
+            formatCadence={formatCadence}
+            formatDate={formatDate}
+          />
         )}
         {statsTab !== 'parties' && (
         <div className="chesscom-right-column">
@@ -3037,7 +2702,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
                       {g.other > 0 && (
                         <div
                           className="chesscom-wdl-segment"
-                          style={{ width: `${(g.other / g.total) * 100}%`, background: '#6f6a60' }}
+                          style={{ width: `${(g.other / g.total) * 100}%`, background: '#8e887c' }}
                           title={`Autre : ${g.other} (${endingView.shareOf(g.other, g.total)} %)`}
                         />
                       )}
@@ -3054,7 +2719,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
                     ))}
                     {g.other > 0 && (
                       <span className="rating-legend-item" title="Motif inclassable ou exotique">
-                        <span className="rating-dot" style={{ background: '#6f6a60' }} />
+                        <span className="rating-dot" style={{ background: '#8e887c' }} />
                         <span>Autre</span>
                         <strong>{g.other.toLocaleString('fr-FR')}</strong>
                         <span className="text-muted">{endingView.shareOf(g.other, g.total)} %</span>
@@ -3161,319 +2826,29 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         </div>
         )}
         {statsTab === 'tactics' && (
-        <div className="chesscom-stats-grid">
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Fourchettes</h3>
-          </div>
-          <div className="activity-subtitle text-muted">
-            {forksTotal.foundTotal.toLocaleString('fr-FR')} trouvée(s) · {forksTotal.missedTotal.toLocaleString('fr-FR')} manquée(s) · {forksTotal.games.toLocaleString('fr-FR')} partie(s) analysée(s)
-          </div>
-          {forksTotal.games === 0 ? (
-            <div className="empty-state">Lancez « Analyser précision » pour détecter vos fourchettes.</div>
-          ) : (
-            <TacticRowsChart
-              rows={FORK_PIECE_ORDER.map((p) => ({
-                key: p,
-                glyph: FORK_PIECE_GLYPHS[p],
-                label: FORK_PIECE_LABELS[p],
-                found: forksTotal.found[p] ?? 0,
-                missed: forksTotal.missed[p] ?? 0,
-              }))}
-            />
-          )}
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Clouages</h3>
-          </div>
-          <div className="activity-subtitle text-muted">
-            {pinsTotal.foundTotal.toLocaleString('fr-FR')} trouvé(s) · {pinsTotal.missedTotal.toLocaleString('fr-FR')} manqué(s) · {pinsTotal.games.toLocaleString('fr-FR')} partie(s) analysée(s)
-          </div>
-          {pinsTotal.games === 0 ? (
-            <div className="empty-state">Lancez « Analyser précision » pour détecter vos clouages.</div>
-          ) : (
-            <TacticRowsChart
-              rows={PIN_PIECE_ORDER.map((p) => ({
-                key: p,
-                glyph: PIN_PIECE_GLYPHS[p],
-                label: PIN_PIECE_LABELS[p],
-                found: pinsTotal.found[p] ?? 0,
-                missed: pinsTotal.missed[p] ?? 0,
-              }))}
-            />
-          )}
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Mats</h3>
-          </div>
-          <div className="activity-subtitle text-muted">
-            {matesTotal.foundTotal.toLocaleString('fr-FR')} trouvé(s) · {matesTotal.missedTotal.toLocaleString('fr-FR')} manqué(s) · {matesTotal.games.toLocaleString('fr-FR')} partie(s) analysée(s)
-          </div>
-          {matesTotal.games === 0 ? (
-            <div className="empty-state">Lancez « Analyser précision » pour détecter vos mats.</div>
-          ) : (
-            <TacticRowsChart
-              rows={MATE_DISTANCE_ORDER.map((d) => ({
-                key: String(d),
-                glyph: '#',
-                label: MATE_DISTANCE_LABELS[d],
-                found: matesTotal.found[d] ?? 0,
-                missed: matesTotal.missed[d] ?? 0,
-              }))}
-            />
-          )}
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Pièces en prise</h3>
-          </div>
-          <div className="activity-subtitle text-muted">
-            {hangsTotal.total.toLocaleString('fr-FR')} pièce(s) laissée(s) en prise · {hangsTotal.games.toLocaleString('fr-FR')} partie(s) analysée(s)
-          </div>
-          {hangsTotal.games === 0 ? (
-            <div className="empty-state">Lancez « Analyser précision » pour détecter vos pièces en prise.</div>
-          ) : (
-            <div className="forks-hbars">
-              {HUNG_PIECE_ORDER.map((p) => {
-                const n = hangsTotal.counts[p] ?? 0;
-                const pct = hangsTotal.total > 0 ? (n / hangsTotal.total) * 100 : 0;
-                return (
-                  <div
-                    key={p}
-                    className="forks-hbar-row"
-                    title={`${HUNG_PIECE_LABELS[p]} : ${n} pièce(s) laissée(s) en prise (${pct.toFixed(0)} %)`}
-                  >
-                    <span className="forks-piece-icon" aria-hidden="true">
-                      {FORK_PIECE_GLYPHS[p]}
-                    </span>
-                    <span className="forks-hbar-label">{HUNG_PIECE_LABELS[p]}</span>
-                    <div
-                      className="chesscom-wdl-bar forks-hbar-track"
-                      role="img"
-                      aria-label={`${HUNG_PIECE_LABELS[p]} : ${pct.toFixed(0)} % des pièces en prise`}
-                    >
-                      {n > 0 && (
-                        <div className="chesscom-wdl-segment" style={{ width: `${pct}%`, background: '#c46b5a' }} />
-                      )}
-                    </div>
-                    <strong className="forks-hbar-value">
-                      {pct.toFixed(0)} % <span className="text-muted">({n.toLocaleString('fr-FR')})</span>
-                    </strong>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Pièces gratuites</h3>
-          </div>
-          <div className="activity-subtitle text-muted">
-            Pièces que votre adversaire a laissées en prise · {freebiesTotal.foundTotal.toLocaleString('fr-FR')} prise(s) · {freebiesTotal.missedTotal.toLocaleString('fr-FR')} ignorée(s) · {freebiesTotal.games.toLocaleString('fr-FR')} partie(s) analysée(s)
-          </div>
-          {freebiesTotal.games === 0 ? (
-            <div className="empty-state">Lancez « Analyser précision » pour détecter les pièces gratuites.</div>
-          ) : (
-            <TacticRowsChart
-              rows={HUNG_PIECE_ORDER.map((p) => ({
-                key: p,
-                glyph: FORK_PIECE_GLYPHS[p],
-                label: HUNG_PIECE_LABELS[p],
-                found: freebiesTotal.found[p] ?? 0,
-                missed: freebiesTotal.missed[p] ?? 0,
-              }))}
-            />
-           )}
-        </div>
-        </div>
+          <TacticsPanel
+            forks={forksTotal}
+            pins={pinsTotal}
+            mates={matesTotal}
+            hangs={hangsTotal}
+            freebies={freebiesTotal}
+          />
         )}
         {statsTab === 'theory' && (
-        <div className="chesscom-stats-grid">
-          <div className="panel-card">
-            <div className="card-title-row">
-              <h3 className="card-title">
-                <BarChart3 size={16} className="title-icon text-accent" />
-                Ouvertures
-              </h3>
-            </div>
-
-            <div className="chesscom-filter-group" role="group" aria-label="Couleur jouée">
-              <button
-                className={`db-toggle-btn ${perfColor === 'w' ? 'active' : ''}`}
-                onClick={() => setPerfColor('w')}
-              >
-                <span>Blancs</span>
-              </button>
-              <button
-                className={`db-toggle-btn ${perfColor === 'b' ? 'active' : ''}`}
-                onClick={() => setPerfColor('b')}
-              >
-                <span>Noirs</span>
-              </button>
-            </div>
-
-            {perfRows.length === 0 ? (
-              <div className="empty-state">Aucune partie avec cette couleur.</div>
-            ) : (
-              <>
-                <div className="perf-rows">
-                  {(openingsExpanded ? perfRows : perfRows.slice(0, OPENINGS_TOP_N)).map((r) => {
-                    const winPct = r.games > 0 ? (r.wins / r.games) * 100 : 0;
-                    const drawPct = r.games > 0 ? (r.draws / r.games) * 100 : 0;
-                    const lossPct = r.games > 0 ? 100 - winPct - drawPct : 0;
-                    return (
-                      <div
-                        key={r.key}
-                        className="perf-row"
-                        tabIndex={0}
-                        onMouseEnter={(e) => showOpeningPreview(r, e.clientX, e.clientY)}
-                        onMouseMove={(e) => moveOpeningPreview(r.key, e.clientX, e.clientY)}
-                        onMouseLeave={() => setOpeningPreview(null)}
-                        onFocus={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          showOpeningPreview(r, rect.right, rect.top);
-                        }}
-                        onBlur={() => setOpeningPreview(null)}
-                        aria-label={`${r.name ? frenchOpeningName(r.name) : 'Ouverture inconnue'} — ${r.movesLabel}`}
-                      >
-                        <div className="perf-row-head">
-                          <span className="perf-name" title={r.name ? frenchOpeningName(r.name) : 'Ouverture inconnue'}>
-                            {r.name ? frenchOpeningName(r.name) : <span className="text-muted">Inconnue</span>}
-                          </span>
-                          {r.eco !== '?' && <span className="eco-tag">{r.eco} </span>}
-                          <span className="text-muted perf-total">
-                            {r.games.toLocaleString('fr-FR')} parties
-                          </span>
-                        </div>
-                        <div className="perf-moves" title="Coups caractéristiques">{r.movesLabel}</div>
-                        <div
-                          className="chesscom-wdl-bar"
-                          title={`V ${winPct.toFixed(0)} % · N ${drawPct.toFixed(0)} % · D ${lossPct.toFixed(0)} %`}
-                        >
-                          {winPct > 0 && (
-                            <div className="chesscom-wdl-segment chesscom-wdl-win" style={{ width: `${winPct}%` }}>
-                              {winPct >= 12 ? `${winPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                          {drawPct > 0 && (
-                            <div className="chesscom-wdl-segment chesscom-wdl-draw" style={{ width: `${drawPct}%` }}>
-                              {drawPct >= 12 ? `${drawPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                          {lossPct > 0 && (
-                            <div className="chesscom-wdl-segment chesscom-wdl-loss" style={{ width: `${lossPct}%` }}>
-                              {lossPct >= 12 ? `${lossPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {!openingsExpanded && perfRows.length > OPENINGS_TOP_N && (
-                  <button
-                    className="primary-btn full-width"
-                    onClick={() => setOpeningsExpanded(true)}
-                  >
-                    <span>Tout afficher ({perfRows.length} ouvertures)</span>
-                  </button>
-                )}
-              </>
-            )}
-            {openingPreview && (
-              <div
-                className="opening-preview-pop"
-                style={{ left: openingPreview.x, top: openingPreview.y }}
-                aria-hidden="true"
-              >
-                <MiniBoard fen={openingPreview.fen} orientation={perfColor} />
-                <div className="opening-preview-caption">
-                  <strong>{openingPreview.name}</strong>
-                  {' · '}
-                  {openingPreview.moves}
-                </div>
-              </div>
-            )}
-          </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Maîtrise</h3>
-          </div>
-          <div className="chesscom-filter-group" role="group" aria-label="Couleur jouée">
-            <button
-              className={`db-toggle-btn ${masteryColor === 'w' ? 'active' : ''}`}
-              onClick={() => setMasteryColor('w')}
-            >
-              <span>Blancs</span>
-            </button>
-            <button
-              className={`db-toggle-btn ${masteryColor === 'b' ? 'active' : ''}`}
-              onClick={() => setMasteryColor('b')}
-            >
-              <span>Noirs</span>
-            </button>
-          </div>
-          {masteryTheory.size === 0 ? (
-            <div className="empty-state">Créez un répertoire avec des variantes pour mesurer votre maîtrise.</div>
-          ) : masteryScoped.length === 0 ? (
-            <div className="empty-state">Aucune partie avec cette couleur.</div>
-          ) : (
-            <>
-              <div className="chesscom-summary">
-                <span>
-                  En moyenne <strong>{masteryAvgTheoryMoves !== null ? masteryAvgTheoryMoves.toFixed(1) : '—'}</strong> coups
-                  théoriques dans les parties où vous déviez en premier ({masteryDevFirst.length.toLocaleString('fr-FR')})
-                </span>
-              </div>
-              <div className="activity-subtitle text-muted">
-                Nombre par {PERIOD_GRANULARITY_LABEL[masteryTrend.granularity] ?? 'période'}
-              </div>
-              <MasteryTrendChart rows={masteryTrend.rows} />
-              <div className="chesscom-stats-table-wrap">
-                <table className="chesscom-stats-table">
-                  <thead>
-                    <tr>
-                      <th>Nom de l'ouverture</th>
-                      <th title="Parties dans le périmètre">Parties</th>
-                      <th title="Part de parties où vous déviez en premier de la théorie">Dévie 1er</th>
-                      <th title="Coup moyen à partir duquel vous déviez de la théorie">Coup moyen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(masteryExpanded ? masteryOpenings : masteryOpenings.slice(0, OPENINGS_TOP_N)).map((r) => (
-                      <tr key={r.key}>
-                        <td>
-                          {r.eco !== '?' && <span className="eco-tag">{r.eco} </span>}
-                          {r.name ? frenchOpeningName(r.name) : <span className="text-muted">Inconnue</span>}
-                        </td>
-                        <td>{r.total.toLocaleString('fr-FR')}</td>
-                        <td>{r.devFirstShare.toFixed(0)} %</td>
-                        <td>{r.avgDevMove !== null ? r.avgDevMove.toFixed(1) : '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {!masteryExpanded && masteryOpenings.length > OPENINGS_TOP_N && (
-                <button
-                  className="primary-btn full-width"
-                  onClick={() => setMasteryExpanded(true)}
-                >
-                  <span>Tout afficher ({masteryOpenings.length} ouvertures)</span>
-                </button>
-              )}
-            </>
-          )}
-        </div>
-        </div>
+          <TheoryPanel
+            perfColor={perfColor}
+            onPerfColorChange={setPerfColor}
+            perfRows={perfRows}
+            masteryColor={masteryColor}
+            onMasteryColorChange={setMasteryColor}
+            hasTheory={masteryTheory.size > 0}
+            masteryEmpty={masteryScoped.length === 0}
+            masteryAvgTheoryMoves={masteryAvgTheoryMoves}
+            masteryDevFirstCount={masteryDevFirst.length}
+            masteryTrendRows={masteryTrend.rows}
+            trendGranularityLabel={PERIOD_GRANULARITY_LABEL[masteryTrend.granularity] ?? 'période'}
+            masteryOpenings={masteryOpenings}
+          />
         )}
         {statsTab === 'rapport' && (
           <RapportPanel input={rapportInput} />

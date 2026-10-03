@@ -141,9 +141,9 @@ export const RAPPORT_PRIORITY_LABEL: Record<RapportPriority, string> = {
 };
 
 export const RAPPORT_PRIORITY_COLOR: Record<RapportPriority, string> = {
-  high: '#c46b5a',
-  medium: '#b58863',
-  low: '#7d9a7e',
+  high: '#d8816f',
+  medium: '#d29e6a',
+  low: '#8fb996',
 };
 
 function pct1(n: number, base: number): string {
@@ -180,13 +180,13 @@ export function buildRapport(input: RapportInput): RapportData {
   const goodMoves = brilliant + best + excellent + good;
   const badMoves = inaccuracy + mistake + blunder;
   const qualitySegments: RapportQualitySegment[] = [
-    { key: 'brillant', label: 'Brillant', count: brilliant, pct: totalMoves > 0 ? (brilliant / totalMoves) * 100 : 0, color: '#7d9a7e' },
+    { key: 'brillant', label: 'Brillant', count: brilliant, pct: totalMoves > 0 ? (brilliant / totalMoves) * 100 : 0, color: '#8fb996' },
     { key: 'meilleur', label: 'Meilleur', count: best, pct: totalMoves > 0 ? (best / totalMoves) * 100 : 0, color: '#9ab89b' },
     { key: 'excellent', label: 'Excellent', count: excellent, pct: totalMoves > 0 ? (excellent / totalMoves) * 100 : 0, color: '#c5d4b5' },
     { key: 'bon', label: 'Bon', count: good, pct: totalMoves > 0 ? (good / totalMoves) * 100 : 0, color: '#d8d2c6' },
     { key: 'imprecision', label: 'Imprécision', count: inaccuracy, pct: totalMoves > 0 ? (inaccuracy / totalMoves) * 100 : 0, color: '#ead9b5' },
     { key: 'erreur', label: 'Erreur', count: mistake, pct: totalMoves > 0 ? (mistake / totalMoves) * 100 : 0, color: '#c8956a' },
-    { key: 'gaffe', label: 'Bévue', count: blunder, pct: totalMoves > 0 ? (blunder / totalMoves) * 100 : 0, color: '#c46b5a' },
+    { key: 'gaffe', label: 'Bévue', count: blunder, pct: totalMoves > 0 ? (blunder / totalMoves) * 100 : 0, color: '#d8816f' },
   ];
 
   const rateOf = (found: number, missed: number): number | null => {
@@ -307,10 +307,10 @@ export function buildRapport(input: RapportInput): RapportData {
       return { label: 'Débutant avancé', desc: 'Concentrez-vous sur la tactique et la réduction des bévues.', tone: 'danger' as const };
     })();
 
-  const gaugeColor = score >= 55 ? '#7d9a7e' : score >= 45 ? '#b58863' : '#c46b5a';
+  const gaugeColor = score >= 55 ? '#8fb996' : score >= 45 ? '#d29e6a' : '#d8816f';
   const accColor = hasAcc && overallAcc !== null
-    ? overallAcc >= 80 ? '#7d9a7e' : overallAcc >= 65 ? '#b58863' : '#c46b5a'
-    : '#6f6a60';
+    ? overallAcc >= 80 ? '#8fb996' : overallAcc >= 65 ? '#d29e6a' : '#d8816f'
+    : '#8e887c';
 
   void theoryCount;
   return {

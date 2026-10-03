@@ -335,7 +335,7 @@ export const GeographyPanel: React.FC<GeographyPanelProps> = ({ games, me }) => 
                   const row = code ? byCode.get(code) : undefined;
                   const n = row?.games ?? 0;
                   const fill = n > 0
-                    ? mixHex('#1e1c18', '#b58863', Math.log1p(n) / Math.log1p(maxGames))
+                    ? mixHex('#1e1c18', '#d29e6a', Math.log1p(n) / Math.log1p(maxGames))
                     : MAP_EMPTY;
                   return (
                     <path

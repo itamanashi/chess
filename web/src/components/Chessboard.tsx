@@ -1,8 +1,8 @@
 import React, { useEffect, useId, useRef, useState, useCallback, useMemo } from 'react';
-import { Chessground } from 'chessground';
-import type { Api } from 'chessground/api';
-import type { Config } from 'chessground/config';
-import type { Key } from 'chessground/types';
+import { Chessground } from '@lichess-org/chessground';
+import type { Api } from '@lichess-org/chessground/api';
+import type { Config } from '@lichess-org/chessground/config';
+import type { Key, Piece } from '@lichess-org/chessground/types';
 import { Chess, type Square } from 'chess.js';
 import type { BoardOrientation } from '../types/chess';
 import { soundFx } from '../utils/audio';
@@ -17,9 +17,9 @@ import {
 } from '../utils/knightArrows';
 
 // Importer les styles officiels de Chessground
-import 'chessground/assets/chessground.base.css';
-import 'chessground/assets/chessground.brown.css';
-import 'chessground/assets/chessground.cburnett.css';
+import '@lichess-org/chessground/assets/chessground.base.css';
+import '@lichess-org/chessground/assets/chessground.cburnett.css';
+import '../styles/chessground-theme.css';
 
 interface ChessboardProps {
   fen: string;
@@ -96,6 +96,16 @@ export const Chessboard: React.FC<ChessboardProps> = ({
     return dests;
   }, [interactive]);
 
+  // Re-pousse la position après un coup annulé : `set({fen})` vide le calque
+  // dessins, on restaure aussitôt ceux de l'utilisateur.
+  const resetPosition = useCallback(() => {
+    if (cgRef.current) {
+      const keepUserShapes = cgRef.current.state.drawable.shapes;
+      cgRef.current.set({ fen });
+      cgRef.current.setShapes(keepUserShapes);
+    }
+  }, [fen]);
+
   // Initialisation et mise à jour de l'échiquier Chessground
   useEffect(() => {
     if (!containerRef.current) return;
@@ -120,79 +130,81 @@ export const Chessboard: React.FC<ChessboardProps> = ({
         free: false,
         color: interactive ? turn : undefined,
         dests: computeDests(fen),
-        events: {
-          after: (orig: Key, dest: Key) => {
-            // Vérifier si c'est une promotion de pion
-            const piece = chess.get(orig as Square);
-            const isPawn = piece && piece.type === 'p';
-            const isPromotionRank = (piece?.color === 'w' && dest[1] === '8') || 
-                                   (piece?.color === 'b' && dest[1] === '1');
+      },
+      events: {
+        // `events.move` (v10) fournit la pièce capturée : plus besoin de la
+        // détecter à la main (case d'arrivée occupée / prise en passant).
+        move: (orig: Key, dest: Key, capturedPiece?: Piece) => {
+          // Vérifier si c'est une promotion de pion
+          const piece = chess.get(orig as Square);
+          const isPawn = piece && piece.type === 'p';
+          const isPromotionRank = (piece?.color === 'w' && dest[1] === '8') ||
+            (piece?.color === 'b' && dest[1] === '1');
 
-            if (isPawn && isPromotionRank && piece) {
-              // Ouvrir le dialogue de promotion (couleur = le pion, pas l'orientation)
-              setPendingPromotion({ from: orig, to: dest, color: piece.color });
-              return;
-            }
+          if (isPawn && isPromotionRank && piece) {
+            // Ouvrir le dialogue de promotion (couleur = le pion, pas l'orientation)
+            setPendingPromotion({ from: orig, to: dest, color: piece.color });
+            return;
+          }
 
-            // Coup régulier
-            const isCapture = !!chess.get(dest as Square) || 
-              (isPawn && orig[0] !== dest[0]);
+          // Coup régulier (prise en passant incluse dans `capturedPiece`)
+          const isCapture = !!capturedPiece;
 
-            const moveSuccess = onMove(orig, dest);
-            if (moveSuccess) {
-              const testChess = new Chess(fen);
-              try {
-                testChess.move({ from: orig, to: dest });
-                if (testChess.inCheck()) {
-                  soundFx.playCheck();
-                } else if (isCapture) {
-                  soundFx.playCapture();
-                } else {
-                  soundFx.playMove();
-                }
-              } catch {
+          const moveSuccess = onMove(orig, dest);
+          if (moveSuccess) {
+            const testChess = new Chess(fen);
+            try {
+              testChess.move({ from: orig, to: dest });
+              if (testChess.inCheck()) {
+                soundFx.playCheck();
+              } else if (isCapture) {
+                soundFx.playCapture();
+              } else {
                 soundFx.playMove();
               }
-            } else {
-              // Réinitialiser le plateau si coup invalide (sans toucher
-              // aux dessins de l'utilisateur : `set({fen})` vide le calque
-              // `shapes`, on le restaure aussitôt).
-              if (cgRef.current) {
-                const keepUserShapes = cgRef.current.state.drawable.shapes;
-                cgRef.current.set({ fen });
-                cgRef.current.setShapes(keepUserShapes);
-              }
+            } catch {
+              soundFx.playMove();
             }
-          },
+            } else {
+              // Coup invalide : on ré-annule visuellement sans perdre
+              // les dessins de l'utilisateur.
+              resetPosition();
+            }
         },
       },
       drawable: {
         enabled: true,
         visible: true,
         // Flèches de l'app (tactiques, correction, moteur) dans le calque
-        // ORDI (`autoShapes`), jamais dans `shapes` (calque UTILISATEUR) :
-        // avant, un clic effaçait les flèches de l'app (eraseOnClick) puis
-        // le `set()` suivant les ressuscitait — la « flèche fantôme ».
-        // Maintenant le clic n'efface que VOS dessins, qui restent effacés.
-        eraseOnClick: true,
-        autoShapes: splitShapes.straight,
+        // ORDI via `setAutoShapes`, jamais dans `shapes` (calque UTILISATEUR) :
+        // le clic n'efface que VOS dessins, qui restent effacés (plus de
+        // « flèche fantôme » ressuscitée par le `set()` suivant).
+        eraseOnMovablePieceClick: true,
       },
     };
 
     if (!cgRef.current) {
       cgRef.current = Chessground(containerRef.current, config);
+      cgRef.current.setAutoShapes(splitShapes.straight);
       lastFenRef.current = fen;
     } else {
-      // `set()` avec un FEN vide le calque dessins : on ne garde les dessins
-      // que si la position n'a pas changé (changement de flèches, survol…).
-      // Sur un vrai coup, effacement standard comme sur Lichess.
+      // `set()` avec un FEN vide le calque dessins : sans changement de
+      // position (flèches, survol…), on omet le FEN pour ne toucher ni aux
+      // pièces ni aux dessins. Sur un vrai coup, `set()` complet (effacement
+      // standard comme sur Lichess). Les flèches de l'app passent toujours
+      // par `setAutoShapes`, jamais par `set()`.
       const samePosition = lastFenRef.current === fen;
-      const keepUserShapes = samePosition ? cgRef.current.state.drawable.shapes : [];
-      cgRef.current.set(config);
-      if (samePosition) cgRef.current.setShapes(keepUserShapes);
+      if (samePosition) {
+        const { fen: _positionInchangee, ...configSansFen } = config;
+        void _positionInchangee;
+        cgRef.current.set(configSansFen);
+      } else {
+        cgRef.current.set(config);
+      }
+      cgRef.current.setAutoShapes(splitShapes.straight);
       lastFenRef.current = fen;
     }
-  }, [fen, orientation, interactive, computeDests, lastMove, splitShapes, onMove]);
+  }, [fen, orientation, interactive, computeDests, lastMove, splitShapes, onMove, resetPosition]);
 
   // Écouter le redimensionnement de la fenêtre pour ajuster Chessground
   useEffect(() => {
@@ -229,10 +241,8 @@ export const Chessboard: React.FC<ChessboardProps> = ({
       } catch {
         soundFx.playMove();
       }
-    } else if (cgRef.current) {
-      const keepUserShapes = cgRef.current.state.drawable.shapes;
-      cgRef.current.set({ fen });
-      cgRef.current.setShapes(keepUserShapes);
+    } else {
+      resetPosition();
     }
   };
 
@@ -312,7 +322,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({
           className="promotion-modal-backdrop"
           onClick={() => {
             setPendingPromotion(null);
-            if (cgRef.current) cgRef.current.set({ fen });
+            resetPosition();
           }}
         >
           <div
@@ -324,7 +334,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
                 setPendingPromotion(null);
-                if (cgRef.current) cgRef.current.set({ fen });
+                resetPosition();
               }
             }}
           >
@@ -368,7 +378,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({
               className="promo-cancel-btn" 
               onClick={() => {
                 setPendingPromotion(null);
-                if (cgRef.current) cgRef.current.set({ fen });
+                resetPosition();
               }}
             >
               Annuler

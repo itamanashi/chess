@@ -11,8 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@lichess-org/chessground": "^10.4.1",
     "chess.js": "^1.4.0",
-    "chessground": "^9.2.1",
     "lucide-react": "^1.45.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
