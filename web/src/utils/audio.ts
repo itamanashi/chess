@@ -4,6 +4,10 @@
 class ChessAudio {
   private ctx: AudioContext | null = null;
   private soundEnabled: boolean = true;
+  // Sample « move » standard de Lichess (lila, GPL-3.0), vendu dans
+  // `public/sounds/move.mp3`. Zéro réseau externe, repli synthé si échec.
+  private moveSample: HTMLAudioElement | null = null;
+  private moveSampleFailed = false;
 
   constructor() {
     // Initialisation paresseuse au premier clic utilisateur (requis par les navigateurs)
@@ -31,8 +35,35 @@ class ChessAudio {
     return this.soundEnabled;
   }
 
-  // Son de déplacement normal (bruit d'impact doux sur du bois)
+  private getMoveSample(): HTMLAudioElement | null {
+    if (!this.soundEnabled || this.moveSampleFailed) return null;
+    if (!this.moveSample) {
+      const el = new Audio('/sounds/move.mp3');
+      el.preload = 'auto';
+      el.addEventListener('error', () => {
+        this.moveSampleFailed = true;
+      });
+      this.moveSample = el;
+    }
+    return this.moveSample;
+  }
+
+  // Son de déplacement : sample Lichess, repli sur la synthèse locale.
   public playMove() {
+    const sample = this.getMoveSample();
+    if (sample) {
+      sample.currentTime = 0;
+      const started = sample.play();
+      if (started) {
+        started.catch(() => this.playMoveSynth());
+        return;
+      }
+    }
+    this.playMoveSynth();
+  }
+
+  // Ancienne synthèse locale (bruit d'impact doux) : repli hors-ligne.
+  private playMoveSynth() {
     const ctx = this.getContext();
     if (!ctx) return;
 

@@ -1,5 +1,0 @@
-Neo uses the original Chess.com image assets:
-https://images.chesscomfiles.com/chess-themes/pieces/neo/150/
-
-The images are loaded from Chess.com's public asset host and are not
-redistributed in this repository.

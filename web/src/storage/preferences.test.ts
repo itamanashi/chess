@@ -38,9 +38,20 @@ describe('piece skin preference', () => {
       removeItem: (key: string) => values.delete(key),
     });
 
-    uiPrefs.setPieceSkin('neo-angle');
+    uiPrefs.setPieceSkin('staunty');
 
-    expect(uiPrefs.getPieceSkin()).toBe('neo-angle');
+    expect(uiPrefs.getPieceSkin()).toBe('staunty');
+  });
+
+  it('migrates the retired Chess.com hotlink skins to the built-in set', () => {
+    const values = new Map([['chess_piece_skin', 'neo']]);
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+
+    expect(uiPrefs.getPieceSkin()).toBe('cburnett');
   });
 
   it('migrates the former Unicode skin to the illustrated set', () => {

@@ -164,10 +164,10 @@ export function subscribeChesscomUser(cb: () => void): () => void {
 }
 
 export type SuggestionSource = 'advice' | 'engine' | 'users';
-export type PieceSkin = 'cburnett' | 'chessnut' | 'merida' | 'fantasy' | 'shapes' | 'neo' | 'neo-angle';
+export type PieceSkin = 'cburnett' | 'chessnut' | 'merida' | 'fantasy' | 'alpha' | 'staunty' | 'pirouetti' | 'tatiana' | 'california';
 
 const SUGGESTION_SOURCES: SuggestionSource[] = ['advice', 'engine', 'users'];
-const PIECE_SKINS: PieceSkin[] = ['cburnett', 'chessnut', 'merida', 'fantasy', 'shapes', 'neo', 'neo-angle'];
+const PIECE_SKINS: PieceSkin[] = ['cburnett', 'chessnut', 'merida', 'fantasy', 'alpha', 'staunty', 'pirouetti', 'tatiana', 'california'];
 
 export const uiPrefs = {
   getEngineDepth(fallback: number | 'auto'): number | 'auto' {

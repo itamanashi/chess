@@ -1,6 +1,0 @@
-Neo angle uses the original Chess.com Neo image assets with a local angle
-treatment because Chess.com does not expose a separate public `neo_angle`
-asset directory.
-
-Base assets:
-https://images.chesscomfiles.com/chess-themes/pieces/neo/150/

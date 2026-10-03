@@ -76,9 +76,11 @@ const PIECE_SKINS: Array<{ id: PieceSkin; label: string }> = [
   { id: 'chessnut', label: 'Gravure' },
   { id: 'merida', label: 'Merida' },
   { id: 'fantasy', label: 'Fantasy' },
-  { id: 'shapes', label: 'Formes' },
-  { id: 'neo', label: 'Neo' },
-  { id: 'neo-angle', label: 'Neo angle' },
+  { id: 'alpha', label: 'Alpha' },
+  { id: 'staunty', label: 'Staunty' },
+  { id: 'pirouetti', label: 'Pirouetti' },
+  { id: 'tatiana', label: 'Tatiana' },
+  { id: 'california', label: 'California' },
 ];
 
 /** Compteur compact de pastille (12 345 → « 12,3 k »). */
