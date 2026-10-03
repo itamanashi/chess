@@ -13,7 +13,7 @@
   "dependencies": {
     "@lichess-org/chessground": "^10.4.1",
     "chess.js": "^1.4.0",
-    "lucide-react": "^1.45.0",
+    "lucide-react": "^1.49.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "stockfish.js": "^10.0.2",
