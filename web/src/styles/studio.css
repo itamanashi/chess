@@ -981,6 +981,99 @@
 }
 .rapport-quality-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+/* ─── Rapport : table de classification façon chess.com ─────────────── */
+.rapport-moves-table {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.rapport-move-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.rapport-move-glyph {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  font-weight: 800;
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 0 6px;
+  line-height: 1.7;
+  flex-shrink: 0;
+  min-width: 34px;
+  text-align: center;
+}
+.rapport-move-label {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+  min-width: 96px;
+}
+.rapport-move-bar {
+  flex: 1 1 auto;
+  min-width: 40px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(236 232 223 / 0.07);
+  overflow: hidden;
+}
+.rapport-move-bar > span { display: block; height: 100%; border-radius: 999px; }
+.rapport-move-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--fs-small);
+  flex-shrink: 0;
+  min-width: 72px;
+  justify-content: flex-end;
+}
+
+/* ─── Rapport : parties marquantes (meilleure / à revoir) ───────────── */
+.rapport-games { display: flex; flex-direction: column; margin-top: var(--sp-2); border-top: 1px solid var(--border); }
+.rapport-game-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 2px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.rapport-game-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rapport-game-tag {
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rapport-game-opp { font-size: var(--fs-body); color: var(--text-2); }
+.rapport-game-opp strong { color: var(--text); }
+.rapport-game-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.rapport-game-acc {
+  font-size: var(--fs-body);
+  font-weight: 800;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: right;
+}
+
 /* ─── Rapport : tableau tactique ─────────────────────────────────────── */
 .rapport-tactic-grid { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
 .rapport-tactic-row { display: flex; align-items: center; gap: var(--sp-3); }
@@ -1204,6 +1297,8 @@
   .rapport-axe-header { flex-direction: column; gap: 2px; }
   .rapport-axe-badge { align-self: flex-start; }
   .rapport-evo-grid { grid-template-columns: repeat(2, 1fr); }
+  .rapport-move-label { min-width: 0; }
+  .rapport-game-row { flex-wrap: wrap; row-gap: var(--sp-1); }
 }
 
 /* Accessibilité Apple : verre désactivé si transparence réduite. */

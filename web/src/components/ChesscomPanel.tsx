@@ -72,6 +72,7 @@ import {
   buildEvolution,
   RAPPORT_EVOLUTION_WINDOW,
   type RapportEvolution,
+  type RapportGameRef,
   type RapportInput,
   type RapportPeriodSlice,
 } from '../services/rapport';
@@ -1627,6 +1628,53 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     }
     return { avg: n > 0 ? sum / n : null, count: n };
   }, [listedGames, me]);
+
+  /**
+   * Parties marquantes façon Game Review (meilleure / à revoir : précision
+   * max/min du compte lié) + précision moyenne par couleur jouée. Pur.
+   */
+  const rapportGames = useMemo(() => {
+    let best: RapportGameRef | null = null;
+    let worst: RapportGameRef | null = null;
+    let whiteSum = 0;
+    let whiteCount = 0;
+    let blackSum = 0;
+    let blackCount = 0;
+    for (const g of listedGames) {
+      if (typeof g.accuracy !== 'number' || !Number.isFinite(g.accuracy)) continue;
+      const mine = colorOf(g, me);
+      if (mine === 'w') {
+        whiteSum += g.accuracy;
+        whiteCount++;
+      } else {
+        blackSum += g.accuracy;
+        blackCount++;
+      }
+      const opp = mine === 'w' ? g.black : g.white;
+      const ref: RapportGameRef = {
+        url: g.url,
+        opponent: opp.username,
+        opponentRating: typeof opp.rating === 'number' ? opp.rating : null,
+        result: outcomeFor(g, me),
+        accuracy: g.accuracy,
+        dateLabel: g.end_time
+          ? new Date(g.end_time * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '',
+      };
+      if (!best || ref.accuracy > best.accuracy) best = ref;
+      if (!worst || ref.accuracy < worst.accuracy) worst = ref;
+    }
+    /* Une seule partie analysée : pas de « à revoir » distincte. */
+    if (best && worst && best.url === worst.url) worst = null;
+    return {
+      best,
+      worst,
+      accWhite: whiteCount > 0 ? whiteSum / whiteCount : null,
+      accWhiteCount: whiteCount,
+      accBlack: blackCount > 0 ? blackSum / blackCount : null,
+      accBlackCount: blackCount,
+    };
+  }, [listedGames, me]);
   const rapportInput: RapportInput = useMemo(() => {
     const totalGames = summary.total;
     const whiteRow = sideRows.find((r) => r.side === 'w');
@@ -1684,8 +1732,14 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
       acplOverall: rapportAcpl.avg,
       acplCount: rapportAcpl.count,
       evolution: rapportEvolution,
+      accWhite: rapportGames.accWhite,
+      accWhiteCount: rapportGames.accWhiteCount,
+      accBlack: rapportGames.accBlack,
+      accBlackCount: rapportGames.accBlackCount,
+      bestGame: rapportGames.best,
+      worstGame: rapportGames.worst,
     };
-  }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount, rapportEvolution, rapportAcpl]);
+  }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount, rapportEvolution, rapportAcpl, rapportGames]);
 
   const selectedGame = useMemo(
     () => (viewer ? (games.find((g) => g.url === viewer.url) ?? null) : null),
@@ -2522,7 +2576,13 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
           />
         )}
         {statsTab === 'rapport' && (
-          <RapportPanel input={rapportInput} />
+          <RapportPanel
+            input={rapportInput}
+            onOpenGame={(url) => {
+              const game = games.find((gp) => gp.url === url);
+              if (game) onOpenGame(game);
+            }}
+          />
         )}
         </div>
         )}

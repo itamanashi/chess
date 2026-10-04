@@ -8,6 +8,7 @@ import {
   Info,
   Minus,
   ShieldAlert,
+  Star,
   Target,
   TrendingDown,
   TrendingUp,
@@ -25,6 +26,7 @@ import {
   RAPPORT_PRIORITY_LABEL,
   buildRapport,
   type RapportDelta,
+  type RapportGameRef,
   type RapportGlobalTrend,
   type RapportIconKind,
   type RapportInput,
@@ -143,8 +145,54 @@ function deltaToneColor(d: RapportDelta): string {
   return '#8e887c';
 }
 
+/** Couleur d'une précision (mêmes seuils que le rapport global). */
+function accuracyTone(acc: number): string {
+  if (acc >= 80) return '#8fb996';
+  if (acc >= 65) return '#d29e6a';
+  return '#d8816f';
+}
+
+const GAME_RESULT_META: Record<RapportGameRef['result'], { label: string; color: string }> = {
+  win: { label: 'Victoire', color: '#8fb996' },
+  draw: { label: 'Nulle', color: '#8e887c' },
+  loss: { label: 'Défaite', color: '#d8816f' },
+};
+
+/** Ligne « partie marquante » façon Game Review (adversaire, issue, précision, Revoir). */
+const GameRow: React.FC<{ tag: string; game: RapportGameRef; onOpen?: (url: string) => void }> = ({
+  tag, game, onOpen,
+}) => {
+  const meta = GAME_RESULT_META[game.result];
+  return (
+    <div className="rapport-game-row">
+      <div className="rapport-game-main">
+        <span className="rapport-game-tag text-muted">{tag}</span>
+        <span className="rapport-game-opp">
+          contre <strong>{game.opponent}</strong>
+          {game.opponentRating !== null && <span className="text-muted"> ({game.opponentRating})</span>}
+          {game.dateLabel && <span className="text-muted"> · {game.dateLabel}</span>}
+        </span>
+      </div>
+      <span className="rapport-game-result" style={{ color: meta.color }}>
+        <span className="rapport-quality-dot" style={{ background: meta.color }} aria-hidden="true" />
+        {meta.label}
+      </span>
+      <span className="rapport-game-acc" style={{ color: accuracyTone(game.accuracy) }}>
+        {game.accuracy.toFixed(1).replace('.', ',')}&nbsp;%
+      </span>
+      {onOpen && (
+        <button type="button" className="action-btn btn-sm" onClick={() => onOpen(game.url)}>
+          Revoir
+        </button>
+      )}
+    </div>
+  );
+};
+
 interface RapportPanelProps {
   input: RapportInput;
+  /** Ouvre la partie en visionneuse (boutons « Revoir »). Absent = lecture seule. */
+  onOpenGame?: (url: string) => void;
 }
 
 /**
@@ -152,7 +200,7 @@ interface RapportPanelProps {
  * sans emoji — pastilles CSS + icônes Lucide. La logique vit dans
  * `services/rapport.ts`, ce panneau ne fait que présenter.
  */
-export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
+export const RapportPanel: React.FC<RapportPanelProps> = ({ input, onOpenGame }) => {
   const data = useMemo(() => buildRapport(input), [input]);
   const dateStr = useMemo(
     () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
@@ -196,11 +244,14 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
       : []),
   ];
 
-  /** Phrase-verdict : niveau, score, précision/ACPL, tendance. */
+  /** Phrase-verdict : niveau, score, précision/ACPL, niveau estimé, tendance. */
   const verdictBody = [
     `Score ${fr1(input.score)} % sur ${input.totalGames} partie${input.totalGames > 1 ? 's' : ''} (${input.wins}V · ${input.draws}N · ${input.losses}D).`,
     ...(data.hasAcc && input.overallAcc !== null
       ? [`Précision ${fr1(input.overallAcc)} %${input.acplOverall !== null ? ` et ACPL ${Math.round(input.acplOverall)} cp` : ''} sur ${input.analyzedCount} partie${input.analyzedCount > 1 ? 's' : ''} analysée${input.analyzedCount > 1 ? 's' : ''}.`]
+      : []),
+    ...(data.estimatedLevel !== null
+      ? [`Vous avez joué comme un joueur estimé à ≈ ${data.estimatedLevel} Elo.`]
       : []),
     ...(data.evolution && data.evolution.sufficient
       ? [`Tendance ${data.evolution.global} sur les ${data.evolution.window} dernières parties.`]
@@ -440,6 +491,14 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
                 <>L&apos;écart entre victoires ({input.accWin.toFixed(1)}&nbsp;%) et défaites ({input.accLoss.toFixed(1)}&nbsp;%) est de{' '}
                 <strong>{Math.abs(input.accWin - input.accLoss).toFixed(1)} points</strong>.</>
               )}
+              {input.accWhite !== null && input.accBlack !== null && input.accWhiteCount > 0 && input.accBlackCount > 0 && (
+                <span>
+                  {' '}Vous êtes plus précis avec <strong>{input.accWhite >= input.accBlack ? 'les Blancs' : 'les Noirs'}</strong>{' '}
+                  ({fr1(Math.max(input.accWhite, input.accBlack))}&nbsp;%) qu’avec{' '}
+                  <strong>{input.accWhite >= input.accBlack ? 'les Noirs' : 'les Blancs'}</strong>{' '}
+                  ({fr1(Math.min(input.accWhite, input.accBlack))}&nbsp;%).
+                </span>
+              )}
             </p>
             {input.acplOverall !== null && (
               <p className="rapport-paragraph">
@@ -486,6 +545,28 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
         )}
       </div>
 
+      {/* Parties marquantes : meilleure / à revoir, façon Game Review */}
+      {(input.bestGame ?? input.worstGame) && (
+        <div className="panel-card">
+          <div className="card-title-row">
+            <h4 className="card-title-sm">
+              <Star size={14} className="title-icon" aria-hidden="true" /> Parties marquantes
+            </h4>
+            <span className="text-muted" style={{ fontSize: 'var(--fs-small)' }}>
+              Précision max / min
+            </span>
+          </div>
+          <div className="rapport-games">
+            {input.bestGame && (
+              <GameRow tag="Meilleure partie" game={input.bestGame} onOpen={onOpenGame} />
+            )}
+            {input.worstGame && (
+              <GameRow tag="À revoir" game={input.worstGame} onOpen={onOpenGame} />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Qualité des coups */}
       {input.totalMoves > 0 && (
         <div className="panel-card">
@@ -513,13 +594,32 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
               ) : null
             ))}
           </div>
-          <div className="rapport-quality-legend">
+          <div
+            className="rapport-moves-table"
+            role="table"
+            aria-label="Classification des coups façon chess.com"
+          >
             {data.qualitySegments.filter((s) => s.count > 0).map((s) => (
-              <div key={s.key} className="rapport-quality-legend-item">
-                <span className="rapport-quality-dot" style={{ background: s.color }} aria-hidden="true" />
-                <span className="text-muted">{s.label}</span>
-                <strong>{s.count}</strong>
-                <span className="text-muted">({s.pct.toFixed(0)}&nbsp;%)</span>
+              <div key={s.key} className="rapport-move-row" role="row">
+                {s.glyph ? (
+                  <span
+                    className="rapport-move-glyph"
+                    style={{ color: s.color, borderColor: `${s.color}55` }}
+                    aria-hidden="true"
+                  >
+                    {s.glyph}
+                  </span>
+                ) : (
+                  <span className="rapport-quality-dot" style={{ background: s.color }} aria-hidden="true" />
+                )}
+                <span className="rapport-move-label">{s.label}</span>
+                <span className="rapport-move-bar" aria-hidden="true">
+                  <span style={{ width: `${s.pct}%`, background: s.color }} />
+                </span>
+                <span className="rapport-move-count">
+                  <strong>{s.count}</strong>
+                  <span className="text-muted">({s.pct.toFixed(0)}&nbsp;%)</span>
+                </span>
               </div>
             ))}
           </div>

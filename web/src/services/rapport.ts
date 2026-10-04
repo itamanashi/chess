@@ -67,6 +67,25 @@ export interface RapportInput {
    * précédentes). `null`/absent = non calculée (le panneau masque la section).
    */
   evolution?: RapportEvolution | null;
+  /* Précision moyenne par couleur jouée (null si aucune partie analysée). */
+  accWhite: number | null;
+  accWhiteCount: number;
+  accBlack: number | null;
+  accBlackCount: number;
+  /* Parties marquantes (meilleure / à revoir, précision max/min). */
+  bestGame: RapportGameRef | null;
+  worstGame: RapportGameRef | null;
+}
+
+/** Référence vers une partie marquante (meilleure ou à revoir). */
+export interface RapportGameRef {
+  url: string;
+  opponent: string;
+  opponentRating: number | null;
+  result: 'win' | 'draw' | 'loss';
+  accuracy: number;
+  /** Libellé de date FR (« 7 oct. 2013 »), prêt à afficher. */
+  dateLabel: string;
 }
 
 export interface RapportQualitySegment {
@@ -75,6 +94,8 @@ export interface RapportQualitySegment {
   count: number;
   pct: number;
   color: string;
+  /** Glyphe façon chess.com/annotations (…, « ?? ») — vide si aucun. */
+  glyph: string;
 }
 
 export interface RapportTacticRow {
@@ -144,6 +165,8 @@ export interface RapportData {
   accColor: string;
   acplColor: string;
   evolution: RapportEvolution | null;
+  /** Niveau de jeu estimé façon Game Review (affichage seul, null si inconnu). */
+  estimatedLevel: number | null;
 }
 
 export const RAPPORT_PRIORITY_LABEL: Record<RapportPriority, string> = {
@@ -377,6 +400,28 @@ function pct1(n: number, base: number): string {
 }
 
 /**
+ * Niveau de jeu estimé façon Game Review chess.com (« vous avez joué
+ * comme un … »). Échelle indicative, AFFICHAGE SEUL : ne sert jamais à
+ * sélectionner ou trier quoi que ce soit.
+ */
+export function estimatedLevelFor(accuracy: number | null): number | null {
+  if (accuracy === null || !Number.isFinite(accuracy)) return null;
+  if (accuracy >= 95) return 2200;
+  if (accuracy >= 92) return 2100;
+  if (accuracy >= 89) return 2000;
+  if (accuracy >= 86) return 1900;
+  if (accuracy >= 83) return 1800;
+  if (accuracy >= 80) return 1700;
+  if (accuracy >= 77) return 1600;
+  if (accuracy >= 74) return 1500;
+  if (accuracy >= 71) return 1400;
+  if (accuracy >= 68) return 1300;
+  if (accuracy >= 64) return 1200;
+  if (accuracy >= 60) return 1100;
+  return 1000;
+}
+
+/**
  * Construit le modèle du rapport de progression. Pur et testable :
  * mêmes seuils que l'ancien bloc inline (précision < 75, pièces en prise
  * ≥ 0,5/partie, cadeaux ≥ 0,3/partie, défaites > 55 %, bévues > 4 %…),
@@ -405,13 +450,13 @@ export function buildRapport(input: RapportInput): RapportData {
   const goodMoves = brilliant + best + excellent + good;
   const badMoves = inaccuracy + mistake + blunder;
   const qualitySegments: RapportQualitySegment[] = [
-    { key: 'brillant', label: 'Brillant', count: brilliant, pct: totalMoves > 0 ? (brilliant / totalMoves) * 100 : 0, color: '#8fb996' },
-    { key: 'meilleur', label: 'Meilleur', count: best, pct: totalMoves > 0 ? (best / totalMoves) * 100 : 0, color: '#9ab89b' },
-    { key: 'excellent', label: 'Excellent', count: excellent, pct: totalMoves > 0 ? (excellent / totalMoves) * 100 : 0, color: '#c5d4b5' },
-    { key: 'bon', label: 'Bon', count: good, pct: totalMoves > 0 ? (good / totalMoves) * 100 : 0, color: '#d8d2c6' },
-    { key: 'imprecision', label: 'Imprécision', count: inaccuracy, pct: totalMoves > 0 ? (inaccuracy / totalMoves) * 100 : 0, color: '#ead9b5' },
-    { key: 'erreur', label: 'Erreur', count: mistake, pct: totalMoves > 0 ? (mistake / totalMoves) * 100 : 0, color: '#c8956a' },
-    { key: 'gaffe', label: 'Bévue', count: blunder, pct: totalMoves > 0 ? (blunder / totalMoves) * 100 : 0, color: '#d8816f' },
+    { key: 'brillant', label: 'Brillant', count: brilliant, pct: totalMoves > 0 ? (brilliant / totalMoves) * 100 : 0, color: '#8fb996', glyph: '!!' },
+    { key: 'meilleur', label: 'Meilleur', count: best, pct: totalMoves > 0 ? (best / totalMoves) * 100 : 0, color: '#9ab89b', glyph: '!' },
+    { key: 'excellent', label: 'Excellent', count: excellent, pct: totalMoves > 0 ? (excellent / totalMoves) * 100 : 0, color: '#c5d4b5', glyph: '' },
+    { key: 'bon', label: 'Bon', count: good, pct: totalMoves > 0 ? (good / totalMoves) * 100 : 0, color: '#d8d2c6', glyph: '' },
+    { key: 'imprecision', label: 'Imprécision', count: inaccuracy, pct: totalMoves > 0 ? (inaccuracy / totalMoves) * 100 : 0, color: '#ead9b5', glyph: '?!' },
+    { key: 'erreur', label: 'Erreur', count: mistake, pct: totalMoves > 0 ? (mistake / totalMoves) * 100 : 0, color: '#c8956a', glyph: '?' },
+    { key: 'gaffe', label: 'Bévue', count: blunder, pct: totalMoves > 0 ? (blunder / totalMoves) * 100 : 0, color: '#d8816f', glyph: '??' },
   ];
 
   const rateOf = (found: number, missed: number): number | null => {
@@ -571,5 +616,6 @@ export function buildRapport(input: RapportInput): RapportData {
     winPct, lossPct, whiteWinPct, blackWinPct, betterColor, worseColor,
     hasAcc, goodMoves, badMoves, qualitySegments, tacticRows,
     level, axes, strengths, gaugeColor, accColor, acplColor, evolution,
+    estimatedLevel: hasAcc ? estimatedLevelFor(overallAcc) : null,
   };
 }

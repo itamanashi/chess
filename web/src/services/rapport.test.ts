@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildEvolution, buildRapport, type RapportInput, type RapportPeriodSlice } from './rapport';
+import { buildEvolution, buildRapport, estimatedLevelFor, type RapportInput, type RapportPeriodSlice } from './rapport';
 
 function baseInput(overrides: Partial<RapportInput> = {}): RapportInput {
   return {
@@ -46,6 +46,12 @@ function baseInput(overrides: Partial<RapportInput> = {}): RapportInput {
     worstOpening: { name: 'Sicilienne', eco: 'B20', wins: 1, games: 5 },
     acplOverall: 35,
     acplCount: 10,
+    accWhite: 84,
+    accWhiteCount: 6,
+    accBlack: 79,
+    accBlackCount: 4,
+    bestGame: null,
+    worstGame: null,
     ...overrides,
   };
 }
@@ -115,6 +121,23 @@ describe('buildRapport', () => {
   it('colore l\u2019ACPL en succès sous 40 cp', () => {
     const data = buildRapport(baseInput({ acplOverall: 35 }));
     expect(data.acplColor).toBe('#8fb996');
+  });
+
+  it('expose les glyphes de classification façon chess.com', () => {
+    const data = buildRapport(baseInput());
+    const byKey = new Map(data.qualitySegments.map((s) => [s.key, s.glyph]));
+    expect(byKey.get('brillant')).toBe('!!');
+    expect(byKey.get('meilleur')).toBe('!');
+    expect(byKey.get('gaffe')).toBe('??');
+  });
+
+  it('estime le niveau de jeu depuis la précision', () => {
+    expect(estimatedLevelFor(null)).toBeNull();
+    expect(estimatedLevelFor(94.6)).toBe(2100);
+    expect(estimatedLevelFor(82)).toBe(1700);
+    expect(estimatedLevelFor(55)).toBe(1000);
+    const data = buildRapport(baseInput({ overallAcc: 82 }));
+    expect(data.estimatedLevel).toBe(1700);
   });
 });
 
