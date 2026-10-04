@@ -52,6 +52,8 @@ export interface StoredAccuracy {
   a: number | null;
   w: number | null;
   b: number | null;
+  /** ACPL du compte lié (perte moyenne en centipions, rapport moteur). */
+  c?: number | null;
   /** Forme narrative (calculée à l'analyse, absente des anciens lots). */
   s?: GameShape | null;
   /** Fourchettes trouvées / manquées (ordre FORK_PIECE_ORDER). */

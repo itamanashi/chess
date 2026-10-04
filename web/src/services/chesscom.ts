@@ -103,6 +103,12 @@ export interface ChesscomGame extends ChesscomArchiveGame {
   /** Précision des Noirs (idem). */
   blackAccuracy?: number | null;
   /**
+   * ACPL du camp du COMPTE LIÉ (perte moyenne en centipions, rapport
+   * en-croissant). `null`/absent = non analysée. Conservée pour le Rapport
+   * (comparaison récente vs précédente) et persistée comme les précisions.
+   */
+  acpl?: number | null;
+  /**
    * Rapport complet (plis annotés, ACPL, phases). Stocké UNIQUEMENT pour
    * la partie analysée en détail (visionneuse) : un historique complet
    * pèserait des Mo. Le batch ne conserve que les nombres ci-dessus.

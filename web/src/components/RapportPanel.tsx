@@ -6,8 +6,10 @@ import {
   FileText,
   Gift,
   Info,
+  Minus,
   ShieldAlert,
   Target,
+  TrendingDown,
   TrendingUp,
   TriangleAlert,
   Trophy,
@@ -22,6 +24,8 @@ import {
   RAPPORT_PRIORITY_COLOR,
   RAPPORT_PRIORITY_LABEL,
   buildRapport,
+  type RapportDelta,
+  type RapportGlobalTrend,
   type RapportIconKind,
   type RapportInput,
 } from '../services/rapport';
@@ -81,6 +85,64 @@ const Gauge: React.FC<{ value: number; label: string; color: string; legend: str
   );
 };
 
+/** Petite sparkline SVG (paquets de 5 parties, ordre chronologique). */
+const Spark: React.FC<{ values: number[]; color: string; label: string }> = ({ values, color, label }) => {
+  if (values.length < 2) {
+    return <span className="text-muted rapport-spark-empty">—</span>;
+  }
+  const w = 120;
+  const h = 36;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const step = w / (values.length - 1);
+  const pts = values
+    .map((v, i) => `${(i * step).toFixed(1)},${(h - 4 - ((v - min) / span) * (h - 8)).toFixed(1)}`)
+    .join(' ');
+  const last = values[values.length - 1];
+  const first = values[0];
+  const dotColor = last >= first ? '#8fb996' : '#d8816f';
+  return (
+    <svg
+      width={w} height={h} viewBox={`0 0 ${w} ${h}`}
+      role="img" aria-label={`${label} : ${values.map((v) => v.toFixed(0)).join(', ')}`}
+      className="rapport-spark"
+    >
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={w} cy={h - 4 - ((last - min) / span) * (h - 8)} r="3" fill={dotColor} />
+    </svg>
+  );
+};
+
+/** Pastille globale d'évolution (progression / régression / stable / historique court). */
+const TREND_META: Record<RapportGlobalTrend, { label: string; color: string; Icon: LucideIcon }> = {
+  progression: { label: 'En progression', color: '#8fb996', Icon: TrendingUp },
+  'régression': { label: 'En régression', color: '#d8816f', Icon: TrendingDown },
+  stable: { label: 'Stable', color: '#8e887c', Icon: Minus },
+  insuffisant: { label: 'Historique court', color: '#d29e6a', Icon: Info },
+};
+
+/** Valeur récente d'un delta, formatée selon l'indicateur. */
+function formatDeltaRecent(d: RapportDelta): string {
+  if (d.recent === null) return '—';
+  switch (d.key) {
+    case 'acpl':
+      return `${Math.round(d.recent)} cp`;
+    case 'pieces-prise':
+      return `${d.recent.toFixed(1).replace('.', ',')} /partie`;
+    case 'theorie':
+      return `${d.recent.toFixed(1).replace('.', ',')} coups`;
+    default:
+      return `${d.recent.toFixed(1).replace('.', ',')} %`;
+  }
+}
+
+function deltaToneColor(d: RapportDelta): string {
+  if (d.favorable === true) return '#8fb996';
+  if (d.favorable === false) return '#d8816f';
+  return '#8e887c';
+}
+
 interface RapportPanelProps {
   input: RapportInput;
 }
@@ -124,6 +186,20 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
           <span className="rapport-level-badge" style={{ borderColor: levelColor, color: levelColor }}>
             {data.level.label}
           </span>
+          {data.evolution && (() => {
+            const meta = TREND_META[data.evolution.global];
+            const TrendIcon = meta.Icon;
+            return (
+              <span
+                className="rapport-trend-badge"
+                style={{ borderColor: `${meta.color}60`, color: meta.color, background: `${meta.color}14` }}
+                title={`${data.evolution.recentGames} récentes contre ${data.evolution.previousGames} précédentes`}
+              >
+                <TrendIcon size={13} aria-hidden="true" />
+                {meta.label}
+              </span>
+            );
+          })()}
           <p className="rapport-level-desc text-muted">{data.level.desc}</p>
         </div>
         <div className="rapport-gauges">
@@ -197,7 +273,75 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             <div className="rapport-stat-sub text-muted">avant déviation</div>
           </div>
         )}
+        {input.acplOverall !== null && (
+          <div className="rapport-stat-card" role="listitem">
+            <div className="rapport-stat-label text-muted">ACPL moyen</div>
+            <div className="rapport-stat-value" style={{ color: data.acplColor }}>
+              {Math.round(input.acplOverall)}
+            </div>
+            <div className="rapport-stat-sub text-muted">{input.acplCount} partie{input.acplCount > 1 ? 's' : ''} · centipions</div>
+          </div>
+        )}
       </div>
+
+      {/* Évolution : période récente vs précédente */}
+      {data.evolution && (
+        <div className="panel-card rapport-evolution">
+          <div className="card-title-row">
+            <h4 className="card-title-sm">
+              {(() => {
+                const meta = TREND_META[data.evolution.global];
+                const TrendIcon = meta.Icon;
+                return <TrendIcon size={14} className="title-icon" aria-hidden="true" />;
+              })()} Évolution
+            </h4>
+            <span className="text-muted" style={{ fontSize: 'var(--fs-small)' }}>
+              {data.evolution.recentGames} récentes vs {data.evolution.previousGames} précédentes
+            </span>
+          </div>
+          <div
+            className="rapport-evo-grid"
+            role="list"
+            aria-label="Indicateurs de progression et régression"
+          >
+            {data.evolution.deltas.map((d) => {
+              const tone = deltaToneColor(d);
+              return (
+                <div
+                  key={d.key}
+                  className="rapport-evo-card"
+                  role="listitem"
+                  title={d.previous !== null ? `Précédent : ${formatDeltaRecent({ ...d, recent: d.previous })}` : 'Période précédente insuffisante'}
+                >
+                  <div className="rapport-evo-label text-muted">{d.label}</div>
+                  <div className="rapport-evo-value">{formatDeltaRecent(d)}</div>
+                  <span className="rapport-evo-delta" style={{ background: `${tone}1f`, color: tone }}>
+                    {d.text}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {data.evolution.sufficient && (
+            <div className="rapport-sparks" aria-label="Tendances graphiques">
+              <div className="rapport-spark-item">
+                <span className="rapport-spark-label text-muted">Score</span>
+                <Spark values={data.evolution.recentSparkScore} color={data.gaugeColor} label="Tendance du score" />
+              </div>
+              <div className="rapport-spark-item">
+                <span className="rapport-spark-label text-muted">Précision</span>
+                <Spark values={data.evolution.recentSparkAcc} color={data.accColor} label="Tendance de la précision" />
+              </div>
+            </div>
+          )}
+          <div className="rapport-section">
+            <h5 className="rapport-section-sub">Analyse de l&apos;évolution</h5>
+            {data.evolution.narrative.map((p, i) => (
+              <p key={i} className="rapport-paragraph">{p}</p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Qualité des coups */}
       {input.totalMoves > 0 && (
@@ -409,6 +553,9 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
                       {ax.metric && <span className="rapport-axe-metric" style={{ color }}>{ax.metric}</span>}
                     </div>
                     <div className="rapport-axe-detail text-muted">{ax.detail}</div>
+                    {ax.evolutionNote && (
+                      <div className="rapport-axe-evo">{ax.evolutionNote}</div>
+                    )}
                   </div>
                   <span className="rapport-axe-badge" style={{ background: `${color}20`, color }}>
                     {RAPPORT_PRIORITY_LABEL[ax.priority]}

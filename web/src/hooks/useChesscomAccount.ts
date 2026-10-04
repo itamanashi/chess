@@ -42,6 +42,7 @@ export interface ChesscomAccount {
     accuracy: number | null;
     whiteAccuracy: number | null;
     blackAccuracy: number | null;
+    acpl?: number | null;
     shape?: GameShape | null;
     forks?: ForkCounts | null;
     pins?: PinCounts | null;
@@ -84,7 +85,7 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
     if (Object.keys(acc).length === 0) return cached;
     return cached.map((g) => {
       const s = acc[g.url];
-            return s ? { ...g, accuracy: s.a, whiteAccuracy: s.w, blackAccuracy: s.b, shape: s.s ?? null, forks: s.ff || s.fm ? forkCountsFromArrays(s.ff, s.fm) : null, pins: s.pf || s.pm ? pinCountsFromArrays(s.pf, s.pm) : null, mates: s.mf || s.mm ? mateCountsFromArrays(s.mf, s.mm) : null, hangs: s.hg ? hungCountsFromArray(s.hg) : null, freebies: s.gf || s.gm ? freebieCountsFromArrays(s.gf, s.gm) : null, moveQuality: s.q || s.qw || s.qb ? moveQualityFromArrays(s.q, s.qw, s.qb) : null, pieces: s.pc ? pieceStatsFromArrays(s.pc, s.pa) : null } : g;
+            return s ? { ...g, accuracy: s.a, whiteAccuracy: s.w, blackAccuracy: s.b, acpl: s.c ?? null, shape: s.s ?? null, forks: s.ff || s.fm ? forkCountsFromArrays(s.ff, s.fm) : null, pins: s.pf || s.pm ? pinCountsFromArrays(s.pf, s.pm) : null, mates: s.mf || s.mm ? mateCountsFromArrays(s.mf, s.mm) : null, hangs: s.hg ? hungCountsFromArray(s.hg) : null, freebies: s.gf || s.gm ? freebieCountsFromArrays(s.gf, s.gm) : null, moveQuality: s.q || s.qw || s.qb ? moveQualityFromArrays(s.q, s.qw, s.qb) : null, pieces: s.pc ? pieceStatsFromArrays(s.pc, s.pa) : null } : g;
     });
   });
   const [failedArchives, setFailedArchives] = useState(0);
@@ -135,7 +136,7 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
           ? res.games
           : res.games.map((g) => {
             const s = acc[g.url];
-      return s ? { ...g, accuracy: s.a, whiteAccuracy: s.w, blackAccuracy: s.b, shape: s.s ?? null, forks: s.ff || s.fm ? forkCountsFromArrays(s.ff, s.fm) : null, pins: s.pf || s.pm ? pinCountsFromArrays(s.pf, s.pm) : null, mates: s.mf || s.mm ? mateCountsFromArrays(s.mf, s.mm) : null, hangs: s.hg ? hungCountsFromArray(s.hg) : null, freebies: s.gf || s.gm ? freebieCountsFromArrays(s.gf, s.gm) : null, moveQuality: s.q || s.qw || s.qb ? moveQualityFromArrays(s.q, s.qw, s.qb) : null, pieces: s.pc ? pieceStatsFromArrays(s.pc, s.pa) : null } : g;
+      return s ? { ...g, accuracy: s.a, whiteAccuracy: s.w, blackAccuracy: s.b, acpl: s.c ?? null, shape: s.s ?? null, forks: s.ff || s.fm ? forkCountsFromArrays(s.ff, s.fm) : null, pins: s.pf || s.pm ? pinCountsFromArrays(s.pf, s.pm) : null, mates: s.mf || s.mm ? mateCountsFromArrays(s.mf, s.mm) : null, hangs: s.hg ? hungCountsFromArray(s.hg) : null, freebies: s.gf || s.gm ? freebieCountsFromArrays(s.gf, s.gm) : null, moveQuality: s.q || s.qw || s.qb ? moveQualityFromArrays(s.q, s.qw, s.qb) : null, pieces: s.pc ? pieceStatsFromArrays(s.pc, s.pa) : null } : g;
           });
         setGames(merged);
         setFailedArchives(res.archivesFailed);
@@ -176,6 +177,7 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
     accuracy: number | null;
     whiteAccuracy: number | null;
     blackAccuracy: number | null;
+    acpl?: number | null;
     shape?: GameShape | null;
     forks?: ForkCounts | null;
     pins?: PinCounts | null;
@@ -187,11 +189,12 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
     gameReport?: GameReport | null;
   }) => {
     const user = linkedUser || chesscomStore.get();
-    // Persisté : nombres + forme + tactique + qualité + pièces (rapport en session).
+    // Persisté : nombres + ACPL + forme + tactique + qualité + pièces (rapport en session).
     const stored = {
       a: patch.accuracy,
       w: patch.whiteAccuracy,
       b: patch.blackAccuracy,
+      ...(patch.acpl !== undefined ? { c: patch.acpl } : {}),
       ...(patch.shape !== undefined ? { s: patch.shape } : {}),
       ...(patch.forks ? forkCountsToArrays(patch.forks) : {}),
       ...(patch.pins ? pinCountsToArrays(patch.pins) : {}),
@@ -206,6 +209,7 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
       accuracy: patch.accuracy,
       whiteAccuracy: patch.whiteAccuracy,
       blackAccuracy: patch.blackAccuracy,
+      ...(patch.acpl !== undefined ? { acpl: patch.acpl } : {}),
       ...(patch.shape !== undefined ? { shape: patch.shape } : {}),
       ...(patch.forks ? { forks: patch.forks } : {}),
       ...(patch.pins ? { pins: patch.pins } : {}),
@@ -224,6 +228,7 @@ export function useChesscomAccount(opts: { onAccountReset: () => void }): Chessc
             accuracy: patch.accuracy,
             whiteAccuracy: patch.whiteAccuracy,
             blackAccuracy: patch.blackAccuracy,
+            ...(patch.acpl !== undefined ? { acpl: patch.acpl } : {}),
             ...(patch.shape !== undefined ? { shape: patch.shape } : {}),
             ...(patch.forks ? { forks: patch.forks } : {}),
             ...(patch.pins ? { pins: patch.pins } : {}),

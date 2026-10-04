@@ -3,9 +3,7 @@ import {
   addPieceStatsInto,
   addPliesToMoveAccuracy,
   analyzeMasteryGames,
-  buildActivityWeeks,
   buildMasteryTheory,
-  buildRatingSeries,
   classifyGameShape,
   colorOf,
   computeAccuracyStats,
@@ -14,9 +12,7 @@ import {
   computeGamePieceStats,
   computeMasteryOpenings,
   computeMasteryTrend,
-  computeOpponentRatingStats,
   computeOpeningPerformances,
-  computePeriodStats,
   computePhaseStats,
   computeQualityTrend,
   computeSideStats,
@@ -59,8 +55,6 @@ import {
   type MoveAccuracyByNumber,
   type MoveQuality,
   type MoveQualityCounts,
-  type OpponentRatingRow,
-  type PeriodStatRow,
   type PhaseStatRow,
   type PieceStats,
   type PinCounts,
@@ -73,21 +67,24 @@ import { analyzeGameAccuracy } from '../services/stockfish';
 import { type GameReport } from '../utils/accuracy';
 import { GameReportView } from './GameReportView';
 import { RapportPanel } from './RapportPanel';
-import type { RapportInput } from '../services/rapport';
+import {
+  buildEvolution,
+  RAPPORT_EVOLUTION_WINDOW,
+  type RapportEvolution,
+  type RapportInput,
+  type RapportPeriodSlice,
+} from '../services/rapport';
 import { TheoryPanel } from './TheoryPanel';
 import { TacticsPanel } from './TacticsPanel';
 import { GamesPanel } from './GamesPanel';
+import { OverviewApple } from './mes-parties-variants/Overview.apple';
 import { CastlingPanel } from './CastlingPanel';
-import { DaytimePanel } from './DaytimePanel';
-import { WeekdayPanel } from './WeekdayPanel';
-import { GeographyPanel } from './GeographyPanel';
 import { frenchOpeningName } from '../utils/openingsFr';
 import type { ChesscomAccount } from '../hooks/useChesscomAccount';
 import {
   ArrowLeft,
   Award,
   BookOpen,
-  CalendarDays,
   Check,
   Crosshair,
   FileText,
@@ -117,6 +114,123 @@ type ResultFilter = 'all' | ChesscomOutcome;
 type ColorFilter = 'all' | 'w' | 'b';
 
 const PAGE_SIZE = 100;
+
+/**
+ * Tranche agrégée pour l'évolution du Rapport (pur, testé via
+ * `services/rapport.ts`) : N parties triées par date → une
+ * `RapportPeriodSlice`. La théorie vient de la table de maîtrise
+ * (déviations déjà rejouées), le reste des champs batch.
+ */
+function aggregateRapportSlice(
+  slice: ChesscomGame[],
+  me: string,
+  theoryByUrl: Map<string, number>,
+): RapportPeriodSlice {
+  let wins = 0;
+  let draws = 0;
+  let accSum = 0;
+  let accN = 0;
+  let acplSum = 0;
+  let acplN = 0;
+  let blunders = 0;
+  let moves = 0;
+  let hangs = 0;
+  let hangsGames = 0;
+  let matesFound = 0;
+  let matesMissed = 0;
+  let forksFound = 0;
+  let forksMissed = 0;
+  let freebiesMissed = 0;
+  let theorySum = 0;
+  let theoryN = 0;
+  const sparkScore: number[] = [];
+  const sparkAcc: number[] = [];
+  for (const g of slice) {
+    const o = outcomeFor(g, me);
+    if (o === 'win') wins++;
+    else if (o === 'draw') draws++;
+    if (typeof g.accuracy === 'number' && Number.isFinite(g.accuracy)) {
+      accSum += g.accuracy;
+      accN++;
+    }
+    if (typeof g.acpl === 'number' && Number.isFinite(g.acpl)) {
+      acplSum += g.acpl;
+      acplN++;
+    }
+    if (g.moveQuality) {
+      const t = g.moveQuality.total;
+      blunders += t.gaffe ?? 0;
+      for (const k of MOVE_QUALITY_ORDER) moves += t[k] ?? 0;
+    }
+    if (g.hangs) {
+      hangsGames++;
+      for (const k of HUNG_PIECE_ORDER) hangs += g.hangs[k] ?? 0;
+    }
+    if (g.mates) {
+      for (const k of MATE_DISTANCE_ORDER) {
+        matesFound += g.mates.found[k] ?? 0;
+        matesMissed += g.mates.missed[k] ?? 0;
+      }
+    }
+    if (g.forks) {
+      for (const k of FORK_PIECE_ORDER) {
+        forksFound += g.forks.found[k] ?? 0;
+        forksMissed += g.forks.missed[k] ?? 0;
+      }
+    }
+    if (g.freebies) {
+      for (const k of HUNG_PIECE_ORDER) freebiesMissed += g.freebies.missed[k] ?? 0;
+    }
+    const dev = theoryByUrl.get(g.url);
+    if (typeof dev === 'number') {
+      theorySum += dev;
+      theoryN++;
+    }
+  }
+  /* Sparklines : paquets chronologiques de 5 parties (déjà triées). */
+  for (let i = 0; i < slice.length; i += 5) {
+    const packet = slice.slice(i, i + 5);
+    if (packet.length === 0) continue;
+    let pw = 0;
+    let pd = 0;
+    let paSum = 0;
+    let paN = 0;
+    for (const g of packet) {
+      const o = outcomeFor(g, me);
+      if (o === 'win') pw++;
+      else if (o === 'draw') pd++;
+      if (typeof g.accuracy === 'number' && Number.isFinite(g.accuracy)) {
+        paSum += g.accuracy;
+        paN++;
+      }
+    }
+    sparkScore.push(((pw + pd / 2) / packet.length) * 100);
+    if (paN > 0) sparkAcc.push(paSum / paN);
+  }
+  const total = slice.length;
+  return {
+    games: total,
+    wins,
+    draws,
+    losses: total - wins - draws,
+    score: total > 0 ? ((wins + draws / 2) / total) * 100 : 0,
+    analyzedCount: accN,
+    overallAcc: accN > 0 ? accSum / accN : null,
+    acpl: acplN > 0 ? acplSum / acplN : null,
+    acplCount: acplN,
+    blunderRate: moves > 0 ? (blunders / moves) * 100 : null,
+    hangsPerGame: hangsGames > 0 ? hangs / hangsGames : null,
+    theoryAvg: theoryN > 0 ? theorySum / theoryN : null,
+    theoryCount: theoryN,
+    matesFound,
+    matesMissed,
+    forksFound,
+    forksMissed,
+    freebiesMissed,
+    sparkScore,
+    sparkAcc,
+  };
+}
 const OUTCOME_LABEL: Record<ChesscomOutcome, string> = {
   win: 'Victoire',
   draw: 'Nulle',
@@ -144,99 +258,6 @@ const SHAPE_COLORS: Record<GameShape, string> = {
   tranquille: '#9a9488',
   mouvementee: '#d8d2c6',
   equilibree: '#8e887c',
-};
-
-/** Couleur UNIQUE d'une case d'activité : score interpolé entre les tons du thème. */
-const ACTIVITY_MID_RGB: [number, number, number] = [210, 158, 106]; // #d29e6a
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-}
-
-const ACTIVITY_WIN_RGB = hexToRgb(OUTCOME_COLOR.win);
-const ACTIVITY_LOSS_RGB = hexToRgb(OUTCOME_COLOR.loss);
-
-function activityScoreColor(wins: number, draws: number, losses: number): string {
-  const total = wins + draws + losses;
-  if (total <= 0) return 'transparent';
-  const score = (wins + draws / 2) / total;
-  const from = score <= 0.5 ? ACTIVITY_LOSS_RGB : ACTIVITY_MID_RGB;
-  const to = score <= 0.5 ? ACTIVITY_MID_RGB : ACTIVITY_WIN_RGB;
-  const t = score <= 0.5 ? score * 2 : (score - 0.5) * 2;
-  const mix = (i: number): number => Math.round(from[i] + (to[i] - from[i]) * t);
-  return `rgb(${mix(0)}, ${mix(1)}, ${mix(2)})`;
-}
-
-function formatActivityDay(isoDate: string): string {
-  try {
-    return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-    });
-  } catch {
-    return isoDate;
-  }
-}
-
-/** Une couleur par cadence (ordre = volume décroissant, stable par rendu). */
-const RATING_COLORS = ['#d8d2c6', '#d29e6a', '#8fb996', '#d8816f', '#9a9488'];
-
-/** Graphique à barres pour les parties par période (jour / mois / an, SVG pur). */
-const PeriodGamesChart: React.FC<{ rows: PeriodStatRow[] }> = ({ rows }) => {
-  if (rows.length === 0) {
-    return <div className="empty-state">Aucune donnée sur la période.</div>;
-  }
-  const W = 560;
-  const H = 150;
-  const padL = 40;
-  const padR = 10;
-  const padT = 10;
-  const padB = 30;
-  const maxGames = Math.max(...rows.map((r) => r.games));
-  const barWidth = (W - padL - padR) / rows.length;
-  const x = (i: number): number => padL + i * barWidth;
-  const y = (games: number): number => padT + (1 - games / maxGames) * (H - padT - padB);
-  // Étiquettes échantillonnées (max ~8) pour rester lisibles en granularité jour.
-  const labelStep = Math.max(1, Math.ceil(rows.length / 8));
-  return (
-    <div>
-      <svg className="rating-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Parties par période">
-        {/* Lignes de grille horizontales */}
-        {[0, 0.25, 0.5, 0.75, 1].map((pct) => {
-          const val = Math.round(maxGames * pct);
-          const yPos = y(val);
-          return (
-            <g key={pct}>
-              <line x1={padL} x2={W - padR} y1={yPos} y2={yPos} className="rating-grid" />
-              <text x={padL - 5} y={yPos + 3.5} textAnchor="end" className="rating-axis">
-                {val}
-              </text>
-            </g>
-          );
-        })}
-        {/* Barres */}
-        {rows.map((r, i) => (
-          <g key={r.key}>
-            <rect
-              x={x(i)}
-              y={y(r.games)}
-              width={barWidth}
-              height={H - padB - y(r.games)}
-              fill="#d8d2c6"
-            >
-              <title>{r.label} : {r.games} parties</title>
-            </rect>
-            {(i % labelStep === 0 || i === rows.length - 1) && (
-              <text x={x(i) + barWidth / 2} y={H - 8} textAnchor="middle" className="rating-axis">
-                {r.shortLabel}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
 };
 
 /** Courbe de précision moyenne par période (SVG pur, sans dépendance). */
@@ -403,95 +424,6 @@ const MoveNumberChart: React.FC<{ agg: MoveAccuracyByNumber; mode: 'total' | 'co
           );
         })}
       </div>
-    </div>
-  );
-};
-
-/** Barres empilées des résultats par tranche Elo adverse (SVG pur). */
-const OpponentRatingChart: React.FC<{ rows: OpponentRatingRow[] }> = ({ rows }) => {
-  if (rows.length === 0) {
-    return <div className="empty-state">Aucune partie classée.</div>;
-  }
-  const W = 560;
-  const H = 170;
-  const padL = 36;
-  const padR = 10;
-  const padT = 10;
-  const padB = 30;
-  const maxGames = Math.max(...rows.map((r) => r.games));
-  const barWidth = (W - padL - padR) / rows.length;
-  const x = (i: number): number => padL + i * barWidth;
-  const y = (games: number): number => padT + (1 - games / maxGames) * (H - padT - padB);
-  // Étiquettes échantillonnées (max ~8) quand il y a beaucoup de tranches.
-  const labelStep = Math.max(1, Math.ceil(rows.length / 8));
-  const SEGMENTS = [
-    { key: 'losses', color: '#d8816f', name: 'Défaites' },
-    { key: 'draws', color: '#8e887c', name: 'Nulles' },
-    { key: 'wins', color: 'var(--success)', name: 'Victoires' },
-  ] as const;
-  return (
-    <div>
-      <svg className="rating-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Résultats par classement de l'adversaire">
-        {[0, 0.25, 0.5, 0.75, 1].map((pct) => {
-          const val = Math.round(maxGames * pct);
-          const yPos = y(val);
-          return (
-            <g key={pct}>
-              <line x1={padL} x2={W - padR} y1={yPos} y2={yPos} className="rating-grid" />
-              <text x={padL - 5} y={yPos + 3.5} textAnchor="end" className="rating-axis">
-                {val}
-              </text>
-            </g>
-          );
-        })}
-        {rows.map((r, i) => {
-          let stacked = 0;
-          return (
-            <g key={r.bucket}>
-              <title>{`${r.label} : ${r.games} parties (${r.wins}V / ${r.draws}N / ${r.losses}D)`}</title>
-              {SEGMENTS.map((s) => {
-                const count = r[s.key];
-                const yTop = y(stacked + count);
-                const yBottom = y(stacked);
-                stacked += count;
-                if (count <= 0) return null;
-                return (
-                  <rect
-                    key={s.key}
-                    x={x(i)}
-                    y={yTop}
-                    width={barWidth}
-                    height={Math.max(0, yBottom - yTop)}
-                    fill={s.color}
-                  >
-                    <title>{`${r.label} — ${s.name} : ${count}`}</title>
-                  </rect>
-                );
-              })}
-              {(i % labelStep === 0 || i === rows.length - 1) && (
-                <text x={x(i) + barWidth / 2} y={H - 8} textAnchor="middle" className="rating-axis">
-                  {r.bucket}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-      <div className="rating-legend">
-        <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: 'var(--success)' }} />
-          <span>Victoires</span>
-        </span>
-        <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#8e887c' }} />
-          <span>Nulles</span>
-        </span>
-        <span className="rating-legend-item">
-          <span className="rating-dot" style={{ background: '#d8816f' }} />
-          <span>Défaites</span>
-        </span>
-      </div>
-      <div className="activity-subtitle text-muted">En bas : défaites · au milieu : nulles · en haut : victoires</div>
     </div>
   );
 };
@@ -1180,156 +1112,6 @@ const PieceAccuracyBars: React.FC<{
   );
 };
 
-/** Courbe Elo par cadence (SVG pur, sans dépendance). */
-const RatingChart: React.FC<{ games: ChesscomGame[]; username: string }> = ({ games, username }) => {
-  const series = useMemo(() => buildRatingSeries(games, username), [games, username]);
-  if (series.length === 0) {
-    return <div className="empty-state">Aucune partie classée sur la période.</div>;
-  }
-  const W = 560;
-  const H = 170;
-  const padL = 36;
-  const padR = 10;
-  const padT = 10;
-  const padB = 22;
-  const all = series.flatMap((s) => s.points);
-  let minT = Math.min(...all.map((p) => p.t));
-  let maxT = Math.max(...all.map((p) => p.t));
-  if (maxT <= minT) {
-    minT -= 43200000;
-    maxT += 43200000;
-  }
-  let minR = Math.min(...all.map((p) => p.rating));
-  let maxR = Math.max(...all.map((p) => p.rating));
-  if (maxR <= minR) {
-    minR -= 25;
-    maxR += 25;
-  } else {
-    minR -= 10;
-    maxR += 10;
-  }
-  const x = (t: number): number => padL + ((t - minT) / (maxT - minT)) * (W - padL - padR);
-  const y = (r: number): number => padT + (1 - (r - minR) / (maxR - minR)) * (H - padT - padB);
-  // Repères mensuels (max ~6 étiquettes).
-  const monthTicks: Array<{ x: number; label: string }> = [];
-  {
-    const cursor = new Date(minT);
-    cursor.setUTCDate(1);
-    cursor.setUTCHours(0, 0, 0, 0);
-    if (cursor.getTime() < minT) cursor.setUTCMonth(cursor.getUTCMonth() + 1);
-    const starts: number[] = [];
-    for (let t = cursor.getTime(); t <= maxT;) {
-      starts.push(t);
-      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
-      t = cursor.getTime();
-    }
-    const step = Math.max(1, Math.ceil(starts.length / 6));
-    starts.forEach((t, i) => {
-      if (i % step === 0) {
-        monthTicks.push({
-          x: x(t),
-          label: new Date(t).toLocaleDateString('fr-FR', { month: 'short' }),
-        });
-      }
-    });
-  }
-  const gridRs = [minR, (minR + maxR) / 2, maxR];
-  return (
-    <div>
-      <svg className="rating-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Historique Elo par cadence">
-        {gridRs.map((r) => (
-          <g key={r}>
-            <line x1={padL} x2={W - padR} y1={y(r)} y2={y(r)} className="rating-grid" />
-            <text x={padL - 5} y={y(r) + 3.5} textAnchor="end" className="rating-axis">
-              {Math.round(r)}
-            </text>
-          </g>
-        ))}
-        {monthTicks.map((t) => (
-          <text key={t.label + t.x} x={t.x} y={H - 7} textAnchor="middle" className="rating-axis">
-            {t.label}
-          </text>
-        ))}
-        {series.map((s, si) => {
-          const color = RATING_COLORS[si % RATING_COLORS.length];
-          const pts = s.points.map((p) => `${x(p.t).toFixed(1)},${y(p.rating).toFixed(1)}`).join(' ');
-          const dotStep = Math.max(1, Math.ceil(s.points.length / 120));
-          return (
-            <g key={s.timeClass}>
-              <polyline points={pts} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" />
-              {s.points.map((p, i) =>
-                i % dotStep === 0 || i === s.points.length - 1 ? (
-                  <circle key={i} cx={x(p.t)} cy={y(p.rating)} r={2.4} fill={color}>
-                    <title>{`${p.rating} — ${new Date(p.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`}</title>
-                  </circle>
-                ) : null,
-              )}
-            </g>
-          );
-        })}
-      </svg>
-      <div className="rating-legend">
-        {series.map((s, si) => (
-          <span key={s.timeClass} className="rating-legend-item">
-            <span className="rating-dot" style={{ background: RATING_COLORS[si % RATING_COLORS.length] }} />
-            <span>{CLASS_LABELS[s.timeClass] ?? s.timeClass}</span>
-            <strong>{s.points[s.points.length - 1].rating}</strong>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/** Heatmap « Activity Last 3 months » (91 jours, semaines lundi-dimanche).
- *  UNE couleur par case : score V/N/D (V=1, N=0.5, D=0) interpolé
- *  rouge → ambre → vert (10V/10D = ambre, 50 %). */
-const ActivityCalendar: React.FC<{ games: ChesscomGame[]; username: string }> = ({ games, username }) => {
-  const weeks = useMemo(() => buildActivityWeeks(games, 91, Date.now(), username), [games, username]);
-  const activeDays = useMemo(
-    () => weeks.flat().filter((d) => !d.future && d.games > 0).length,
-    [weeks],
-  );
-  return (
-    <div className="activity-cal-wrap" title={`${games.length} parties sur les 3 derniers mois`}>
-      <div className="activity-cal" role="img" aria-label={`${games.length} parties sur les 3 derniers mois`}>
-        {weeks.map((week, wi) => (
-          <div key={wi} className="activity-week">
-            {week.map((d) => (
-              <span
-                key={d.date}
-                className={`activity-cell${d.future ? ' is-future' : ''}`}
-                style={d.games > 0 ? { background: activityScoreColor(d.wins, d.draws, d.losses), borderColor: 'transparent' } : undefined}
-                title={
-                  d.future
-                    ? undefined
-                    : d.games > 0
-                      ? `${d.wins}V / ${d.draws}N / ${d.losses}D — ${formatActivityDay(d.date)}`
-                      : `Aucune partie — ${formatActivityDay(d.date)}`
-                }
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="activity-cal-caption text-muted">
-        {games.length.toLocaleString('fr-FR')} parties · {activeDays} jours actifs
-      </div>
-      <div className="activity-legend text-muted" aria-hidden="true">
-        <span className="activity-legend-item">
-          <i style={{ background: OUTCOME_COLOR.win }} />V
-        </span>
-        <span className="activity-legend-item">
-          <i style={{ background: OUTCOME_COLOR.draw }} />N
-        </span>
-        <span className="activity-legend-item">
-          <i style={{ background: OUTCOME_COLOR.loss }} />D
-        </span>
-      </div>
-    </div>
-  );
-};
-
 const CLASS_LABELS: Record<string, string> = {
   bullet: 'Bullet',
   blitz: 'Blitz',
@@ -1407,6 +1189,7 @@ interface ChesscomPanelProps {
     accuracy: number | null;
     whiteAccuracy: number | null;
     blackAccuracy: number | null;
+    acpl?: number | null;
     shape?: GameShape | null;
     forks?: ForkCounts | null;
     pins?: PinCounts | null;
@@ -1518,7 +1301,6 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
 
   const sideRows = useMemo(() => computeSideStats(listedGames, me), [listedGames, me]);
   const ending = useMemo(() => computeEndingStats(listedGames, me), [listedGames, me]);
-  const opponentRatingRows = useMemo(() => computeOpponentRatingStats(listedGames, me), [listedGames, me]);
 
   /** Fins de partie : trois barres (V / N / D), chacune à 100 % de son issue. */
   const endingView = useMemo(() => {
@@ -1566,8 +1348,6 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     ];
     return { groups, unknown: ending.other, total: ending.total, shareOf };
   }, [ending]);
-  const periodStats = useMemo(() => computePeriodStats(listedGames, me), [listedGames, me]);
-  const periodRows = periodStats.rows;
   const accuracyStats = useMemo(() => computeAccuracyStats(listedGames, me), [listedGames, me]);
 
   /** Formes narratives : une seule barre (100 % des parties classées). */
@@ -1814,6 +1594,36 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
 
 
   /** Entree pure de l'onglet Rapport (calculs dans services/rapport.ts). */
+  const rapportEvolution: RapportEvolution | null = useMemo(() => {
+    if (listedGames.length === 0) return null;
+    const byDate = [...listedGames].sort((a, b) => (a.end_time ?? 0) - (b.end_time ?? 0));
+    const window = RAPPORT_EVOLUTION_WINDOW;
+    const recent = byDate.slice(-window);
+    const previous = byDate.slice(-window * 2, -window);
+    const theoryByUrl = new Map<string, number>();
+    for (const m of masteryGames) {
+      if (m.deviator === 'me' && m.myDeviationMove !== null) {
+        theoryByUrl.set(m.url, m.myDeviationMove - 1);
+      }
+    }
+    return buildEvolution(
+      aggregateRapportSlice(recent, me, theoryByUrl),
+      aggregateRapportSlice(previous, me, theoryByUrl),
+      window,
+    );
+  }, [listedGames, masteryGames, me]);
+
+  const rapportAcpl = useMemo(() => {
+    let sum = 0;
+    let n = 0;
+    for (const g of listedGames) {
+      if (typeof g.acpl === 'number' && Number.isFinite(g.acpl)) {
+        sum += g.acpl;
+        n++;
+      }
+    }
+    return { avg: n > 0 ? sum / n : null, count: n };
+  }, [listedGames]);
   const rapportInput: RapportInput = useMemo(() => {
     const totalGames = summary.total;
     const whiteRow = sideRows.find((r) => r.side === 'w');
@@ -1868,8 +1678,11 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
       topShapePct: shapeView.total > 0 ? ((shapeView.counts[topShape] ?? 0) / shapeView.total) * 100 : 0,
       bestOpening: best ? { name: best.name, eco: best.eco, wins: best.wins, games: best.games } : null,
       worstOpening: worst && worst !== best ? { name: worst.name, eco: worst.eco, wins: worst.wins, games: worst.games } : null,
+      acplOverall: rapportAcpl.avg,
+      acplCount: rapportAcpl.count,
+      evolution: rapportEvolution,
     };
-  }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount]);
+  }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount, rapportEvolution, rapportAcpl]);
 
   const selectedGame = useMemo(
     () => (viewer ? (games.find((g) => g.url === viewer.url) ?? null) : null),
@@ -1946,10 +1759,12 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
             const freebies = detectUserFreebies(game.sans, mine);
             const moveQuality = computeGameMoveQuality(r.report.plies);
             const pieces = computeGamePieceStats(r.report.plies);
+            const acpl = mine === 'w' ? r.report.acpl.white : r.report.acpl.black;
             const patch = {
               accuracy: userAcc,
               whiteAccuracy: r.whiteAccuracy,
               blackAccuracy: r.blackAccuracy,
+              acpl,
               shape,
               forks,
               pins,
@@ -2048,11 +1863,13 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
       const freebies = detectUserFreebies(game.sans, mine);
       const moveQuality = computeGameMoveQuality(result.plies);
       const pieces = computeGamePieceStats(result.plies);
+      const viewerAcpl = mine === 'w' ? result.acpl.white : result.acpl.black;
       if (onUpdateGameAnalysis) {
         onUpdateGameAnalysis(game.url, {
           accuracy: userAcc,
           whiteAccuracy: result.accuracy.white,
           blackAccuracy: result.accuracy.black,
+          acpl: viewerAcpl,
           shape,
           forks,
           pins,
@@ -2184,156 +2001,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         {statsTab !== 'parties' && (
         <div className="chesscom-right-column">
         {statsTab === 'overview' && (
-        <div className="chesscom-stats-grid">
-        <div className="panel-card">
-          <div className="card-title-row">
-              <h3 className="card-title">
-                <CalendarDays size={16} className="title-icon text-accent" />
-                Activité
-              </h3>
-          </div>
-          <div className="activity-subtitle text-muted">3 derniers mois</div>
-          <ActivityCalendar games={listedGames} username={me} />
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Elo</h3>
-          </div>
-          <RatingChart games={listedGames} username={me} />
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Parties dans le temps</h3>
-          </div>
-          <div className="activity-subtitle text-muted">{PERIOD_GRANULARITY_LABEL[periodStats.granularity] ?? ''}</div>
-          {(() => {
-            const totalGames = periodRows.reduce((sum, r) => sum + r.games, 0);
-            const totalWins = periodRows.reduce((sum, r) => sum + r.wins, 0);
-            const totalDraws = periodRows.reduce((sum, r) => sum + r.draws, 0);
-            const totalLosses = periodRows.reduce((sum, r) => sum + r.losses, 0);
-            const winPct = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
-            const drawPct = totalGames > 0 ? (totalDraws / totalGames) * 100 : 0;
-            const lossPct = totalGames > 0 ? 100 - winPct - drawPct : 0;
-            return (
-              <>
-                <div className="chesscom-summary">
-                  <span><strong>{totalGames.toLocaleString('fr-FR')}</strong> parties totales</span>
-                  <span aria-hidden="true">•</span>
-                  <span style={{ color: OUTCOME_COLOR.win }}>{totalWins}V</span>
-                  <span aria-hidden="true">•</span>
-                  <span className="text-muted">{totalDraws}N</span>
-                  <span aria-hidden="true">•</span>
-                  <span style={{ color: OUTCOME_COLOR.loss }}>{totalLosses}D</span>
-                </div>
-                <div
-                  className="chesscom-wdl-bar"
-                  title={`Victoires : ${winPct.toFixed(0)} % · Nulles : ${drawPct.toFixed(0)} % · Défaites : ${lossPct.toFixed(0)} %`}
-                >
-                  {winPct > 0 && (
-                    <div
-                      className="chesscom-wdl-segment chesscom-wdl-win"
-                      style={{ width: `${winPct}%` }}
-                    >
-                      {winPct >= 12 ? `${winPct.toFixed(0)}%` : ''}
-                    </div>
-                  )}
-                  {drawPct > 0 && (
-                    <div
-                      className="chesscom-wdl-segment chesscom-wdl-draw"
-                      style={{ width: `${drawPct}%` }}
-                    >
-                      {drawPct >= 12 ? `${drawPct.toFixed(0)}%` : ''}
-                    </div>
-                  )}
-                  {lossPct > 0 && (
-                    <div
-                      className="chesscom-wdl-segment chesscom-wdl-loss"
-                      style={{ width: `${lossPct}%` }}
-                    >
-                      {lossPct >= 12 ? `${lossPct.toFixed(0)}%` : ''}
-                    </div>
-                  )}
-                </div>
-              </>
-            );
-          })()}
-          <PeriodGamesChart rows={periodRows} />
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Parties par couleur</h3>
-          </div>
-          <div className="chesscom-stats-table-wrap">
-            <table className="chesscom-stats-table">
-              <thead>
-                <tr>
-                  <th>Camp</th>
-                  <th>Parties</th>
-                  <th title="Victoires - Nulles - Défaites">V % - N % - D %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sideRows.map((r) => {
-                  const winPct = r.games > 0 ? (r.wins / r.games) * 100 : 0;
-                  const drawPct = r.games > 0 ? (r.draws / r.games) * 100 : 0;
-                  const lossPct = r.games > 0 ? 100 - winPct - drawPct : 0;
-                  return (
-                    <tr key={r.side}>
-                      <td>{r.side === 'w' ? '♔ White' : '♚ Black'}</td>
-                      <td>{r.games}</td>
-                      <td>
-                        <div
-                          className="chesscom-wdl-bar"
-                          title={`V ${winPct.toFixed(0)} % · N ${drawPct.toFixed(0)} % · D ${lossPct.toFixed(0)} %`}
-                        >
-                          {winPct > 0 && (
-                            <div
-                              className="chesscom-wdl-segment chesscom-wdl-win"
-                              style={{ width: `${winPct}%` }}
-                            >
-                              {winPct >= 12 ? `${winPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                          {drawPct > 0 && (
-                            <div
-                              className="chesscom-wdl-segment chesscom-wdl-draw"
-                              style={{ width: `${drawPct}%` }}
-                            >
-                              {drawPct >= 12 ? `${drawPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                          {lossPct > 0 && (
-                            <div
-                              className="chesscom-wdl-segment chesscom-wdl-loss"
-                              style={{ width: `${lossPct}%` }}
-                            >
-                              {lossPct >= 12 ? `${lossPct.toFixed(0)}%` : ''}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="panel-card">
-          <div className="card-title-row">
-            <h3 className="card-title">Résultats par classement de l'adversaire</h3>
-          </div>
-          <div className="activity-subtitle text-muted">Tranches de 100 Elo</div>
-          <OpponentRatingChart rows={opponentRatingRows} />
-        </div>
-        <DaytimePanel games={listedGames} me={me} />
-        <WeekdayPanel games={listedGames} me={me} />
-        <GeographyPanel games={listedGames} me={me} />
-        </div>
+          <OverviewApple games={listedGames} me={me} />
         )}
         {statsTab === 'precision' && (
         <div className="chesscom-stats-grid">

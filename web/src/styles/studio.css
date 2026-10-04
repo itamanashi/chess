@@ -595,7 +595,7 @@
 .opening-preview-pop {
   position: fixed;
   z-index: 60;
-  width: 216px;
+  width: 320px;
   background: var(--bg-overlay);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-panel);
@@ -756,7 +756,32 @@
 
 /* (Colonnes Mes parties supprimées : liste centrée unique.) */
 
-/* ─── Onglet Rapport ───────────────────────────────────────────────────── */
+/* ─── Onglet Rapport ─────────────────────────────────────────────────────
+ * Refonte Apple (remplacement direct) : matériaux verre hiérarchisés,
+ * type optique, pastilles pilule, fondus couleur seule — mêmes classes,
+ * même logique, seuls les matériaux changent. Français uniquement.
+ * ------------------------------------------------------------------ */
+.rapport-grid {
+  --ra-glass-bg: rgb(30 28 24 / 0.6);
+  --ra-glass-blur: blur(22px) saturate(170%);
+  --ra-edge-light: rgb(236 232 223 / 0.14);
+  --ra-radius: 20px;
+  --ra-radius-sm: 12px;
+  --ra-shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 48px rgb(0 0 0 / 0.38);
+  --ra-dur: 140ms;
+}
+
+/* Cartes du rapport : verre, pas de bg-raised plat. */
+.rapport-grid .panel-card {
+  background: var(--ra-glass-bg);
+  backdrop-filter: var(--ra-glass-blur);
+  -webkit-backdrop-filter: var(--ra-glass-blur);
+  border: 1px solid var(--ra-edge-light);
+  border-radius: var(--ra-radius);
+  box-shadow: var(--ra-shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  transition: background-color var(--ra-dur) ease, border-color var(--ra-dur) ease;
+}
+
 .rapport-card { display: flex; flex-direction: column; gap: var(--sp-4); }
 
 .rapport-header {
@@ -825,10 +850,11 @@
   display: flex;
   gap: var(--sp-3);
   align-items: flex-start;
-  background: var(--bg-raised);
+  background: rgb(236 232 223 / 0.04);
   border: 1px solid var(--border);
-  border-radius: var(--r-control);
+  border-radius: var(--ra-radius-sm);
   padding: var(--sp-2) var(--sp-3);
+  transition: background-color var(--ra-dur) ease, border-color var(--ra-dur) ease;
 }
 .rapport-axe-priority {
   width: 4px;
@@ -837,9 +863,16 @@
   align-self: stretch;
   flex-shrink: 0;
 }
-.rapport-axe-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.rapport-axe-title { font-size: var(--fs-body); font-weight: 600; color: var(--text); }
+.rapport-axe-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.rapport-axe-title { font-size: var(--fs-body); font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
 .rapport-axe-detail { font-size: var(--fs-small); line-height: 1.55; }
+/* Suffixe d'évolution sous l'axe (période récente vs précédente). */
+.rapport-axe-evo {
+  font-size: var(--fs-small);
+  font-style: italic;
+  color: var(--text-3);
+  line-height: 1.5;
+}
 
 .rapport-footer {
   font-size: var(--fs-small);
@@ -866,15 +899,28 @@
 }
 .rapport-hero-title-block { display: flex; align-items: flex-start; gap: var(--sp-2); }
 .rapport-hero-icon { color: var(--accent-text); flex-shrink: 0; margin-top: 2px; }
-.rapport-hero-title { font-size: var(--fs-h3); font-weight: 700; margin: 0; line-height: 1.3; }
-.rapport-hero-meta { font-size: var(--fs-small); margin-top: 2px; }
+.rapport-hero-title { font-size: var(--fs-h3); font-weight: 600; margin: 0; line-height: 1.3; letter-spacing: -0.01em; }
+.rapport-hero-meta { font-size: var(--fs-small); margin-top: 2px; font-variant-numeric: tabular-nums; }
 .rapport-level-badge {
   align-self: flex-start;
   font-size: var(--fs-small);
   font-weight: 700;
   border: 1px solid;
-  border-radius: var(--r-control);
+  border-radius: 999px;
   padding: 2px var(--sp-2);
+}
+/* Pastille globale d'évolution (hero) : pilule teintée, icône + texte. */
+.rapport-trend-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-variant-numeric: tabular-nums;
 }
 .rapport-level-desc { font-size: var(--fs-small); margin: 0; line-height: 1.55; }
 .rapport-gauges { display: flex; gap: var(--sp-4); align-items: flex-start; flex-shrink: 0; }
@@ -888,16 +934,17 @@
   gap: var(--sp-2);
 }
 .rapport-stat-card {
-  background: var(--bg-raised);
+  background: rgb(236 232 223 / 0.05);
   border: 1px solid var(--border);
-  border-radius: var(--r-control);
+  border-radius: var(--ra-radius-sm);
   padding: var(--sp-2) var(--sp-3);
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  transition: background-color var(--ra-dur) ease, border-color var(--ra-dur) ease;
 }
-.rapport-stat-label { font-size: var(--fs-kicker); }
+.rapport-stat-label { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.06em; }
 .rapport-stat-value {
   font-size: var(--fs-h3);
   font-weight: 800;
@@ -909,17 +956,17 @@
 /* ─── Rapport : barre de qualité des coups ───────────────────────────── */
 .rapport-quality-bar {
   display: flex;
-  height: 10px;
-  border-radius: 5px;
+  height: 14px;
+  border-radius: 999px;
   overflow: hidden;
-  background: var(--bg-raised);
+  background: rgb(236 232 223 / 0.07);
   border: 1px solid var(--border);
 }
 .rapport-qbar-seg { height: 100%; min-width: 0; }
 .rapport-quality-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
+  gap: var(--sp-1) var(--sp-2);
   margin-top: var(--sp-2);
 }
 .rapport-quality-legend-item {
@@ -928,6 +975,9 @@
   gap: 6px;
   font-size: var(--fs-small);
   font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
 }
 .rapport-quality-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
@@ -948,12 +998,12 @@
   flex: 1 1 auto;
   min-width: 40px;
   height: 8px;
-  border-radius: 4px;
-  background: var(--bg-raised);
+  border-radius: 999px;
+  background: rgb(236 232 223 / 0.07);
   border: 1px solid var(--border);
   overflow: hidden;
 }
-.rapport-tactic-fill { height: 100%; border-radius: 4px; }
+.rapport-tactic-fill { height: 100%; border-radius: 999px; }
 .rapport-tactic-rate {
   font-size: var(--fs-small);
   font-variant-numeric: tabular-nums;
@@ -1025,11 +1075,65 @@
   font-size: var(--fs-kicker);
   font-weight: 700;
   white-space: nowrap;
-  border-radius: var(--r-control);
-  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  padding: 2px 10px;
   flex-shrink: 0;
   align-self: flex-start;
 }
+
+/* ─── Rapport : évolution (récent vs précédent) ─────────────────────── */
+.rapport-evolution { gap: var(--sp-3); }
+.rapport-evo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-2);
+}
+.rapport-evo-card {
+  background: rgb(236 232 223 / 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--ra-radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  transition: background-color var(--ra-dur) ease, border-color var(--ra-dur) ease;
+}
+.rapport-evo-label {
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rapport-evo-value {
+  font-size: var(--fs-h3);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.rapport-evo-delta {
+  align-self: flex-start;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rapport-sparks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-5);
+}
+.rapport-spark-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.rapport-spark-label { font-size: var(--fs-kicker); text-transform: uppercase; letter-spacing: 0.06em; }
+.rapport-spark { display: block; }
+.rapport-spark-empty { font-size: var(--fs-small); }
 
 @media (max-width: 760px) {
   .stats-dashboard-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1042,4 +1146,98 @@
   .rapport-gauges { justify-content: flex-start; flex-wrap: wrap; }
   .rapport-axe-header { flex-direction: column; gap: 2px; }
   .rapport-axe-badge { align-self: flex-start; }
+  .rapport-evo-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Accessibilité Apple : verre désactivé si transparence réduite. */
+@media (prefers-reduced-transparency: reduce) {
+  .rapport-grid .panel-card,
+  .rapport-evo-card,
+  .rapport-stat-card {
+    background: var(--bg-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .rapport-grid .panel-card,
+  .rapport-evo-card,
+  .rapport-stat-card,
+  .rapport-axe {
+    border-color: var(--border-strong);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rapport-grid .panel-card,
+  .rapport-evo-card,
+  .rapport-stat-card,
+  .rapport-axe {
+    transition: none;
+  }
+}
+
+/* --- Statistiques des variantes (panneau de droite) --- */
+.variant-stats-card {
+  border-left: 3px solid var(--accent);
+}
+.variant-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.variant-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+}
+.variant-stat-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.variant-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.variant-stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-emph);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.variant-stat-label {
+  font-size: var(--fs-kicker);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.variant-stat-separator {
+  color: var(--text-3);
+  font-size: var(--fs-body);
+  flex-shrink: 0;
+}
+.current-branch-info {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-small);
+}
+.branch-label { color: var(--text-3); }
+.branch-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-text);
 }
