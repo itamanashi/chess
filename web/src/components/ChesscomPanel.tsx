@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addPieceStatsInto,
   addPliesToMoveAccuracy,
+  acplFor,
   analyzeMasteryGames,
   buildMasteryTheory,
   classifyGameShape,
@@ -153,8 +154,9 @@ function aggregateRapportSlice(
       accSum += g.accuracy;
       accN++;
     }
-    if (typeof g.acpl === 'number' && Number.isFinite(g.acpl)) {
-      acplSum += g.acpl;
+    const gameAcpl = acplFor(g, me);
+    if (gameAcpl !== null) {
+      acplSum += gameAcpl;
       acplN++;
     }
     if (g.moveQuality) {
@@ -1617,13 +1619,14 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     let sum = 0;
     let n = 0;
     for (const g of listedGames) {
-      if (typeof g.acpl === 'number' && Number.isFinite(g.acpl)) {
-        sum += g.acpl;
+      const v = acplFor(g, me);
+      if (v !== null) {
+        sum += v;
         n++;
       }
     }
     return { avg: n > 0 ? sum / n : null, count: n };
-  }, [listedGames]);
+  }, [listedGames, me]);
   const rapportInput: RapportInput = useMemo(() => {
     const totalGames = summary.total;
     const whiteRow = sideRows.find((r) => r.side === 'w');

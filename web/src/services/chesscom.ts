@@ -178,6 +178,25 @@ export function outcomeFor(game: Pick<ChesscomGame, 'white' | 'black'>, username
   return 'loss';
 }
 
+/**
+ * ACPL du compte lié (perte moyenne en centipions). Lit le champ batch
+ * `acpl`, avec repli sur le rapport complet de la visionneuse (parties
+ * analysées en détail, y compris lots antérieurs à l'ajout du champ).
+ * `null` = jamais analysée au moteur (ni batch ni visionneuse).
+ */
+export function acplFor(
+  game: Pick<ChesscomGame, 'white' | 'black' | 'acpl' | 'gameReport'>,
+  username: string,
+): number | null {
+  if (typeof game.acpl === 'number' && Number.isFinite(game.acpl)) return game.acpl;
+  const report = game.gameReport;
+  if (report) {
+    const v = colorOf(game, username) === 'w' ? report.acpl.white : report.acpl.black;
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+  }
+  return null;
+}
+
 /** Couleur jouée par `username` ('w' | 'b'). */
 export function colorOf(
   game: Pick<ChesscomGame, 'white'>,

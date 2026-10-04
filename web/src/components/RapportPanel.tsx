@@ -167,6 +167,46 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
   const topShapeDesc = GAME_SHAPE_DESCRIPTIONS[input.topShape];
   const levelColor = LEVEL_COLOR[data.level.tone] ?? LEVEL_COLOR.neutral;
 
+  const fr1 = (v: number): string => v.toFixed(1).replace('.', ',');
+  const blunderRate = input.totalMoves > 0 ? (input.blunder / input.totalMoves) * 100 : null;
+  const hangsPerGame = input.analyzedCount > 0 ? input.hangs / input.analyzedCount : null;
+
+  /** Chiffres à retenir (pastilles de synthèse du rapport). */
+  const keyFigures: Array<{ label: string; value: string; color: string }> = [
+    { label: 'Score', value: `${fr1(input.score)} %`, color: data.gaugeColor },
+    ...(input.overallAcc !== null
+      ? [{ label: 'Précision', value: `${fr1(input.overallAcc)} %`, color: data.accColor }]
+      : []),
+    ...(input.acplOverall !== null
+      ? [{ label: 'ACPL', value: `${Math.round(input.acplOverall)} cp`, color: data.acplColor }]
+      : []),
+    ...(blunderRate !== null
+      ? [{
+        label: 'Bévues',
+        value: `${fr1(blunderRate)} %`,
+        color: blunderRate > 4 ? '#d8816f' : blunderRate >= 2 ? '#d29e6a' : '#8fb996',
+      }]
+      : []),
+    ...(hangsPerGame !== null
+      ? [{
+        label: 'Prises /partie',
+        value: hangsPerGame.toFixed(1).replace('.', ','),
+        color: hangsPerGame >= 0.5 ? '#d8816f' : hangsPerGame > 0 ? '#d29e6a' : '#8fb996',
+      }]
+      : []),
+  ];
+
+  /** Phrase-verdict : niveau, score, précision/ACPL, tendance. */
+  const verdictBody = [
+    `Score ${fr1(input.score)} % sur ${input.totalGames} partie${input.totalGames > 1 ? 's' : ''} (${input.wins}V · ${input.draws}N · ${input.losses}D).`,
+    ...(data.hasAcc && input.overallAcc !== null
+      ? [`Précision ${fr1(input.overallAcc)} %${input.acplOverall !== null ? ` et ACPL ${Math.round(input.acplOverall)} cp` : ''} sur ${input.analyzedCount} partie${input.analyzedCount > 1 ? 's' : ''} analysée${input.analyzedCount > 1 ? 's' : ''}.`]
+      : []),
+    ...(data.evolution && data.evolution.sufficient
+      ? [`Tendance ${data.evolution.global} sur les ${data.evolution.window} dernières parties.`]
+      : []),
+  ].join(' ');
+
   return (
     <div className="chesscom-stats-grid rapport-grid">
       {/* Titre + niveau + jauges */}
@@ -273,13 +313,17 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
             <div className="rapport-stat-sub text-muted">avant déviation</div>
           </div>
         )}
-        {input.acplOverall !== null && (
+        {input.analyzedCount > 0 && (
           <div className="rapport-stat-card" role="listitem">
             <div className="rapport-stat-label text-muted">ACPL moyen</div>
             <div className="rapport-stat-value" style={{ color: data.acplColor }}>
-              {Math.round(input.acplOverall)}
+              {input.acplOverall !== null ? Math.round(input.acplOverall) : '—'}
             </div>
-            <div className="rapport-stat-sub text-muted">{input.acplCount} partie{input.acplCount > 1 ? 's' : ''} · centipions</div>
+            <div className="rapport-stat-sub text-muted">
+              {input.acplCount > 0
+                ? `${input.acplCount} partie${input.acplCount > 1 ? 's' : ''} · centipions`
+                : 'Relancez « Analyser précision »'}
+            </div>
           </div>
         )}
       </div>
@@ -342,6 +386,105 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
           </div>
         </div>
       )}
+
+      {/* Analyse : synthèse rédigée, cœur du rapport */}
+      <div className="panel-card rapport-narrative rapport-analyse">
+        <div className="card-title-row">
+          <h4 className="card-title-sm rapport-analyse-title">
+            <FileText size={16} className="title-icon" aria-hidden="true" /> Analyse
+          </h4>
+          <span className="text-muted" style={{ fontSize: 'var(--fs-small)' }}>
+            {input.analyzedCount}/{input.totalGames} analysée{input.totalGames > 1 ? 's' : ''}
+          </span>
+        </div>
+        <div className="rapport-verdict" style={{ borderColor: `${levelColor}55` }}>
+          <span className="rapport-verdict-level" style={{ color: levelColor }}>{data.level.label}</span>
+          <p className="rapport-verdict-text">{verdictBody}</p>
+        </div>
+        {keyFigures.length > 0 && (
+          <div className="rapport-keyfigures" role="list" aria-label="Chiffres à retenir">
+            {keyFigures.map((c) => (
+              <span key={c.label} className="rapport-chip" role="listitem">
+                <span className="rapport-chip-label text-muted">{c.label}</span>
+                <strong className="rapport-chip-value" style={{ color: c.color }}>{c.value}</strong>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="rapport-section">
+          <h5 className="rapport-section-sub">Bilan général</h5>
+          <p className="rapport-paragraph">
+            Sur la période, <strong>{input.me}</strong> a joué{' '}
+            <strong>{input.totalGames.toLocaleString('fr-FR')}</strong> partie{input.totalGames > 1 ? 's' : ''}
+            {input.botGamesCount > 0 ? ' (robots exclus)' : ''} avec un score de{' '}
+            <strong style={{ color: data.gaugeColor }}>{input.score.toFixed(1)}&nbsp;%</strong>{' '}
+            ({input.wins}V · {input.draws}N · {input.losses}D).{' '}
+            {input.totalGames >= 10 && (
+              <>Vous performez mieux avec <strong>{data.betterColor}</strong> qu&apos;avec <strong>{data.worseColor}</strong>.</>
+            )}
+          </p>
+          {input.topShapePct > 20 && (
+            <p className="rapport-paragraph">
+              Votre forme dominante est <strong>{topShapeLabel}</strong> ({input.topShapePct.toFixed(0)}&nbsp;% des parties).
+              {' '}{topShapeDesc}
+            </p>
+          )}
+        </div>
+        {data.hasAcc && input.overallAcc !== null && (
+          <div className="rapport-section">
+            <h5 className="rapport-section-sub">Précision et qualité de jeu</h5>
+            <p className="rapport-paragraph">
+              Sur <strong>{input.analyzedCount}</strong> partie{input.analyzedCount > 1 ? 's' : ''} analysées au moteur,
+              votre précision moyenne est de <strong style={{ color: data.accColor }}>{input.overallAcc.toFixed(1)}&nbsp;%</strong>.{' '}
+              {input.accWin !== null && input.accLoss !== null && (
+                <>L&apos;écart entre victoires ({input.accWin.toFixed(1)}&nbsp;%) et défaites ({input.accLoss.toFixed(1)}&nbsp;%) est de{' '}
+                <strong>{Math.abs(input.accWin - input.accLoss).toFixed(1)} points</strong>.</>
+              )}
+            </p>
+            {input.acplOverall !== null && (
+              <p className="rapport-paragraph">
+                Votre ACPL moyen est de <strong style={{ color: data.acplColor }}>{Math.round(input.acplOverall)} centipions</strong>{' '}
+                ({input.acplCount} partie{input.acplCount > 1 ? 's' : ''}) : sous 40 cp, votre jeu est très propre ; au-delà de 80 cp, chaque partie contient en moyenne une erreur décisive.
+              </p>
+            )}
+          </div>
+        )}
+        {(input.bestOpening ?? input.worstOpening) && (
+          <div className="rapport-section">
+            <h5 className="rapport-section-sub">Ouvertures</h5>
+            <p className="rapport-paragraph">
+              {input.bestOpening && (
+                <>Votre meilleure ouverture (3 parties min.) est{' '}
+                <strong style={{ color: '#8fb996' }}>{frenchOpeningName(input.bestOpening.name || 'Inconnue')}</strong>{' '}
+                {input.bestOpening.eco !== '?' ? `(${input.bestOpening.eco}) ` : ''}avec{' '}
+                <strong>{((input.bestOpening.wins / input.bestOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
+                victoires sur {input.bestOpening.games} parties.</>
+              )}{' '}
+              {input.worstOpening && input.worstOpening !== input.bestOpening && (
+                <>À l&apos;inverse, <strong style={{ color: '#d8816f' }}>{frenchOpeningName(input.worstOpening.name || 'Inconnue')}</strong>{' '}
+                ne récolte que <strong>{((input.worstOpening.wins / input.worstOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
+                victoires — piste à retravailler.</>
+              )}
+            </p>
+            {input.theoryAvg !== null && (
+              <p className="rapport-paragraph">
+                Vous quittez votre répertoire théorique au coup <strong>{input.theoryAvg.toFixed(1)}</strong> en moyenne
+                ({input.theoryCount} partie{input.theoryCount > 1 ? 's' : ''} concernée{input.theoryCount > 1 ? 's' : ''}).
+              </p>
+            )}
+          </div>
+        )}
+        {data.evolution && (
+          <div className="rapport-section">
+            <h5 className="rapport-section-sub">En bref : l&apos;évolution</h5>
+            <p className="rapport-paragraph">
+              {data.evolution.sufficient
+                ? `Sur les ${data.evolution.window} dernières parties, la tendance est « ${data.evolution.global} » — détail indicateur par indicateur dans la section Évolution ci-dessus.`
+                : `L'historique est encore trop court pour comparer deux périodes — l'analyse ci-dessus porte sur l'ensemble des parties.`}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Qualité des coups */}
       {input.totalMoves > 0 && (
@@ -441,70 +584,6 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input }) => {
           </div>
         </div>
       )}
-
-      {/* Analyse */}
-      <div className="panel-card rapport-narrative">
-        <h4 className="card-title-sm">
-          <FileText size={14} className="title-icon" aria-hidden="true" /> Analyse
-        </h4>
-        <div className="rapport-section">
-          <h5 className="rapport-section-sub">Bilan général</h5>
-          <p className="rapport-paragraph">
-            Sur la période, <strong>{input.me}</strong> a joué{' '}
-            <strong>{input.totalGames.toLocaleString('fr-FR')}</strong> partie{input.totalGames > 1 ? 's' : ''}
-            {input.botGamesCount > 0 ? ' (robots exclus)' : ''} avec un score de{' '}
-            <strong style={{ color: data.gaugeColor }}>{input.score.toFixed(1)}&nbsp;%</strong>{' '}
-            ({input.wins}V · {input.draws}N · {input.losses}D).{' '}
-            {input.totalGames >= 10 && (
-              <>Vous performez mieux avec <strong>{data.betterColor}</strong> qu&apos;avec <strong>{data.worseColor}</strong>.</>
-            )}
-          </p>
-          {input.topShapePct > 20 && (
-            <p className="rapport-paragraph">
-              Votre forme dominante est <strong>{topShapeLabel}</strong> ({input.topShapePct.toFixed(0)}&nbsp;% des parties).
-              {' '}{topShapeDesc}
-            </p>
-          )}
-        </div>
-        {data.hasAcc && input.overallAcc !== null && (
-          <div className="rapport-section">
-            <h5 className="rapport-section-sub">Précision et qualité de jeu</h5>
-            <p className="rapport-paragraph">
-              Sur <strong>{input.analyzedCount}</strong> partie{input.analyzedCount > 1 ? 's' : ''} analysées au moteur,
-              votre précision moyenne est de <strong style={{ color: data.accColor }}>{input.overallAcc.toFixed(1)}&nbsp;%</strong>.{' '}
-              {input.accWin !== null && input.accLoss !== null && (
-                <>L&apos;écart entre victoires ({input.accWin.toFixed(1)}&nbsp;%) et défaites ({input.accLoss.toFixed(1)}&nbsp;%) est de{' '}
-                <strong>{Math.abs(input.accWin - input.accLoss).toFixed(1)} points</strong>.</>
-              )}
-            </p>
-          </div>
-        )}
-        {(input.bestOpening ?? input.worstOpening) && (
-          <div className="rapport-section">
-            <h5 className="rapport-section-sub">Ouvertures</h5>
-            <p className="rapport-paragraph">
-              {input.bestOpening && (
-                <>Votre meilleure ouverture (3 parties min.) est{' '}
-                <strong style={{ color: '#8fb996' }}>{frenchOpeningName(input.bestOpening.name || 'Inconnue')}</strong>{' '}
-                {input.bestOpening.eco !== '?' ? `(${input.bestOpening.eco}) ` : ''}avec{' '}
-                <strong>{((input.bestOpening.wins / input.bestOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
-                victoires sur {input.bestOpening.games} parties.</>
-              )}{' '}
-              {input.worstOpening && input.worstOpening !== input.bestOpening && (
-                <>À l&apos;inverse, <strong style={{ color: '#d8816f' }}>{frenchOpeningName(input.worstOpening.name || 'Inconnue')}</strong>{' '}
-                ne récolte que <strong>{((input.worstOpening.wins / input.worstOpening.games) * 100).toFixed(0)}&nbsp;%</strong> de
-                victoires — piste à retravailler.</>
-              )}
-            </p>
-            {input.theoryAvg !== null && (
-              <p className="rapport-paragraph">
-                Vous quittez votre répertoire théorique au coup <strong>{input.theoryAvg.toFixed(1)}</strong> en moyenne
-                ({input.theoryCount} partie{input.theoryCount > 1 ? 's' : ''} concernée{input.theoryCount > 1 ? 's' : ''}).
-              </p>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* Points forts */}
       {data.strengths.length > 0 && (

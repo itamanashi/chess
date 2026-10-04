@@ -1021,6 +1021,63 @@
 
 /* ─── Rapport : récit + points forts ─────────────────────────────────── */
 .rapport-narrative { gap: var(--sp-4); }
+/* Analyse : pièce maîtresse du rapport (synthèse rédigée). */
+.rapport-analyse {
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+}
+.rapport-analyse-title {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* Verdict : niveau + phrase de synthèse, filet teinté à gauche. */
+.rapport-verdict {
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: var(--ra-radius-sm);
+  background: rgb(236 232 223 / 0.05);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rapport-verdict-level {
+  font-size: var(--fs-small);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rapport-verdict-text {
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  margin: 0;
+  color: var(--text);
+}
+/* Chiffres à retenir : pastilles pilule (label + valeur tabulaire). */
+.rapport-keyfigures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.rapport-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  background: rgb(236 232 223 / 0.04);
+}
+.rapport-chip-label {
+  font-size: var(--fs-kicker);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rapport-chip-value {
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+}
 .rapport-section-sub {
   font-size: var(--fs-small);
   font-weight: 700;

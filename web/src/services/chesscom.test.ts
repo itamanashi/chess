@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   addPliesToMoveAccuracy,
+  acplFor,
   analyzeMasteryGames,
   buildActivityWeeks,
   buildMasteryTheory,
@@ -175,6 +176,35 @@ describe('outcomeFor / colorOf', () => {
     }
     const resigned = { ...base, white: { ...base.white, result: 'resigned' } };
     expect(outcomeFor(resigned, 'hikaru')).toBe('loss');
+  });
+});
+
+describe('acplFor', () => {
+  it('lit le champ batch en priorité', () => {
+    const g = { ...parseArchiveGame(archiveGame()), acpl: 42 } as ChesscomGame;
+    expect(acplFor(g, 'hikaru')).toBe(42);
+  });
+
+  it('replie sur le rapport visionneuse (camp du compte lié)', () => {
+    const base = { ...parseArchiveGame(archiveGame()), acpl: null } as ChesscomGame;
+    const report = {
+      plies: [],
+      accuracy: { white: 90, black: 80 },
+      acpl: { white: 35, black: 55 },
+      annotations: { '!!': 0, '!': 0, '!?': 0, '?!': 0, '?': 0, '??': 0 },
+      phases: {
+        opening: { white: null, black: null },
+        middlegame: { white: null, black: null },
+        endgame: { white: null, black: null },
+      },
+    };
+    expect(acplFor({ ...base, gameReport: report }, 'hikaru')).toBe(35);
+    expect(acplFor({ ...base, gameReport: report }, 'opponent')).toBe(55);
+  });
+
+  it('retourne null sans aucune analyse', () => {
+    const g = { ...parseArchiveGame(archiveGame()), acpl: null } as ChesscomGame;
+    expect(acplFor(g, 'hikaru')).toBeNull();
   });
 });
 
