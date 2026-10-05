@@ -34,6 +34,7 @@ python run_web.py                                  # dev server, fixed port 5173
 ## Frontend conventions
 
 - Design system "carnet d'étude", **French only**: `web/src/styles/` (`tokens.css` palette/radius/type, `controls.css` single button system). ♞♔♚ are domain symbols (kept); no status emojis (CSS pastilles instead).
+- **No separate variant files** (`*-variants/`, `*.apple-design.tsx`, `?variant=`/`?sidebar=`/`?builder=` branches) unless explicitly requested — token-expensive. Redesigns edit the original files directly.
 - Chess.com tab needs no token; game history lives in **session memory only** (never localStorage — full history is MBs). `StudioTab` += `'games'`.
 - Accuracy core is pure and mirrored: `web/src/utils/accuracy.ts` ↔ root `accuracy.py` (+ `tests/test_accuracy.py`, CLI `--cps`, no engine). Engine reports live in `services/gameAnalysis.ts` / `stockfish.ts`.
 
