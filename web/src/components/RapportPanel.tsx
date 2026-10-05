@@ -646,36 +646,71 @@ export const RapportPanel: React.FC<RapportPanelProps> = ({ input, onOpenGame })
           <div className="rapport-tactic-grid">
             {data.tacticRows.map((row) => {
               const Icon = row.key === 'mates' ? Crown : row.key === 'forks' ? Zap : row.key === 'hangs' ? ShieldAlert : Gift;
+              const hangsPerGame = input.analyzedCount > 0 ? row.missed / input.analyzedCount : (row.missed > 0 ? 1 : 0);
               const barColor = row.rate === null
                 ? '#8e887c'
                 : row.invert
-                  ? row.missed > 0 ? '#d8816f' : '#8fb996'
+                  ? hangsPerGame === 0
+                    ? '#8fb996'
+                    : hangsPerGame <= 0.5
+                      ? '#9ab89b'
+                      : hangsPerGame <= 1.5
+                        ? '#d29e6a'
+                        : '#d8816f'
                   : row.rate >= 70 ? '#8fb996' : row.rate >= 40 ? '#d29e6a' : '#d8816f';
               return (
                 <div key={row.key} className="rapport-tactic-row">
                   <span className="rapport-tactic-icon"><Icon size={15} aria-hidden="true" /></span>
                   <div className="rapport-tactic-info">
-                    <div className="rapport-tactic-label">{row.label}</div>
-                    {row.rate !== null ? (
+                    <div className="rapport-tactic-label">
+                      {row.label}
+                      {row.key === 'mates' && (
+                        <span className="text-muted" style={{ fontSize: '11px', marginLeft: '6px', fontWeight: 'normal' }}>
+                          (par coup au trait)
+                        </span>
+                      )}
+                    </div>
+                    {row.invert ? (
+                      <div className="rapport-tactic-bar-wrap">
+                        <div
+                          className="rapport-tactic-bar"
+                          role="img"
+                          aria-label={`${row.label} : ${row.missed} concédée${row.missed > 1 ? 's' : ''}`}
+                        >
+                          <div
+                            className="rapport-tactic-fill"
+                            style={{
+                              width: `${Math.max(0, Math.min(100, Math.round(100 - hangsPerGame * 20)))}%`,
+                              background: barColor,
+                            }}
+                          />
+                        </div>
+                        <span className="rapport-tactic-rate text-muted">
+                          {input.analyzedCount > 0 ? `${hangsPerGame.toFixed(1)} /partie` : `${row.missed}`}
+                        </span>
+                      </div>
+                    ) : row.rate !== null ? (
                       <div className="rapport-tactic-bar-wrap">
                         <div
                           className="rapport-tactic-bar"
                           role="img"
                           aria-label={`${row.label} : ${row.found} sur ${row.found + row.missed}`}
                         >
-                          <div className="rapport-tactic-fill" style={{ width: `${row.invert ? 100 - (row.rate ?? 0) : row.rate}%`, background: barColor }} />
+                          <div className="rapport-tactic-fill" style={{ width: `${row.rate}%`, background: barColor }} />
                         </div>
-                        <span className="rapport-tactic-rate text-muted">{(row.invert ? 100 - (row.rate ?? 0) : row.rate ?? 0).toFixed(0)}&nbsp;%</span>
+                        <span className="rapport-tactic-rate text-muted">{(row.rate ?? 0).toFixed(0)}&nbsp;%</span>
                       </div>
                     ) : (
                       <span className="text-muted" style={{ fontSize: 'var(--fs-small)' }}>Aucun cas détecté</span>
                     )}
                   </div>
                   <div className="rapport-tactic-counts text-muted">
-                    {row.found + row.missed > 0 ? (
-                      row.invert
-                        ? <span style={{ color: row.missed > 0 ? '#d8816f' : '#8fb996' }}>{row.missed}</span>
-                        : <><span style={{ color: '#8fb996' }}>{row.found}</span> / {row.found + row.missed}</>
+                    {row.invert ? (
+                      <span style={{ color: row.missed > 0 ? '#d8816f' : '#8fb996' }}>
+                        {row.missed} concédée{row.missed > 1 ? 's' : ''}
+                      </span>
+                    ) : row.found + row.missed > 0 ? (
+                      <><span style={{ color: '#8fb996' }}>{row.found}</span> / {row.found + row.missed}</>
                     ) : '—'}
                   </div>
                 </div>

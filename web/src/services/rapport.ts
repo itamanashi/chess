@@ -257,8 +257,72 @@ export interface RapportEvolution {
 
 /** Fenêtre de comparaison : 20 récentes contre 20 précédentes. */
 export const RAPPORT_EVOLUTION_WINDOW = 20;
-/** Seuil de parties précédentes sous lequel la comparaison est masquée. */
-export const RAPPORT_EVOLUTION_MIN_PREVIOUS = 10;
+/**
+ * Seuil de parties sous lequel une période est trop courte pour un verdict
+ * fiable. S'applique aux DEUX côtés : une période récente de 8 parties
+ * contre 30 précédentes reste indicative (variance énorme du score).
+ */
+export const RAPPORT_EVOLUTION_MIN_GAMES = 10;
+
+/* ------------------------------------------------------------------
+ * Rapports périodiques : l'historique (trié chronologiquement) est
+ * découpé en blocs fixes de N parties. Chaque bloc donne un rapport
+ * complet, comparé automatiquement au bloc précédent
+ * (progression / régression via `buildEvolution`).
+ * ------------------------------------------------------------------ */
+
+/** Taille d'un bloc de rapport périodique : un rapport toutes les 30 parties. */
+export const RAPPORT_BLOCK_SIZE = 30;
+
+export interface RapportBlockMeta {
+  /** Index du bloc (0 = 1ères parties). */
+  index: number;
+  /** Numéro de la 1ère partie du bloc (1-based, ordre chrono). */
+  start: number;
+  /** Numéro de la dernière partie du bloc (1-based). */
+  end: number;
+  /** Parties réellement dans le bloc (== taille sauf dernier bloc). */
+  games: number;
+  /** Vrai si le bloc atteint la taille nominale. */
+  complete: boolean;
+}
+
+/**
+ * Découpe une liste (déjà triée chrono par l'appelant) en blocs fixes.
+ * Pur : le dernier bloc peut être incomplet (`complete: false`).
+ */
+export function splitIntoBlocks<T>(sorted: T[], size: number = RAPPORT_BLOCK_SIZE): T[][] {
+  if (!Number.isInteger(size) || size <= 0) return sorted.length > 0 ? [ [...sorted] ] : [];
+  const out: T[][] = [];
+  for (let i = 0; i < sorted.length; i += size) {
+    out.push(sorted.slice(i, i + size));
+  }
+  return out;
+}
+
+/** Métadonnées d'affichage des blocs (numéros 1-based, ordre chrono). */
+export function describeRapportBlocks(
+  totalGames: number,
+  size: number = RAPPORT_BLOCK_SIZE,
+): RapportBlockMeta[] {
+  if (!Number.isInteger(totalGames) || totalGames <= 0) return [];
+  if (!Number.isInteger(size) || size <= 0) {
+    return [{ index: 0, start: 1, end: totalGames, games: totalGames, complete: true }];
+  }
+  const out: RapportBlockMeta[] = [];
+  const count = Math.ceil(totalGames / size);
+  for (let i = 0; i < count; i++) {
+    const start = i * size + 1;
+    const end = Math.min((i + 1) * size, totalGames);
+    out.push({ index: i, start, end, games: end - start + 1, complete: end - start + 1 >= size });
+  }
+  return out;
+}
+
+/** Libellé FR d'un bloc (« Bloc 2 · parties 31–60 »). */
+export function rapportBlockLabel(meta: Pick<RapportBlockMeta, 'index' | 'start' | 'end'>): string {
+  return `Bloc ${meta.index + 1} · parties ${meta.start}–${meta.end}`;
+}
 
 /** Seuils de significativité par indicateur (en deçà → stable). */
 const EVOLUTION_THRESHOLDS: Record<string, number> = {
@@ -307,18 +371,20 @@ function rateOfEvol(found: number, missed: number): number | null {
 
 /**
  * Compare deux tranches (récente vs précédente). Pur : seuils fixés
- * ci-dessus, baisse ACPL/bévues/prises = progression. Si la période
- * précédente est trop petite (< 10 parties), `sufficient` est faux et les
- * deltas restent incomparables (texte « — »).
+ * ci-dessus, baisse ACPL/bévues/prises = progression. Un verdict ferme
+ * exige 10 parties minimum des DEUX côtés ; sinon `sufficient` est faux.
+ * Les deltas restent affichés dès que la période précédente suffit (lecture
+ * indicateur par indicateur), mais la tendance globale reste « insuffisant ».
  */
 export function buildEvolution(
   recent: RapportPeriodSlice,
   previous: RapportPeriodSlice,
   window: number = RAPPORT_EVOLUTION_WINDOW,
 ): RapportEvolution {
-  const sufficient =
-    previous.games >= RAPPORT_EVOLUTION_MIN_PREVIOUS && recent.games > 0;
-  const prev: RapportPeriodSlice | null = sufficient ? previous : null;
+  const prevOk = previous.games >= RAPPORT_EVOLUTION_MIN_GAMES;
+  const recentOk = recent.games >= RAPPORT_EVOLUTION_MIN_GAMES;
+  const sufficient = prevOk && recentOk;
+  const prev: RapportPeriodSlice | null = prevOk ? previous : null;
   const deltas: RapportDelta[] = [
     makeDelta({ key: 'score', label: 'Score', unit: 'pts', recent: recent.score, previous: prev ? prev.score : null }),
     makeDelta({ key: 'precision', label: 'Précision', unit: 'pts', recent: recent.overallAcc, previous: prev ? prev.overallAcc : null }),
@@ -349,13 +415,21 @@ export function buildEvolution(
 
   const narrative: string[] = [];
   if (!sufficient) {
-    const missing = Math.max(0, RAPPORT_EVOLUTION_MIN_PREVIOUS - previous.games);
-    narrative.push(
-      `Historique encore court : ${previous.games} partie${previous.games > 1 ? 's' : ''} en période précédente. ` +
-      (missing > 0
-        ? `Analysez encore ${missing} partie${missing > 1 ? 's' : ''} pour activer la comparaison (${window} récentes contre ${window} précédentes).`
-        : `La comparaison s'activera avec davantage de parties analysées.`),
-    );
+    if (!prevOk) {
+      const missing = Math.max(0, RAPPORT_EVOLUTION_MIN_GAMES - previous.games);
+      narrative.push(
+        `Historique encore court : ${previous.games} partie${previous.games > 1 ? 's' : ''} en période précédente. ` +
+        (missing > 0
+          ? `Analysez encore ${missing} partie${missing > 1 ? 's' : ''} pour activer la comparaison (${window} récentes contre ${window} précédentes).`
+          : `La comparaison s'activera avec davantage de parties analysées.`),
+      );
+    } else {
+      narrative.push(
+        `Période récente trop courte (${recent.games} parties) : le verdict reste indicatif ` +
+        `face aux ${previous.games} parties précédentes. Il se stabilisera à partir de ` +
+        `${RAPPORT_EVOLUTION_MIN_GAMES} parties récentes — lisez les écarts un par un.`,
+      );
+    }
   } else {
     const scored = deltas
       .filter((d) => d.favorable !== null)
@@ -618,4 +692,168 @@ export function buildRapport(input: RapportInput): RapportData {
     level, axes, strengths, gaugeColor, accColor, acplColor, evolution,
     estimatedLevel: hasAcc ? estimatedLevelFor(overallAcc) : null,
   };
+}
+
+/* ------------------------------------------------------------------
+ * Export : sérialise un rapport en Markdown (pur). Pensé pour être
+ * relu hors appli — par un humain comme par un agent : toutes les
+ * valeurs, les deltas et les phrases d'analyse y figurent.
+ * ------------------------------------------------------------------ */
+
+function mdFr1(v: number): string {
+  return v.toFixed(1).replace('.', ',');
+}
+
+function mdDeltaValue(d: RapportDelta, v: number | null): string {
+  if (v === null || !Number.isFinite(v)) return '—';
+  switch (d.key) {
+    case 'acpl':
+      return `${Math.round(v)} cp`;
+    case 'pieces-prise':
+      return `${mdFr1(v)} /partie`;
+    case 'theorie':
+      return `${mdFr1(v)} coups`;
+    default:
+      return `${mdFr1(v)} %`;
+  }
+}
+
+function mdDeltaReading(d: RapportDelta): string {
+  if (d.favorable === true) return 'progression';
+  if (d.favorable === false) return 'régression';
+  return 'stable';
+}
+
+/**
+ * Rapport complet en Markdown : identité, score, précision, ACPL,
+ * qualité des coups, tactique, théorie, ouvertures, parties marquantes,
+ * évolution (deltas + tendance + analyse), points forts et axes.
+ * `title` = portée (« Tout l'historique », « Bloc 2 · parties 31–60 »).
+ */
+export function rapportToMarkdown(
+  input: RapportInput,
+  title = "Tout l'historique",
+  dateStr?: string,
+): string {
+  const data = buildRapport(input);
+  const day = dateStr
+    ?? new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const L: string[] = [];
+  L.push(`# Rapport de progression — ${input.me}`);
+  L.push('');
+  L.push(`*${title} · ${day} · ${input.totalGames} parties (${input.wins}V · ${input.draws}N · ${input.losses}D)*`);
+  L.push('');
+  L.push(`Niveau : **${data.level.label}** — ${data.level.desc}`);
+  if (data.estimatedLevel !== null) {
+    L.push(`Niveau de jeu estimé : ≈ ${data.estimatedLevel} Elo.`);
+  }
+  L.push('');
+  L.push('## Score');
+  L.push('');
+  L.push(`- Score : **${mdFr1(input.score)} %** (${input.wins}V · ${input.draws}N · ${input.losses}D)`);
+  L.push(`- Blancs : ${mdFr1(data.whiteWinPct)} % sur ${input.whiteGames} parties`);
+  L.push(`- Noirs : ${mdFr1(data.blackWinPct)} % sur ${input.blackGames} parties`);
+  L.push('');
+  if (data.hasAcc && input.overallAcc !== null) {
+    L.push('## Précision et ACPL (moteur)');
+    L.push('');
+    L.push(`- Précision moyenne : **${mdFr1(input.overallAcc)} %** sur ${input.analyzedCount} parties analysées`);
+    if (input.accWin !== null) L.push(`- Victoires : ${mdFr1(input.accWin)} % (${input.accWinCount})`);
+    if (input.accDraw !== null) L.push(`- Nulles : ${mdFr1(input.accDraw)} % (${input.accDrawCount})`);
+    if (input.accLoss !== null) L.push(`- Défaites : ${mdFr1(input.accLoss)} % (${input.accLossCount})`);
+    if (input.accWhite !== null) L.push(`- Blancs : ${mdFr1(input.accWhite)} % (${input.accWhiteCount})`);
+    if (input.accBlack !== null) L.push(`- Noirs : ${mdFr1(input.accBlack)} % (${input.accBlackCount})`);
+    if (input.acplOverall !== null) L.push(`- ACPL moyen : ${Math.round(input.acplOverall)} cp (${input.acplCount} parties)`);
+    L.push('');
+  }
+  if (input.totalMoves > 0) {
+    L.push('## Qualité des coups');
+    L.push('');
+    for (const s of data.qualitySegments) {
+      if (s.count <= 0) continue;
+      L.push(`- ${s.label}${s.glyph ? ` (${s.glyph})` : ''} : ${s.count} (${s.pct.toFixed(0)} %)`);
+    }
+    L.push(`- Bons coups : ${data.goodMoves} · mauvais coups : ${data.badMoves}`);
+    L.push('');
+  }
+  if (input.analyzedCount > 0) {
+    L.push('## Bilan tactique');
+    L.push('');
+    for (const row of data.tacticRows) {
+      if (row.invert) {
+        if (row.missed > 0) {
+          const perGame = input.analyzedCount > 0 ? mdFr1(row.missed / input.analyzedCount) : null;
+          L.push(`- ${row.label} : ${row.missed} concédée${row.missed > 1 ? 's' : ''}${perGame ? ` (${perGame} /partie)` : ''}`);
+        } else {
+          L.push(`- ${row.label} : 0 (aucune pièce laissée sans défense)`);
+        }
+      } else {
+        const total = row.found + row.missed;
+        const note = row.key === 'mates' ? ' — calculé par position à mat forcé' : '';
+        L.push(row.rate !== null
+          ? `- ${row.label} : ${row.found}/${total} (${row.rate.toFixed(0)} %)${note}`
+          : `- ${row.label} : aucun cas détecté`);
+      }
+    }
+    if (input.theoryAvg !== null) {
+      L.push(`- Théorie : sortie au coup ${mdFr1(input.theoryAvg)} en moyenne (${input.theoryCount} parties)`);
+    }
+    L.push('');
+  }
+  if (input.bestOpening ?? input.worstOpening) {
+    L.push('## Ouvertures (3 parties min.)');
+    L.push('');
+    if (input.bestOpening) {
+      L.push(`- Meilleure : ${input.bestOpening.name} (${input.bestOpening.eco}) — ${input.bestOpening.wins}/${input.bestOpening.games} victoires`);
+    }
+    if (input.worstOpening) {
+      L.push(`- À retravailler : ${input.worstOpening.name} (${input.worstOpening.eco}) — ${input.worstOpening.wins}/${input.worstOpening.games} victoires`);
+    }
+    L.push('');
+  }
+  if (input.bestGame ?? input.worstGame) {
+    L.push('## Parties marquantes');
+    L.push('');
+    const line = (tag: string, g: RapportGameRef): string =>
+      `- ${tag} : contre ${g.opponent}${g.opponentRating !== null ? ` (${g.opponentRating})` : ''} — ${g.result} à ${mdFr1(g.accuracy)} %${g.dateLabel ? ` (${g.dateLabel})` : ''} — ${g.url}`;
+    if (input.bestGame) L.push(line('Meilleure', input.bestGame));
+    if (input.worstGame) L.push(line('À revoir', input.worstGame));
+    L.push('');
+  }
+  if (data.evolution) {
+    const evo = data.evolution;
+    L.push('## Évolution (récente vs précédente)');
+    L.push('');
+    L.push(`Tendance globale : **${evo.global}** (${evo.recentGames} récentes vs ${evo.previousGames} précédentes).`);
+    L.push('');
+    L.push('| Indicateur | Récent | Précédent | Écart | Lecture |');
+    L.push('| --- | --- | --- | --- | --- |');
+    for (const d of evo.deltas) {
+      L.push(`| ${d.label} | ${mdDeltaValue(d, d.recent)} | ${mdDeltaValue(d, d.previous)} | ${d.text} | ${mdDeltaReading(d)} |`);
+    }
+    L.push('');
+    for (const p of evo.narrative) {
+      L.push(`> ${p}`);
+      L.push('');
+    }
+  }
+  if (data.strengths.length > 0) {
+    L.push('## Points forts');
+    L.push('');
+    for (const s of data.strengths) {
+      L.push(`- ${s.title} : ${s.detail}`);
+    }
+    L.push('');
+  }
+  L.push('## Plan de progression');
+  L.push('');
+  if (data.axes.length === 0) {
+    L.push('Aucun axe critique détecté.');
+  } else {
+    for (const ax of data.axes) {
+      L.push(`- [${RAPPORT_PRIORITY_LABEL[ax.priority]}] ${ax.title}${ax.metric ? ` (${ax.metric})` : ''} : ${ax.detail}${ax.evolutionNote ? ` ${ax.evolutionNote}` : ''}`);
+    }
+  }
+  L.push('');
+  return L.join('\n');
 }

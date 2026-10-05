@@ -70,12 +70,18 @@ import { GameReportView } from './GameReportView';
 import { RapportPanel } from './RapportPanel';
 import {
   buildEvolution,
+  RAPPORT_BLOCK_SIZE,
   RAPPORT_EVOLUTION_WINDOW,
+  rapportToMarkdown,
   type RapportEvolution,
   type RapportGameRef,
   type RapportInput,
-  type RapportPeriodSlice,
 } from '../services/rapport';
+import {
+  aggregatePeriodSlice,
+  buildRapportBlocks,
+  type RapportBlock,
+} from '../services/rapportBlocks';
 import { TheoryPanel } from './TheoryPanel';
 import { TacticsPanel } from './TacticsPanel';
 import { GamesPanel } from './GamesPanel';
@@ -88,7 +94,9 @@ import {
   Award,
   BookOpen,
   Check,
+  Copy,
   Crosshair,
+  Download,
   FileText,
   History,
   LayoutDashboard,
@@ -118,122 +126,10 @@ type ColorFilter = 'all' | 'w' | 'b';
 const PAGE_SIZE = 100;
 
 /**
- * Tranche agrégée pour l'évolution du Rapport (pur, testé via
- * `services/rapport.ts`) : N parties triées par date → une
- * `RapportPeriodSlice`. La théorie vient de la table de maîtrise
- * (déviations déjà rejouées), le reste des champs batch.
+ * Agrégation des tranches du Rapport : voir `aggregatePeriodSlice`
+ * (`services/rapportBlocks.ts`, pur et testé) — source unique utilisée
+ * par l'évolution globale comme par les rapports par blocs de 30.
  */
-function aggregateRapportSlice(
-  slice: ChesscomGame[],
-  me: string,
-  theoryByUrl: Map<string, number>,
-): RapportPeriodSlice {
-  let wins = 0;
-  let draws = 0;
-  let accSum = 0;
-  let accN = 0;
-  let acplSum = 0;
-  let acplN = 0;
-  let blunders = 0;
-  let moves = 0;
-  let hangs = 0;
-  let hangsGames = 0;
-  let matesFound = 0;
-  let matesMissed = 0;
-  let forksFound = 0;
-  let forksMissed = 0;
-  let freebiesMissed = 0;
-  let theorySum = 0;
-  let theoryN = 0;
-  const sparkScore: number[] = [];
-  const sparkAcc: number[] = [];
-  for (const g of slice) {
-    const o = outcomeFor(g, me);
-    if (o === 'win') wins++;
-    else if (o === 'draw') draws++;
-    if (typeof g.accuracy === 'number' && Number.isFinite(g.accuracy)) {
-      accSum += g.accuracy;
-      accN++;
-    }
-    const gameAcpl = acplFor(g, me);
-    if (gameAcpl !== null) {
-      acplSum += gameAcpl;
-      acplN++;
-    }
-    if (g.moveQuality) {
-      const t = g.moveQuality.total;
-      blunders += t.gaffe ?? 0;
-      for (const k of MOVE_QUALITY_ORDER) moves += t[k] ?? 0;
-    }
-    if (g.hangs) {
-      hangsGames++;
-      for (const k of HUNG_PIECE_ORDER) hangs += g.hangs[k] ?? 0;
-    }
-    if (g.mates) {
-      for (const k of MATE_DISTANCE_ORDER) {
-        matesFound += g.mates.found[k] ?? 0;
-        matesMissed += g.mates.missed[k] ?? 0;
-      }
-    }
-    if (g.forks) {
-      for (const k of FORK_PIECE_ORDER) {
-        forksFound += g.forks.found[k] ?? 0;
-        forksMissed += g.forks.missed[k] ?? 0;
-      }
-    }
-    if (g.freebies) {
-      for (const k of HUNG_PIECE_ORDER) freebiesMissed += g.freebies.missed[k] ?? 0;
-    }
-    const dev = theoryByUrl.get(g.url);
-    if (typeof dev === 'number') {
-      theorySum += dev;
-      theoryN++;
-    }
-  }
-  /* Sparklines : paquets chronologiques de 5 parties (déjà triées). */
-  for (let i = 0; i < slice.length; i += 5) {
-    const packet = slice.slice(i, i + 5);
-    if (packet.length === 0) continue;
-    let pw = 0;
-    let pd = 0;
-    let paSum = 0;
-    let paN = 0;
-    for (const g of packet) {
-      const o = outcomeFor(g, me);
-      if (o === 'win') pw++;
-      else if (o === 'draw') pd++;
-      if (typeof g.accuracy === 'number' && Number.isFinite(g.accuracy)) {
-        paSum += g.accuracy;
-        paN++;
-      }
-    }
-    sparkScore.push(((pw + pd / 2) / packet.length) * 100);
-    if (paN > 0) sparkAcc.push(paSum / paN);
-  }
-  const total = slice.length;
-  return {
-    games: total,
-    wins,
-    draws,
-    losses: total - wins - draws,
-    score: total > 0 ? ((wins + draws / 2) / total) * 100 : 0,
-    analyzedCount: accN,
-    overallAcc: accN > 0 ? accSum / accN : null,
-    acpl: acplN > 0 ? acplSum / acplN : null,
-    acplCount: acplN,
-    blunderRate: moves > 0 ? (blunders / moves) * 100 : null,
-    hangsPerGame: hangsGames > 0 ? hangs / hangsGames : null,
-    theoryAvg: theoryN > 0 ? theorySum / theoryN : null,
-    theoryCount: theoryN,
-    matesFound,
-    matesMissed,
-    forksFound,
-    forksMissed,
-    freebiesMissed,
-    sparkScore,
-    sparkAcc,
-  };
-}
 const OUTCOME_LABEL: Record<ChesscomOutcome, string> = {
   win: 'Victoire',
   draw: 'Nulle',
@@ -1596,6 +1492,17 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
   );
 
 
+  /** Coups théoriques par URL (sortie de théorie du compte lié). */
+  const rapportTheoryByUrl = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of masteryGames) {
+      if (m.deviator === 'me' && m.myDeviationMove !== null) {
+        map.set(m.url, m.myDeviationMove - 1);
+      }
+    }
+    return map;
+  }, [masteryGames]);
+
   /** Entree pure de l'onglet Rapport (calculs dans services/rapport.ts). */
   const rapportEvolution: RapportEvolution | null = useMemo(() => {
     if (listedGames.length === 0) return null;
@@ -1603,18 +1510,36 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
     const window = RAPPORT_EVOLUTION_WINDOW;
     const recent = byDate.slice(-window);
     const previous = byDate.slice(-window * 2, -window);
-    const theoryByUrl = new Map<string, number>();
-    for (const m of masteryGames) {
-      if (m.deviator === 'me' && m.myDeviationMove !== null) {
-        theoryByUrl.set(m.url, m.myDeviationMove - 1);
-      }
-    }
     return buildEvolution(
-      aggregateRapportSlice(recent, me, theoryByUrl),
-      aggregateRapportSlice(previous, me, theoryByUrl),
+      aggregatePeriodSlice(recent, me, rapportTheoryByUrl),
+      aggregatePeriodSlice(previous, me, rapportTheoryByUrl),
       window,
     );
-  }, [listedGames, masteryGames, me]);
+  }, [listedGames, rapportTheoryByUrl, me]);
+
+  /**
+   * Rapports périodiques : historique découpé en blocs fixes de 30
+   * parties (ordre chrono). Chaque bloc = un rapport complet comparé au
+   * précédent (progression / régression). Pur (services/rapportBlocks.ts).
+   */
+  const rapportBlocks: RapportBlock[] = useMemo(() => {
+    if (listedGames.length === 0) return [];
+    const byDate = [...listedGames].sort((a, b) => (a.end_time ?? 0) - (b.end_time ?? 0));
+    return buildRapportBlocks(byDate, me, rapportTheoryByUrl, masteryTheory.size > 0, RAPPORT_BLOCK_SIZE);
+  }, [listedGames, me, rapportTheoryByUrl, masteryTheory]);
+
+  /** Vue de l'onglet Rapport : globale ou par tranches de 30. */
+  const [rapportView, setRapportView] = useState<'global' | 'blocks'>('global');
+  /** Bloc sélectionné (défaut : dernier). Recalé quand l'historique change. */
+  const [selectedBlockIdx, setSelectedBlockIdx] = useState(0);
+  const [prevBlocksLen, setPrevBlocksLen] = useState(0);
+  if (prevBlocksLen !== rapportBlocks.length) {
+    setPrevBlocksLen(rapportBlocks.length);
+    setSelectedBlockIdx(Math.max(0, rapportBlocks.length - 1));
+  }
+  const selectedBlock = rapportBlocks.length > 0
+    ? rapportBlocks[Math.min(selectedBlockIdx, rapportBlocks.length - 1)]
+    : undefined;
 
   const rapportAcpl = useMemo(() => {
     let sum = 0;
@@ -1740,6 +1665,55 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
       worstGame: rapportGames.worst,
     };
   }, [summary, sideRows, perfRows, shapeView, accuracyStats, qualityTotals, matesTotal, forksTotal, hangsTotal, freebiesTotal, masteryAvgTheoryMoves, masteryDevFirst, masteryTheory, me, botGamesCount, rapportEvolution, rapportAcpl, rapportGames]);
+
+  /** Rapport affiché (global ou bloc sélectionné) : source des exports. */
+  const displayedRapportInput: RapportInput = rapportView === 'blocks' && selectedBlock
+    ? selectedBlock.input
+    : rapportInput;
+  const displayedRapportTitle: string = rapportView === 'blocks' && selectedBlock
+    ? selectedBlock.label
+    : "Tout l'historique";
+  /** Message de statut d'export (copie / téléchargement). */
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+
+  /** Slug de fichier ASCII depuis les numéros (pas de regex unicode fragile). */
+  const displayedRapportSlug: string = rapportView === 'blocks' && selectedBlock
+    ? `bloc-${selectedBlock.meta.index + 1}-parties-${selectedBlock.meta.start}-${selectedBlock.meta.end}`
+    : 'global';
+
+  const downloadTextFile = (filename: string, mime: string, text: string): void => {
+    const blob = new Blob([text], { type: `${mime};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  /** Copie le rapport affiché en Markdown (à coller à un agent/humain). */
+  const copyRapportMarkdown = useCallback(async () => {
+    const md = rapportToMarkdown(displayedRapportInput, displayedRapportTitle);
+    try {
+      await navigator.clipboard.writeText(md);
+      setExportMsg('Rapport copié : collez-le où vous voulez le relire.');
+    } catch {
+      setExportMsg('Copie impossible dans ce navigateur : utilisez « Télécharger (.md) ».');
+    }
+  }, [displayedRapportInput, displayedRapportTitle]);
+
+  /** Télécharge le rapport affiché (.md lisible humain/agent, .json brut). */
+  const downloadRapport = useCallback((format: 'md' | 'json') => {
+    if (format === 'json') {
+      downloadTextFile(`rapport-${displayedRapportSlug}.json`, 'application/json', JSON.stringify(displayedRapportInput, null, 2));
+      setExportMsg('Rapport .json téléchargé.');
+    } else {
+      downloadTextFile(`rapport-${displayedRapportSlug}.md`, 'text/markdown', rapportToMarkdown(displayedRapportInput, displayedRapportTitle));
+      setExportMsg('Rapport .md téléchargé.');
+    }
+  }, [displayedRapportInput, displayedRapportTitle, displayedRapportSlug]);
 
   const selectedGame = useMemo(
     () => (viewer ? (games.find((g) => g.url === viewer.url) ?? null) : null),
@@ -2576,13 +2550,127 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
           />
         )}
         {statsTab === 'rapport' && (
-          <RapportPanel
-            input={rapportInput}
-            onOpenGame={(url) => {
-              const game = games.find((gp) => gp.url === url);
-              if (game) onOpenGame(game);
-            }}
-          />
+          <>
+            <div className="panel-card">
+              <div className="card-title-row">
+                <h4 className="card-title-sm">
+                  <FileText size={14} className="title-icon" aria-hidden="true" /> Rapports
+                </h4>
+                <div className="chesscom-filter-group" role="group" aria-label="Portée du rapport">
+                  <button
+                    type="button"
+                    className={`db-toggle-btn ${rapportView === 'global' ? 'active' : ''}`}
+                    onClick={() => setRapportView('global')}
+                    title="Un rapport sur tout l'historique"
+                  >
+                    <span>Tout l&apos;historique</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`db-toggle-btn ${rapportView === 'blocks' ? 'active' : ''}`}
+                    onClick={() => setRapportView('blocks')}
+                    title={`Un rapport toutes les ${RAPPORT_BLOCK_SIZE} parties, comparé au précédent`}
+                  >
+                    <span>Par tranches de {RAPPORT_BLOCK_SIZE}</span>
+                  </button>
+                </div>
+              </div>
+              {rapportView === 'blocks' && (
+                rapportBlocks.length === 0 ? (
+                  <div className="empty-state">Aucune partie pour générer un rapport.</div>
+                ) : (
+                  <>
+                    <div className="chesscom-filter-group" role="group" aria-label="Tranches de parties">
+                      {rapportBlocks.map((b) => {
+                        const active = selectedBlock && b.meta.index === selectedBlock.meta.index;
+                        const evo = b.input.evolution;
+                        const tone = !evo || !evo.sufficient
+                          ? '#8e887c'
+                          : evo.global === 'progression'
+                            ? '#8fb996'
+                            : evo.global === 'régression'
+                              ? '#d8816f'
+                              : '#8e887c';
+                        return (
+                          <button
+                            key={b.meta.index}
+                            type="button"
+                            className={`db-toggle-btn${active ? ' active' : ''}`}
+                            onClick={() => setSelectedBlockIdx(b.meta.index)}
+                            title={`${b.label} — score ${b.input.score.toFixed(1)} %${evo && evo.sufficient ? ` · ${evo.global}` : ''}`}
+                          >
+                            <span className="rapport-quality-dot" style={{ background: tone }} aria-hidden="true" />
+                            <span>{b.label}{!b.meta.complete ? ' (en cours)' : ''}</span>
+                            <strong>{b.input.score.toFixed(0)}&nbsp;%</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedBlock && selectedBlock.meta.index > 0 && (
+                      <div className="activity-subtitle text-muted">
+                        Comparé au {rapportBlocks[selectedBlock.meta.index - 1]?.label ?? 'bloc précédent'}
+                        {' '}— progression / régression calculée bloc contre bloc.
+                      </div>
+                    )}
+                  </>
+                )
+              )}
+              <div className="chesscom-filter-group" role="group" aria-label="Exporter le rapport affiché">
+                <button
+                  type="button"
+                  className="action-btn btn-sm"
+                  onClick={copyRapportMarkdown}
+                  title="Copie le rapport affiché en Markdown (à coller à un agent ou un humain)"
+                >
+                  <Copy size={13} aria-hidden="true" />
+                  <span>Copier (.md)</span>
+                </button>
+                <button
+                  type="button"
+                  className="action-btn btn-sm"
+                  onClick={() => downloadRapport('md')}
+                  title="Télécharge le rapport affiché en Markdown"
+                >
+                  <Download size={13} aria-hidden="true" />
+                  <span>Télécharger (.md)</span>
+                </button>
+                <button
+                  type="button"
+                  className="action-btn btn-sm"
+                  onClick={() => downloadRapport('json')}
+                  title="Télécharge le rapport affiché en JSON brut"
+                >
+                  <Download size={13} aria-hidden="true" />
+                  <span>Télécharger (.json)</span>
+                </button>
+              </div>
+              {exportMsg && (
+                <div className="activity-subtitle text-muted" role="status">
+                  {exportMsg}
+                </div>
+              )}
+            </div>
+            {rapportView === 'global' ? (
+              <RapportPanel
+                input={rapportInput}
+                onOpenGame={(url) => {
+                  const game = games.find((gp) => gp.url === url);
+                  if (game) onOpenGame(game);
+                }}
+              />
+            ) : (
+              selectedBlock && (
+                <RapportPanel
+                  key={selectedBlock.meta.index}
+                  input={selectedBlock.input}
+                  onOpenGame={(url) => {
+                    const game = games.find((gp) => gp.url === url);
+                    if (game) onOpenGame(game);
+                  }}
+                />
+              )
+            )}
+          </>
         )}
         </div>
         )}

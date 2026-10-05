@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildEvolution, buildRapport, estimatedLevelFor, type RapportInput, type RapportPeriodSlice } from './rapport';
+import { buildEvolution, buildRapport, estimatedLevelFor, rapportToMarkdown, type RapportInput, type RapportPeriodSlice } from './rapport';
 
 function baseInput(overrides: Partial<RapportInput> = {}): RapportInput {
   return {
@@ -182,6 +182,19 @@ describe('buildEvolution', () => {
     expect(evo.deltas.every((d) => d.text === '—')).toBe(true);
   });
 
+  it('marque insuffisant quand la période récente a moins de 10 parties, sans masquer les deltas', () => {
+    const evo = buildEvolution(
+      slice({ games: 8, score: 37.5, overallAcc: 77.4 }),
+      slice({ games: 30, score: 70, overallAcc: 75.3 }),
+    );
+    expect(evo.sufficient).toBe(false);
+    expect(evo.global).toBe('insuffisant');
+    /* Période précédente solide : les écarts restent lisibles un par un. */
+    expect(evo.deltas.find((d) => d.key === 'score')?.text).not.toBe('—');
+    expect(evo.deltas.find((d) => d.key === 'precision')?.favorable).toBe(true);
+    expect(evo.narrative.join(' ')).toContain('trop courte');
+  });
+
   it('annote les axes du rapport avec la note d\u2019évolution', () => {
     const evo = buildEvolution(
       slice({ overallAcc: 68, hangsPerGame: 1 }),
@@ -190,5 +203,43 @@ describe('buildEvolution', () => {
     const data = buildRapport(baseInput({ overallAcc: 68, hangs: 10, analyzedCount: 10, evolution: evo }));
     const axe = data.axes.find((a) => a.title === 'Précision globale');
     expect(axe?.evolutionNote).toContain('aggrave');
+  });
+});
+
+describe('rapportToMarkdown', () => {
+  it('sérialise le rapport complet avec deltas et analyse', () => {
+    const evo = buildEvolution(
+      slice({ score: 65, overallAcc: 84, acpl: 28 }),
+      slice({ score: 55, overallAcc: 78, acpl: 45 }),
+    );
+    const md = rapportToMarkdown(
+      baseInput({ evolution: evo }),
+      'Bloc 2 · parties 31–60',
+      '5 octobre 2026',
+    );
+    expect(md).toContain('# Rapport de progression — joueur');
+    expect(md).toContain('Bloc 2 · parties 31–60');
+    expect(md).toContain('## Score');
+    expect(md).toContain('## Précision et ACPL (moteur)');
+    expect(md).toContain('## Qualité des coups');
+    expect(md).toContain('## Bilan tactique');
+    expect(md).toContain('- Pièces en prise : 1 concédée (0,1 /partie)');
+    expect(md).toContain('- Mats convertis : 2/2 (100 %) — calculé par position à mat forcé');
+    expect(md).toContain('## Évolution (récente vs précédente)');
+    expect(md).toContain('Tendance globale : **progression**');
+    expect(md).toContain('| Score |');
+    expect(md).toContain('## Plan de progression');
+  });
+
+  it('reste lisible sans analyse moteur', () => {
+    const md = rapportToMarkdown(
+      baseInput({
+        overallAcc: null, analyzedCount: 0,
+        accWin: null, accWinCount: 0, accLoss: null, accLossCount: 0,
+        accDraw: null, accDrawCount: 0, acplOverall: null, acplCount: 0,
+      }),
+    );
+    expect(md).toContain('## Score');
+    expect(md).not.toContain('## Précision et ACPL (moteur)');
   });
 });
