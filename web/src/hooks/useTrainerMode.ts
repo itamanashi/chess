@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TrainingStats } from '../types/chess';
 import {
   loadTrainerReviews,
@@ -8,6 +8,7 @@ import {
   TrainerRating,
   type TrainerReviews,
 } from '../storage/trainerReviews';
+import { addStudyTime } from '../storage/studyTime';
 
 const INITIAL_STATS: TrainingStats = {
   correctMoves: 0,
@@ -41,6 +42,29 @@ export function useTrainerMode(
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  /**
+   * Temps d'étude : tant que l'entraînement de ce répertoire est ouvert, on
+   * cumule par tranches de 30 s (plafonnées : un réveil de veille ne compte
+   * pas des heures). La queue est versée à la fermeture / au changement de
+   * répertoire pour ne rien perdre.
+   */
+  const studyFlushRef = useRef<number>(Date.now());
+  useEffect(() => {
+    if (!repertoireId) return;
+    studyFlushRef.current = Date.now();
+    const flush = (): void => {
+      const at = Date.now();
+      const elapsed = Math.max(0, Math.min(120, Math.round((at - studyFlushRef.current) / 1000)));
+      studyFlushRef.current = at;
+      if (elapsed > 0) addStudyTime(repertoireId, elapsed);
+    };
+    const timer = window.setInterval(flush, 30_000);
+    return () => {
+      window.clearInterval(timer);
+      flush();
+    };
+  }, [repertoireId]);
 
   const recordReview = useCallback((
     positionKey: string | undefined,

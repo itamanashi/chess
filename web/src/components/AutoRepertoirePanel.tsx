@@ -31,12 +31,12 @@ interface AutoRepertoirePanelProps {
 }
 
 const DEFAULT_STATS: AutoGenStats = {
-  sent: 0, cached: 0, api: 0, refCached: 0, refApi: 0, engineNodes: 0, engineFallbacks: 0,
+  sent: 0, cached: 0, api: 0, engineNodes: 0, engineFallbacks: 0,
   engineCached: 0, pruned: 0, transpositions: 0, explored: 0,
   depthPruned: 0, popPruned: 0, bookPenalized: 0, cacheBoostedChildren: 0,
   maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
-  positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0, refApiWaitMs: 0,
-  refCacheWaitMs: 0, engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
+  positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0,
+  engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
   quiescenceExtended: 0,
 };
 
@@ -166,8 +166,12 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   const [explorationOrder, setExplorationOrder] = useState<NonNullable<AutoGenConfig['explorationOrder']>>('popular');
   /** Seuil Line Value de l'élagage final winrate (opt-in, 0 = désactivé). */
   const [minLV, setMinLV] = useState(0);
-  /** Juge moteur OPT-IN : Stockfish local choisit ta réplique (1 seule, lent : ~secondes/position à nous). */
-  const [useEngine, setUseEngine] = useState(false);
+  /**
+   * Parties mini par coup adverse (défaut 100) : un choix adverse sous ce
+   * seuil n'entre pas dans l'arbre. Sans effet sur nos répliques (Stockfish
+   * tranche) ni sur les mats (toujours inclus).
+   */
+  const [minGames, setMinGames] = useState(100);
   /** Threads Stockfish détectés (multicœur si isolation navigateur active, sinon 1). */
   const engineThreads = desiredEngineThreads();
   /** Threads confirmés au handshake (null = moteur pas encore démarré ce run). */
@@ -225,6 +229,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   const minDepthNum = useUncontrolledNumber(setMinDepth, clampInt(1, 24));
   const maxPosNum = useUncontrolledNumber(setMaxPositions, (n) => Math.min(MAX_AUTO_POSITIONS, Math.max(5, Math.round(n))));
   const minLVNum = useUncontrolledNumber(setMinLV, (n) => Math.max(0, Math.min(1, n)));
+  const minGamesNum = useUncontrolledNumber(setMinGames, (n) => Math.max(0, Math.min(1000000, Math.round(n))));
 
   const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -248,6 +253,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       maxDepth: depth,
       maxBranching,
       minFreq: MIN_FREQ,
+      minGames,
       minPopularity: MIN_POPULARITY,
       coveragePercent: COVERAGE,
       adaptiveDepth,
@@ -260,27 +266,23 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
       since: elo.since,
       gapMs: 600,
       pruneMinLineValue: minLV,
-      ...(useEngine
-        ? {
-            engineJudge: {
-              judge: (
-                fen: string,
-                o: {
-                  multiPv: number; depth: number; timeoutMs: number; signal?: AbortSignal;
-                  onPartial?: (lines: EngineMove[]) => void;
-                },
-              ) =>
-                analyzeLocalFen(fen, {
-                  multiPv: o.multiPv,
-                  depth: o.depth,
-                  timeoutMs: o.timeoutMs,
-                  signal: o.signal,
-                  priority: 'background',
-                  onPartial: o.onPartial,
-                }),
-            },
-          }
-        : {}),
+      engineJudge: {
+        judge: (
+          fen: string,
+          o: {
+            multiPv: number; depth: number; timeoutMs: number; signal?: AbortSignal;
+            onPartial?: (lines: EngineMove[]) => void;
+          },
+        ) =>
+          analyzeLocalFen(fen, {
+            multiPv: o.multiPv,
+            depth: o.depth,
+            timeoutMs: o.timeoutMs,
+            signal: o.signal,
+            priority: 'background',
+            onPartial: o.onPartial,
+          }),
+      },
     };
     try {
       const { root, stats, completed } = await generateAutoRepertoire(startFen, cfg, {
@@ -390,7 +392,6 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
             <span>
               {progress.positionsInterrogees}/{maxPositions} pos · {progress.sent} coups
               {` · ${progress.cached} cache / ${progress.api} API`}
-              {(progress.refCached + progress.refApi) > 0 ? ` · ${progress.refCached + progress.refApi} réf` : ''}
               {progress.engineNodes > 0 ? ` · ${progress.engineNodes} moteur` : ''}
               {progress.engineCached > 0 ? ` · ${progress.engineCached} sf-cache` : ''}
               {progress.transpositions > 0 ? ` · ${progress.transpositions} transpo` : ''}
@@ -418,8 +419,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
         Par défaut, les positions les plus probables sont explorées en priorité ;
         l'ordre par couverture traite un pli entier avant de creuser le suivant,
         ce qui répartit mieux un petit budget entre les branches.
-        Tes répliques sont choisies par gradient Elo (coups que les forts
-        jouent), ou par Stockfish si la case moteur est cochée — l'adversaire
+        Tes répliques sont tranchées par Stockfish local — l'adversaire
         vient toujours de ton pool uniquement. Le budget pilote l'ampleur :
         petit budget = cœur populaire, grand budget = élargissement. Les
         mats (délivrés ou mat-en-1) sont toujours inclus en priorité. Les coups sont ajoutés à votre
@@ -451,24 +451,17 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
         </button>
       </div>
 
-      <label
-        style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, marginBottom: 8 }}
-        title={`Stockfish local choisit ta réplique (la meilleure, départagée en creusant si serré, repli gradient si aveugle). Lent : compte ~secondes par position à toi, le run peut durer 10× plus longtemps. Arrêter conserve le partiel.${threadsApplied !== null ? ` Threads appliqués au moteur : ${threadsApplied}.` : ''}`}
+      <p
+        className="text-muted"
+        style={{ fontSize: 12 }}
+        title={`Stockfish local tranche chaque réplique (repli populaire si aveugle).${threadsApplied !== null ? ` Threads appliqués au moteur : ${threadsApplied}.` : ''}`}
       >
-        <input
-          type="checkbox"
-          checked={useEngine}
-          disabled={running}
-          onChange={(e) => setUseEngine(e.target.checked)}
-        />
-        <span>
-          {(threadsApplied ?? engineThreads) > 1
-            ? `Répliques moteur (Stockfish local, ${(threadsApplied ?? engineThreads)} threads)`
-            : threadsApplied === 1 && engineThreads > 1
-              ? 'Répliques moteur (Stockfish local, repli mono-thread)'
-              : 'Répliques moteur (Stockfish local, lent mais précis)'}
-        </span>
-      </label>
+        {(threadsApplied ?? engineThreads) > 1
+          ? `Répliques moteur : Stockfish local (${(threadsApplied ?? engineThreads)} threads)`
+          : threadsApplied === 1 && engineThreads > 1
+            ? 'Répliques moteur : Stockfish local (repli mono-thread)'
+            : 'Répliques moteur : Stockfish local (lent mais précis)'}
+      </p>
 
       <p
         className="text-muted"
@@ -517,7 +510,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
         <p className="text-muted" style={{ fontSize: 12 }}>
           Par défaut l'exploration suit la popularité (les plus jouées d'abord)
           sous le plafond du budget : l'Italienne et l'Espagnole sont explorées
-          car jouées, et Stockfish (si coché) tranche ta réplique. Ne touche
+          car jouées, et Stockfish tranche ta réplique. Ne touche
           ci-dessous que pour forcer la largeur.
         </p>
         <div className="auto-gen-grid">
@@ -547,6 +540,15 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
               type="number" min={1} max={12} defaultValue={maxBranching}
               disabled={running} ref={branchNum.attach('branches')}
               onBlur={branchNum.commit('branches', maxBranching)}
+              onKeyDown={blurOnEnter}
+            />
+          </label>
+          <label className="auto-gen-field" title="Un coup adverse joué moins de fois que ce seuil n'entre pas dans l'arbre (0 = désactivé). Sans effet sur tes répliques (Stockfish tranche) ni sur les mats (toujours inclus).">
+            <span>Parties mini (adversaire)</span>
+            <input
+              type="number" min={0} max={1000000} step={10} defaultValue={minGames}
+              disabled={running} ref={minGamesNum.attach('minGames')}
+              onBlur={minGamesNum.commit('minGames', minGames)}
               onKeyDown={blurOnEnter}
             />
           </label>
@@ -583,22 +585,21 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
           <span>
             {!done.completed ? 'Interrompu (partiel) · ' : ''}
             {done.nodes} coups · {done.stats.explored} positions · {done.stats.cached} cache / {done.stats.api} API
-            {(done.stats.refCached + done.stats.refApi) > 0 ? ` · ${done.stats.refCached + done.stats.refApi} réf Maîtres` : ''}
             {done.stats.engineNodes > 0 ? ` · ${done.stats.engineNodes} calcul(s) moteur` : ''}
-            {done.stats.engineFallbacks > 0 ? ` · ${done.stats.engineFallbacks} repli(s) gradient` : ''}
+            {done.stats.engineFallbacks > 0 ? ` · ${done.stats.engineFallbacks} repli(s) populaire(s)` : ''}
             {done.stats.engineCached > 0 ? ` · ${done.stats.engineCached} sf-cache` : ''}
             {' · '}{done.stats.transpositions} transposition(s)
             {done.stats.mates > 0 ? ` · ${done.stats.mates} mat(s) prioritaire(s)` : ''}
             {done.stats.prunedValue > 0 ? ` · ${done.stats.prunedValue} élagué(s) LV` : ''}
             {done.stats.emptyPositions > 0 ? ` · ${done.stats.emptyPositions} sans suite en base` : ''}
           </span>
-          {(done.stats.apiWaitMs + done.stats.cacheWaitMs + done.stats.refApiWaitMs + done.stats.refCacheWaitMs + done.stats.engineWaitMs) > 0 && (
+          {(done.stats.apiWaitMs + done.stats.cacheWaitMs + done.stats.engineWaitMs) > 0 && (
             <span
               className="auto-gen-note"
               title="Durées cumulées des attentes pendant ce run. Elles excluent le temps de calcul local et les pauses de cadence entre requêtes."
             >
-              Attente mesurée : API {formatWait(done.stats.apiWaitMs)} + réf {formatWait(done.stats.refApiWaitMs)}
-              {' · '}cache {formatWait(done.stats.cacheWaitMs + done.stats.refCacheWaitMs)}
+              Attente mesurée : API {formatWait(done.stats.apiWaitMs)}
+              {' · '}cache {formatWait(done.stats.cacheWaitMs)}
               {' · '}moteur {formatWait(done.stats.engineWaitMs)}
             </span>
           )}

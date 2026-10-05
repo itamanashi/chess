@@ -38,6 +38,7 @@ import { useTrainerMode } from './hooks/useTrainerMode';
 import { useHoverPreview } from './hooks/useHoverPreview';
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, Eye, Repeat, X } from 'lucide-react';
 import { Chessboard } from './components/Chessboard';
+import { VariantStatsPanel } from './components/VariantStatsPanel';
 import { EvalBar } from './components/EvalBar';
 import { Sidebar } from './components/Sidebar';
 import { uiPrefs, type PieceSkin } from './storage/preferences';
@@ -1109,7 +1110,34 @@ export const App: React.FC = () => {
               />
             )}
 
-            {activeStudioTab === 'explorer' && (
+            {activeStudioTab === 'explorer' && activeRepertoire && (
+              <>
+                <ExplorerPanel
+                  currentFen={fen}
+                  candidateMoves={candidateMoves}
+                  history={history}
+                  currentIndex={currentIndex}
+                  onSelectCandidateMove={(m) => playUciMove(m.uci)}
+                  onHoverMove={preview.handleHoverMove}
+                  onJumpToMove={jumpToMove}
+                  onGoStart={() => jumpToMove(0)}
+                  onGoBack={() => jumpToMove(currentIndex - 1)}
+                  onGoForward={() => jumpToMove(currentIndex + 1)}
+                  onGoEnd={() => jumpToMove(history.length - 1)}
+                  onPlayMainLine={() => setIsMainLinePlaying((p) => !p)}
+                  onFlipBoard={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+                  isInRepertoire={isInRepertoire}
+                  isMainLinePlaying={isMainLinePlaying}
+                />
+                <VariantStatsPanel
+                  repertoire={activeRepertoire}
+                  currentFen={fen}
+                  registeredMoves={candidateMoves}
+                />
+              </>
+            )}
+
+            {activeStudioTab === 'explorer' && !activeRepertoire && (
               <ExplorerPanel
                 currentFen={fen}
                 candidateMoves={candidateMoves}

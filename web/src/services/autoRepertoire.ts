@@ -33,6 +33,14 @@ export interface AutoGenConfig {
   maxDepth?: number;
   maxBranching?: number;
   minFreq?: number;
+  /**
+   * Parties mini par coup (défaut 0 = désactivé ; le panneau met 100).
+   * L'appelant ne l'applique qu'aux coups ADVERSAIRES : à notre tour,
+   * Stockfish tranche seul (1 seule réplique) et les mats restent toujours
+   * inclus (fin forcée, pas un avis). Un coup sous le seuil n'entre jamais
+   * dans l'arbre, même en top-1 (pas de repêchage).
+   */
+  minGames?: number;
   coveragePercent?: number;
   minPopularity?: number;
   adaptiveDepth?: boolean;
@@ -57,8 +65,7 @@ export interface AutoGenConfig {
   /**
    * Budget d'exploration : nombre de positions INTERROGÉES (cache + API,
    * arrêt déterministe — même ensemble avec ou sans cache puisque l'ordre ne
-   * dépend plus du cache). Les lectures Maîtres de référence (gradient Elo)
-   * sont comptées à part (refCached/refApi) mais coûtent la même pause.
+   * dépend plus du cache).
    */
   maxPositions?: number;
   /** Ordre de parcours de la file ; 'popular' conserve l'ordre historique. */
@@ -77,11 +84,10 @@ export interface AutoGenConfig {
   /** Élagage final winrate (opt-in) : branches à nous sous ce Line Value (0 = désactivé, défaut 0). */
   pruneMinLineValue?: number;
   /**
-   * Juge moteur OPT-IN (choix utilisateur explicite) : à nos positions, la
-   * réplique est choisie par Stockfish local (MultiPV) au lieu du gradient
-   * Elo (UNE SEULE réplique, comme le gradient). Absent = mode gradient
-   * rapide (défaut). Le juge est injecté (tests sans worker) ; le panneau
-   * branche le Stockfish local.
+   * Juge moteur (paramètre de base, toujours branché par le panneau) : à
+   * nos positions, la réplique est choisie par Stockfish local (MultiPV,
+   * UNE SEULE réplique). Repli popularité si aveugle/évincé. Le juge est
+   * injecté (tests sans worker) ; le panneau branche le Stockfish local.
    */
   engineJudge?: EngineJudgeSettings;
   /** Optimisme λ de l'élagage (0 = réaliste pur). */
@@ -96,12 +102,9 @@ export interface AutoGenStats {
   sent: number;
   cached: number;
   api: number;
-  /** Lectures du pool de référence (Maîtres) pour le gradient Elo. */
-  refCached: number;
-  refApi: number;
   /** Positions à nous tranchées par un vrai calcul Stockfish (hors cache). */
   engineNodes: number;
-  /** Positions retombées sur le gradient (moteur aveugle/évincé). */
+  /** Positions retombées sur le coup populaire (moteur aveugle/évincé). */
   engineFallbacks: number;
   /** Jugements servis depuis le cache (mémoire du run ou IndexedDB), sans calcul. */
   engineCached: number;
@@ -120,9 +123,6 @@ export interface AutoGenStats {
   /** Temps cumulé des consultations principales, classées par source. */
   apiWaitMs: number;
   cacheWaitMs: number;
-  /** Temps cumulé des lectures de référence, classées par source. */
-  refApiWaitMs: number;
-  refCacheWaitMs: number;
   /** Temps cumulé dans le juge moteur, cache compris. */
   engineWaitMs: number;
   /** Positions abandonnées après épuisement des réessais. */
@@ -170,6 +170,7 @@ const DEFAULTS: Required<Omit<AutoGenConfig, 'ratingsParam' | 'since' | 'engineJ
   maxDepth: 12,
   maxBranching: 4,
   minFreq: 0.3,
+  minGames: 0,
   coveragePercent: 100,
   minPopularity: 0.00002,
   adaptiveDepth: true,
@@ -197,21 +198,27 @@ export function gamesOf(m: LichessMove): number {
   return (m.white || 0) + (m.draws || 0) + (m.black || 0);
 }
 
-/** Sélection par couverture : tri parties ↓, filtre minFreq, coupe coverage/branching. */
+/** Sélection par couverture : tri parties ↓, filtre minGames (dur) puis minFreq, coupe coverage/branching. */
 export function selectMovesByCoverage(
   moves: LichessMove[],
   total: number,
-  cfg: Pick<AutoGenConfig, 'maxBranching' | 'minFreq' | 'coveragePercent'>,
+  cfg: Pick<AutoGenConfig, 'maxBranching' | 'minFreq' | 'minGames' | 'coveragePercent'>,
 ): { move: LichessMove; freq: number }[] {
   const maxBranching = cfg.maxBranching ?? DEFAULTS.maxBranching;
   const minFreq = cfg.minFreq ?? DEFAULTS.minFreq;
+  const minGames = cfg.minGames ?? DEFAULTS.minGames;
   const coverage = cfg.coveragePercent ?? DEFAULTS.coveragePercent;
   if (total <= 0 || moves.length === 0) return [];
   const ordered = [...moves].sort((a, b) => gamesOf(b) - gamesOf(a));
+  // Seuil dur en parties : un coup sous le seuil est exclu, sans repêchage
+  // (même le top-1 ne revient pas — une position sans coup éligible se
+  // termine, comptée en `emptyPositions` par l'appelant).
+  const eligible = minGames > 0 ? ordered.filter((m) => gamesOf(m) >= minGames) : ordered;
+  if (eligible.length === 0) return [];
   const selected: { move: LichessMove; freq: number }[] = [];
   let cumulative = 0;
   const coverageActive = coverage < 100;
-  for (const m of ordered) {
+  for (const m of eligible) {
     const freq = (gamesOf(m) / total) * 100;
     if (freq < minFreq) continue;
     selected.push({ move: m, freq });
@@ -220,7 +227,7 @@ export function selectMovesByCoverage(
     if (selected.length >= maxBranching) break;
   }
   if (selected.length === 0) {
-    const top = ordered[0];
+    const top = eligible[0];
     selected.push({ move: top, freq: (gamesOf(top) / total) * 100 });
   }
   return selected;
@@ -426,11 +433,8 @@ export function pickEngineReplies<T extends { uci: string; san: string }>(
   return mapped.filter((m) => best - m.value <= opts.equivalenceCp);
 }
 
-/** Parties mini du pool de référence pour un lift fiable (en dessous : repli popularité pure). */
-export const MIN_REF_GAMES = 30;
-
 /**
- * Tranche notre réplique par le juge moteur (null = repli gradient :
+ * Tranche notre réplique par le juge moteur (null = repli popularité :
  * pas de juge branché, un seul candidat, moteur aveugle ou évincé).
  * Rend les coups sains classés (meilleur d'abord après départage) ; c'est
  * l'appelant qui ne garde que le meilleur (contrat 1-coup des modes
@@ -448,7 +452,12 @@ async function judgeOwnReplies(
   cache: Map<string, EngineMove[]>,
   onPartial?: (ranked: EngineEvalLine[]) => void,
 ): Promise<{ candidate: LichessMove; value: number }[] | null> {
-  if (!settings || candidates.length < 2) return null;
+  if (candidates.length < 2) return null;
+  if (!settings) {
+    // Pas de juge branché (tests directs) : repli popularité, compté.
+    stats.engineFallbacks++;
+    return null;
+  }
 
   // Déclenchement intelligent (Cutoff) : si un coup est ultra-dominant dans la pratique
   // (ex: >= 85% des parties et gap >= 60% avec le second), pas besoin d'invoquer le moteur.
@@ -469,7 +478,7 @@ async function judgeOwnReplies(
     settings.multiPv ?? ENGINE_DEFAULTS.multiPv,
     // Couvrir tous les candidats : avec Branches max à 12, un MultiPV fixe
     // de 6 rendrait moins de lignes que de candidats → `pickEngineReplies`
-    // verrait un résultat partiel et replierait sur le gradient à chaque
+    // verrait un résultat partiel et replierait sur la popularité à chaque
     // position large (des centaines de replis, moteur inutile).
     Math.min(candidates.length, ENGINE_DEFAULTS.multiPvCap),
   );
@@ -576,33 +585,10 @@ async function judgeOwnReplies(
     return picked;
   } catch (err) {
     if (isAbortError(err) || signal?.aborted) throw err;
-    // Moteur aveugle/évincé : repli gradient, branche conservée (jamais d'abandon).
+    // Moteur aveugle/évincé : repli popularité, branche conservée (jamais d'abandon).
     stats.engineFallbacks++;
     return null;
   }
-}
-/** Plafond du multiplicateur de qualité (×3 : l'ancrage local reste dominant). */
-export const QUALITY_LIFT_CAP = 2;
-/** Plancher du multiplicateur (un coup abandonné des forts est écrasé, jamais inversé). */
-export const QUALITY_LIFT_FLOOR = 0.1;
-/** Lissage du lift (évite la division par ~0 sur les coups rarissimes). */
-const QUALITY_EPS = 0.02;
-
-/**
- * Qualité fréquentiste d'un coup, SANS winrate ni moteur : combine sa part
- * à notre niveau (`userGames/userTotal`, ancrage : sous-arbre riche en
- * parties) et son gradient Elo (part chez les Maîtres − part chez nous).
- * Un coup qui monte avec le niveau est boosté (×3 max), un coup que les
- * forts ont abandonné est écrasé (×0.1 min). Référence vide ou peu fournie
- * → popularité pure (repli automatique, aucun échec compté).
- */
-export function qualityScore(userGames: number, userTotal: number, refGames: number, refTotal: number): number {
-  const fUser = userTotal > 0 ? Math.max(0, userGames) / userTotal : 0;
-  if (!(refTotal >= MIN_REF_GAMES)) return fUser;
-  const fRef = Math.max(0, refGames) / refTotal;
-  const lift = (fRef - fUser) / (fUser + QUALITY_EPS);
-  const mult = Math.max(QUALITY_LIFT_FLOOR, Math.min(1 + QUALITY_LIFT_CAP, 1 + lift));
-  return fUser * mult;
 }
 
 /**
@@ -824,6 +810,11 @@ export async function generateAutoRepertoire(
     cfg.maxBranching = Number.isFinite(b)
       ? Math.max(1, Math.min(12, Math.round(b)))
       : DEFAULTS.maxBranching;
+    const rawMinGames = (cfg as AutoGenConfig).minGames as unknown;
+    const mg = typeof rawMinGames === 'number' ? rawMinGames : DEFAULTS.minGames;
+    cfg.minGames = Number.isFinite(mg)
+      ? Math.max(0, Math.min(1000000, Math.round(mg)))
+      : DEFAULTS.minGames;
   }
   const rootFen = startFen || INITIAL_FEN;
   const root: RepertoireRoot = { fen: rootFen, children: [] };
@@ -842,12 +833,12 @@ export async function generateAutoRepertoire(
   }
 
   const stats: AutoGenStats = {
-    sent: 0, cached: 0, api: 0, refCached: 0, refApi: 0, engineNodes: 0, engineFallbacks: 0,
+    sent: 0, cached: 0, api: 0, engineNodes: 0, engineFallbacks: 0,
     engineCached: 0, pruned: 0, transpositions: 0, explored: 0,
     depthPruned: 0, popPruned: 0, bookPenalized: 0, cacheBoostedChildren: 0,
     maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
-    positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0, refApiWaitMs: 0,
-    refCacheWaitMs: 0, engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
+    positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0,
+    engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
     quiescenceExtended: 0,
   };
   let completed = true;
@@ -1020,12 +1011,9 @@ export async function generateAutoRepertoire(
       continue;
     }
 
-    // À notre tour (modes blancs/noirs) : double lecture Maîtres pour le
-    // gradient Elo (trouver les coups sains sans winrate ni moteur) — SAUF
-    // juge moteur actif : Stockfish tranche seul, pas de double lecture.
+    // À notre tour (modes blancs/noirs) : Stockfish tranche seul.
     // Le pool adverse reste toujours le nôtre uniquement (ce qu'on va
-    // affronter) ; en mode 'both' ou endpoint Maîtres, pas de double
-    // lecture (pas de « nous » / même pool → repli popularité pure).
+    // affronter) ; en mode 'both', pas de choix à faire.
     let isOwnTurnNode = false;
     try {
       const turn = new Chess(fen).turn(); // 'w' | 'b'
@@ -1033,71 +1021,8 @@ export async function generateAutoRepertoire(
       isOwnTurnNode =
         (repColor === 'white' && turn === 'w') || (repColor === 'black' && turn === 'b');
     } catch {
-      /* FEN illisible : pas de double lecture */
+      /* FEN illisible : pas de choix moteur */
     }
-    // Part du coup chez les Maîtres (0 si absent) + total de référence.
-    // Échec de la référence → dégradation silencieuse (jamais d'abandon
-    // de branche : la qualité retombe sur la popularité pure).
-    let refTotal = 0;
-    const refGamesByKey = new Map<string, number>();
-    if (isOwnTurnNode && !cfg.engineJudge && (cfg.endpoint as string) !== 'masters') {
-      if (lastNetworkStartedAtMs !== undefined && (cfg.gapMs as number) > 0) {
-        try {
-          const remaining = remainingRequestGapMs(lastNetworkStartedAtMs, cfg.gapMs as number);
-          if (remaining > 0) await abortableSleep(remaining, events.signal);
-        } catch (err) {
-          if (isAbortError(err)) throw err;
-        }
-      }
-      const refStartedAt = Date.now();
-      try {
-        const ref = await fetchLichessMovesWithCacheStatus(
-          fen,
-          undefined,
-          'masters',
-          undefined,
-          undefined,
-          { signal: events.signal, since: cfg.since },
-        );
-        const refMoves = ref.data.moves || [];
-        refTotal = refMoves.reduce((s, m) => s + gamesOf(m), 0);
-        for (const m of refMoves) {
-          if (m.uci) refGamesByKey.set(`u:${normalizeCastleUci(fen, m.uci)}`, gamesOf(m));
-          refGamesByKey.set(`s:${m.san}`, gamesOf(m));
-        }
-        if (ref.source !== 'network') {
-          stats.refCached++;
-          stats.refCacheWaitMs += Date.now() - refStartedAt;
-        }
-        else {
-          stats.refApi++;
-          stats.refApiWaitMs += Date.now() - refStartedAt;
-          lastNetworkStartedAtMs = ref.networkStartedAtMs ?? refStartedAt;
-          if (stats.positionsInterrogees < (cfg.maxPositions as number) && (cfg.gapMs as number) > 0) {
-            try {
-              const remaining = remainingRequestGapMs(lastNetworkStartedAtMs, cfg.gapMs as number);
-              if (remaining > 0) await abortableSleep(remaining, events.signal);
-            } catch (err) {
-              if (isAbortError(err)) throw err;
-            }
-          }
-        }
-      } catch (err) {
-        if (isAbortError(err) || events.signal?.aborted) throw err;
-        stats.refApiWaitMs += Date.now() - refStartedAt;
-        refTotal = 0;
-        refGamesByKey.clear();
-      }
-    }
-    const refGamesOf = (m: LichessMove): number => {
-      if (m.uci) {
-        const g = refGamesByKey.get(`u:${normalizeCastleUci(fen, m.uci)}`);
-        if (g !== undefined) return g;
-      }
-      return refGamesByKey.get(`s:${m.san}`) ?? 0;
-    };
-    const qualityOf = (m: LichessMove): number =>
-      qualityScore(gamesOf(m), total, refGamesOf(m), refTotal);
 
     // Couverture pondérée par profondeur (large à la base, resserrée en haut).
     const effCoverage = depthWeightedCoverage(
@@ -1111,6 +1036,9 @@ export async function generateAutoRepertoire(
       ...cfg,
       maxBranching: branchCap,
       coveragePercent: effCoverage,
+      // Seuil parties mini = coups adverses uniquement : à notre tour,
+      // Stockfish tranche (les coups rares mais sains restent éligibles).
+      minGames: isOwnTurnNode ? 0 : cfg.minGames,
     });
     // Mats prioritaires (deux camps) : un mat est une fin forcée, pas un
     // avis — inclusion garantie même sous les seuils, exploré en premier.
@@ -1127,11 +1055,10 @@ export async function generateAutoRepertoire(
     }
     // Tri stable : mats d'abord, le reste garde l'ordre de couverture.
     selected.sort((a, b) => Number(isMateMove(b.move)) - Number(isMateMove(a.move)));
-    // Mode couleur : à notre tour, nos répliques — juge moteur OPT-IN
-    // (choix utilisateur explicite : le meilleur selon Stockfish, départagé
-    // en creusant si le top-2 est serré), sinon qualité gradient-Elo.
-    // Dans les deux cas : UNE SEULE réplique (contrat 1-coup des modes
-    // blancs/noirs). Si un mat est disponible à notre tour, la partie s'y
+    // Mode couleur : à notre tour, Stockfish choisit la réplique (le
+    // meilleur, départagé en creusant si le top-2 est serré ; repli coup
+    // le plus joué si aveugle).
+    // UNE SEULE réplique (contrat 1-coup des modes blancs/noirs). Si un mat est disponible à notre tour, la partie s'y
     // termine : on ne garde QUE les mats (le « meilleur » coup sain est
     // inatteignable, son sous-arbre consommerait du budget pour rien).
     if (isOwnTurnNode && selected.length > 0) {
@@ -1203,16 +1130,9 @@ export async function generateAutoRepertoire(
           const bestSel = others.find((s) => s.move === best.candidate) ?? others[0];
           selected = [bestSel];
         } else {
-          let best = others[0];
-          let bestQ = -Infinity;
-          for (const s of others) {
-            const q = qualityOf(s.move);
-            if (q > bestQ) {
-              bestQ = q;
-              best = s;
-            }
-          }
-          selected = [best];
+          // Moteur aveugle/évincé ou dominant : le plus joué (others suit
+          // l'ordre de couverture, popularité décroissante).
+          selected = [others[0]];
         }
       }
     }

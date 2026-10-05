@@ -7,7 +7,6 @@ import {
   depthWeightedCoverage,
   effectiveMaxDepth,
   pickEngineReplies,
-  qualityScore,
   findMateInOneUcis,
   generateAutoRepertoire,
   pruneLowValueLines,
@@ -76,6 +75,22 @@ describe('selectMovesByCoverage', () => {
     expect(sel).toHaveLength(1);
     expect(sel[0].move.san).toBe('e4');
   });
+
+  it('minGames : exclut les coups sous le seuil, sans repêchage', () => {
+    const moves = [lichessMove('e4', 6000), lichessMove('d4', 3000, 'd2d4'), lichessMove('a3', 50, 'a2a3')];
+    // a3 : 50 parties < 100 → exclu même si la couverture le prendrait.
+    const sel = selectMovesByCoverage(moves, 9050, { maxBranching: 4, minFreq: 0, minGames: 100, coveragePercent: 100 });
+    expect(sel.map((s) => s.move.san)).toEqual(['e4', 'd4']);
+    // 0 = désactivé : a3 revient.
+    const off = selectMovesByCoverage(moves, 9050, { maxBranching: 4, minFreq: 0, minGames: 0, coveragePercent: 100 });
+    expect(off.map((s) => s.move.san)).toEqual(['e4', 'd4', 'a3']);
+  });
+
+  it('minGames : aucun éligible → vide (pas de top-1 repêché)', () => {
+    const moves = [lichessMove('e4', 60), lichessMove('d4', 40, 'd2d4')];
+    const sel = selectMovesByCoverage(moves, 100, { maxBranching: 4, minFreq: 0, minGames: 100, coveragePercent: 100 });
+    expect(sel).toHaveLength(0);
+  });
 });
 
 describe('scores', () => {
@@ -132,21 +147,9 @@ describe('scores', () => {
     expect(noThreshold.stats.positionsInterrogees).toBe(3);
   });
 
-  it('qualityScore : booste ce qui monte avec le niveau, écrase le reste (sans winrate)', () => {
-    // Englund 1...e5 : 44 % chez nous, 1 % chez les Maîtres → écrasé (×0.1).
-    expect(qualityScore(4000, 9000, 100, 10000)).toBeCloseTo(0.0444, 3);
-    // Nf6 : 22 % chez nous, 40 % chez les Maîtres → boosté au-dessus de sa part.
-    expect(qualityScore(2000, 9000, 4000, 10000)).toBeCloseTo(0.385, 2);
-    // Cap : même adoré des Maîtres, un coup confidentiel reste sous les lignes installées.
-    expect(qualityScore(100, 10000, 9000, 10000)).toBeCloseTo(0.03, 6);
-    // Référence vide ou trop mince → popularité pure (repli automatique).
-    expect(qualityScore(3000, 9000, 0, 0)).toBeCloseTo(1 / 3, 9);
-    expect(qualityScore(3000, 9000, 5, 10)).toBeCloseTo(1 / 3, 9);
-  });
-
-  it('mode noirs : la réplique suit le gradient Maîtres, pas la popularité brute', async () => {
-    // Après 1.d4, e5 domine en bas (44 %) mais les Maîtres l'ont abandonné :
-    // la réplique retenue est Nf6 (22 % en bas, 40 % en haut), pas e5.
+  it('mode noirs : sans moteur → repli popularité, avec moteur → Stockfish tranche', async () => {
+    // Après 1.d4, e5 domine en bas (44 %) : sans juge, le repli popularité
+    // garde e5. Avec un juge qui déclasse e5, la réplique retenue est Nf6.
     const rootData = {
       white: 5000, draws: 1000, black: 4000,
       moves: [
@@ -169,34 +172,97 @@ describe('scores', () => {
         { san: 'Nf6', uci: 'g8f6', white: 1000, draws: 300, black: 700 },
       ],
     };
-    const refD4 = {
-      white: 5000, draws: 1000, black: 4000,
-      moves: [
-        { san: 'e5', uci: 'e7e5', white: 50, draws: 10, black: 40 },
-        { san: 'd5', uci: 'd7d5', white: 1750, draws: 350, black: 1400 },
-        { san: 'Nf6', uci: 'g8f6', white: 2000, draws: 400, black: 1600 },
-        { san: 'g6', uci: 'g7g6', white: 750, draws: 150, black: 600 },
-      ],
-    };
-    const empty = { white: 0, draws: 0, black: 0, moves: [] };
-    mockFetch.mockImplementation(async (fen: string, _token?: string, db?: 'masters' | 'lichess') => {
-      if (db === 'masters') return fen.includes('3P4') ? refD4 : empty;
+    mockFetch.mockImplementation(async (fen: string) => {
       if (fen.includes('4P3')) return afterE4;
       if (fen.includes('3P4')) return afterD4;
       return rootData;
     });
-    const { root, stats } = await generateAutoRepertoire(INITIAL_FEN, {
+    const cfgBase = {
       maxDepth: 2, maxBranching: 6, minFreq: 0, coveragePercent: 100,
-      maxPositions: 10, gapMs: 0, repertoireColor: 'black', pruneMinLineValue: 0,
-      endpoint: 'lichess', ratingsParam: '400,1000',
+      maxPositions: 10, gapMs: 0, repertoireColor: 'black' as const, pruneMinLineValue: 0,
+      endpoint: 'lichess' as const, ratingsParam: '400,1000',
+    };
+    // Sans juge : repli popularité → e5 partout.
+    const noEngine = await generateAutoRepertoire(INITIAL_FEN, cfgBase);
+    const d4no = noEngine.root.children.find((c) => c.san === 'd4');
+    const e4no = noEngine.root.children.find((c) => c.san === 'e4');
+    expect((d4no?.children ?? []).map((c) => c.san)).toEqual(['e5']);
+    expect((e4no?.children ?? []).map((c) => c.san)).toEqual(['e5']);
+    expect(noEngine.stats.engineFallbacks).toBe(2);
+    expect(noEngine.stats.failed).toBe(0);
+    // Avec juge : e5 déclassé → Nf6 après 1.d4.
+    mockFetch.mockImplementation(async (fen: string) => {
+      if (fen.includes('4P3')) return afterE4;
+      if (fen.includes('3P4')) return afterD4;
+      return rootData;
+    });
+    const em = (uci: string, san: string, cp?: number): EngineMove =>
+      ({ uci, san, cp, depth: 16, scoreFormatted: '', pvSans: [] });
+    const judge = vi.fn(async () => [
+      em('g8f6', 'Nf6', 30), em('d7d5', 'd5', 25), em('e7e5', 'e5', -50),
+    ]);
+    const { root, stats } = await generateAutoRepertoire(INITIAL_FEN, {
+      ...cfgBase, engineJudge: { judge },
     });
     const d4 = root.children.find((c) => c.san === 'd4');
-    const e4 = root.children.find((c) => c.san === 'e4');
     expect((d4?.children ?? []).map((c) => c.san)).toEqual(['Nf6']);
-    // Sans référence (vide) : repli popularité pure → e5.
-    expect((e4?.children ?? []).map((c) => c.san)).toEqual(['e5']);
     expect(stats.failed).toBe(0);
-    expect(stats.refApi).toBe(2);
+  });
+
+  it('minGames : les coups adverses sous le seuil sont exclus, nos répliques non', async () => {
+    // Racine (mode both : tout le monde joue plusieurs coups) : a3 ne fait
+    // que 50 parties → exclu avec minGames 100, gardé sans seuil.
+    const rootData = {
+      white: 5000, draws: 1000, black: 4000,
+      moves: [
+        { san: 'e4', uci: 'e2e4', white: 4000, draws: 800, black: 3200 },
+        { san: 'd4', uci: 'd2d4', white: 900, draws: 200, black: 700 },
+        { san: 'a3', uci: 'a2a3', white: 25, draws: 10, black: 15 },
+      ],
+    };
+    const empty = { white: 0, draws: 0, black: 0, moves: [] };
+    mockFetch.mockImplementation(async (fen: string) =>
+      (normalizeFen(fen) === normalizeFen(INITIAL_FEN) ? rootData : empty),
+    );
+    const cfgBase = {
+      maxDepth: 1, maxBranching: 4, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'both' as const, pruneMinLineValue: 0,
+    };
+    const filtered = await generateAutoRepertoire(INITIAL_FEN, { ...cfgBase, minGames: 100 });
+    expect(filtered.root.children.map((c) => c.san).sort()).toEqual(['d4', 'e4']);
+    const unfiltered = await generateAutoRepertoire(INITIAL_FEN, cfgBase);
+    expect(unfiltered.root.children.map((c) => c.san).sort()).toEqual(['a3', 'd4', 'e4']);
+  });
+
+  it('minGames : à notre tour, le seuil ne s\u2019applique pas (le moteur tranche)', async () => {
+    // Mode noirs, après 1.d4 : tous les candidats font < 100 parties, sans
+    // juge → le repli popularité garde quand même le plus joué (pas de
+    // branche vide à cause du seuil adverse).
+    const rootData = {
+      white: 5000, draws: 1000, black: 4000,
+      moves: [{ san: 'd4', uci: 'd2d4', white: 4000, draws: 1000, black: 3000 }],
+    };
+    const afterD4 = {
+      white: 45, draws: 11, black: 34,
+      moves: [
+        { san: 'e5', uci: 'e7e5', white: 20, draws: 3, black: 17 },
+        { san: 'd5', uci: 'd7d5', white: 15, draws: 5, black: 10 },
+      ],
+    };
+    const empty = { white: 0, draws: 0, black: 0, moves: [] };
+    mockFetch.mockImplementation(async (fen: string) => {
+      if (fen.includes('3P4')) return afterD4;
+      if (normalizeFen(fen) === normalizeFen(INITIAL_FEN)) return rootData;
+      return empty;
+    });
+    const { root, stats } = await generateAutoRepertoire(INITIAL_FEN, {
+      maxDepth: 2, maxBranching: 6, minFreq: 0, minGames: 100, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'black' as const, pruneMinLineValue: 0,
+      endpoint: 'lichess' as const, ratingsParam: '400,1000',
+    });
+    const d4 = root.children.find((c) => c.san === 'd4');
+    expect((d4?.children ?? []).map((c) => c.san)).toEqual(['e5']);
+    expect(stats.failed).toBe(0);
   });
 
   it('pickEngineReplies : fenêtre ±30, mat pour nous gardé, aveugle → null', () => {
@@ -309,7 +375,7 @@ describe('scores', () => {
   it('juge moteur : multi-répliques gardées, ex æquo départagés en creusant', async () => {
     // Après 1.d4 : e5 domine en bas mais le moteur le déclasse ; d5 et Nf6
     // équivalents (±30) sont gardés tous les deux, puis le creusage (D22)
-    // sépare Nf6 → réplique unique. Sans moteur : repli gradient.
+    // sépare Nf6 → réplique unique. Sans moteur : repli popularité.
     const rootData = {
       white: 4000, draws: 1000, black: 3000,
       moves: [
@@ -324,13 +390,7 @@ describe('scores', () => {
         { san: 'Nf6', uci: 'g8f6', white: 1000, draws: 300, black: 700 },
       ],
     };
-    const empty = { white: 0, draws: 0, black: 0, moves: [] };
-    let mastersCalls = 0;
-    mockFetch.mockImplementation(async (fen: string, _token?: string, db?: 'masters' | 'lichess') => {
-      if (db === 'masters') {
-        mastersCalls++;
-        return empty;
-      }
+    mockFetch.mockImplementation(async (fen: string) => {
       if (fen.includes('3P4')) return afterD4;
       return rootData;
     });
@@ -369,7 +429,6 @@ describe('scores', () => {
     const d4 = root.children.find((c) => c.san === 'd4');
     expect((d4?.children ?? []).map((c) => c.san)).toEqual(['Nf6']);
     expect(judge).toHaveBeenCalledTimes(2); // tri + creusage
-    expect(mastersCalls).toBe(0); // juge moteur actif : Stockfish tranche seul, pas de double lecture
     expect(stats.engineNodes).toBe(1);
     expect(engineEvals).toHaveLength(1);
     expect(engineEvals[0].ranked.map((r) => r.san)).toEqual(['Nf6']);
@@ -380,9 +439,8 @@ describe('scores', () => {
     expect(stats.failed).toBe(0);
   });
 
-  it('juge moteur aveugle → repli gradient, branche conservée', async () => {
-    mockFetch.mockImplementation(async (fen: string, _token?: string, db?: 'masters' | 'lichess') => {
-      if (db === 'masters') return { white: 0, draws: 0, black: 0, moves: [] };
+  it('juge moteur aveugle → repli popularité, branche conservée', async () => {
+    mockFetch.mockImplementation(async (fen: string) => {
       if (fen.includes('3P4')) {
         return {
           white: 4500, draws: 1100, black: 3400,
@@ -406,7 +464,7 @@ describe('scores', () => {
       endpoint: 'lichess' as const, ratingsParam: '400,1000',
       engineJudge: { judge },
     });
-    // Repli gradient : e5 (populaire en bas, sans référence) reste la réplique.
+    // Repli popularité : e5 (le plus joué, sans juge utilisable) reste la réplique.
     const d4 = root.children.find((c) => c.san === 'd4');
     expect((d4?.children ?? []).map((c) => c.san)).toEqual(['e5']);
     expect(stats.engineFallbacks).toBe(1);
