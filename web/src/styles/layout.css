@@ -53,14 +53,15 @@ button.side-brand:hover { background: var(--bg-raised); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent-tint);
-  border: 1px solid var(--accent);
+  background: transparent;
+  border: none;
   border-radius: var(--r-control);
   font-size: 24px;
   line-height: 1;
   color: var(--accent-text);
   flex: none;
 }
+.brand-logo svg { width: 22px; height: 22px; display: block; }
 .side-brand-text { display: flex; flex-direction: column; min-width: 0; }
 .side-brand-name { font-family: var(--font-display); font-size: 18px; }
 .side-brand-sub { font-size: var(--fs-kicker); color: var(--text-3); }

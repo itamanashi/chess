@@ -1,0 +1,326 @@
+/* ------------------------------------------------------------------
+ * Barre latérale « apple-design » (style officiel).
+ * Préfixe asa- : couche visuelle de Sidebar.tsx.
+ * Principes WWDC « Designing Fluid Interfaces » traduits en CSS :
+ * feedback :active immédiat (pointer-down), ressorts émulés, matériau
+ * translucide hiérarchisé, groupes « réglages », type optique,
+ * reduced-motion / reduced-transparency.
+ * ------------------------------------------------------------------ */
+
+.asa-sidebar {
+  /* Tokens motion : mêmes ressorts que la variante Bibliothèque. */
+  --asa-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --asa-dur-tap: 100ms;
+  --asa-dur-ui: 280ms;
+  --asa-glass-bg: rgb(22 21 18 / 0.72);
+  --asa-group-bg: rgb(216 210 198 / 0.055);
+  --asa-cell-active-bg: rgb(216 210 198 / 0.16);
+  --asa-hairline: rgb(236 232 223 / 0.1);
+  --asa-radius: 14px;
+
+  width: 248px;
+  flex: none;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-3);
+  background: var(--asa-glass-bg);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+/* --- Marque : press immédiat, type optique resserré. --- */
+.asa-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 52px;
+  padding: var(--sp-2);
+  border: none;
+  border-radius: var(--asa-radius);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-ui);
+  text-align: left;
+  width: 100%;
+  transition: background-color var(--asa-dur-ui) var(--asa-spring), transform var(--asa-dur-tap) ease-out;
+}
+button.asa-brand { cursor: pointer; }
+button.asa-brand:hover { background: var(--asa-group-bg); }
+button.asa-brand:active { transform: scale(0.98); }
+.asa-brand-mark { width: 34px; height: 34px; flex: none; color: var(--accent-text); }
+.asa-brand-mark svg { width: 100%; height: 100%; display: block; }
+.asa-brand-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.asa-brand-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: -0.01em; /* display : tracking resserré */
+  white-space: nowrap;
+}
+.asa-brand-sub { font-size: var(--fs-kicker); color: var(--text-3); }
+.asa-brand-chevron { color: var(--text-3); flex: none; }
+
+/* --- Étiquette de section : petit texte = tracking positif. --- */
+.asa-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: var(--sp-2) var(--sp-2) 0;
+}
+
+/* --- Groupe « réglages » : carte encastrée, séparateurs capillaires. --- */
+.asa-group {
+  background: var(--asa-group-bg);
+  border: 1px solid var(--asa-hairline);
+  border-radius: var(--asa-radius);
+  overflow: hidden;
+  flex: none;
+}
+
+/* --- Cellule : cible 44px, press sur pointer-down, ressort au relâchement. --- */
+.asa-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--asa-dur-ui) var(--asa-spring),
+    color var(--asa-dur-ui) var(--asa-spring),
+    transform var(--asa-dur-tap) ease-out;
+}
+.asa-group > .asa-cell + .asa-cell { border-top: 1px solid var(--asa-hairline); }
+.asa-cell:hover { background: rgb(216 210 198 / 0.07); color: var(--text); }
+.asa-cell:active { transform: scale(0.99); }
+.asa-cell:disabled { opacity: 0.45; cursor: default; }
+.asa-cell:disabled:active { transform: none; }
+.asa-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.asa-cell.is-active { background: var(--asa-cell-active-bg); color: var(--text); }
+.asa-cell-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asa-cell.is-active .asa-cell-label { font-weight: 600; }
+.asa-cell-value {
+  font-size: var(--fs-small);
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40%;
+}
+.asa-chevron { color: var(--text-3); flex: none; transition: transform var(--asa-dur-ui) var(--asa-spring); }
+.asa-chevron.is-open { transform: rotate(90deg); }
+
+/* --- Pastille : chiffres tabulaires, pilule. --- */
+.asa-badge {
+  flex: none;
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(216 210 198 / 0.18);
+  color: var(--text);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* --- Carte contexte : même groupe, contenu aéré. --- */
+.asa-context { padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+.asa-context-title {
+  font-weight: 600;
+  font-size: var(--fs-emph);
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.asa-context-badges { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.asa-context-stats { display: flex; gap: var(--sp-2); font-size: var(--fs-small); color: var(--text-3); }
+
+.asa-spacer { flex: 1; min-height: var(--sp-2); }
+
+/* --- Boutons : press immédiat, ressort symétrique. --- */
+.asa-exports { display: flex; gap: var(--sp-2); }
+.asa-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 40px;
+  padding: var(--sp-2);
+  border-radius: 12px;
+  border: 1px solid var(--asa-hairline);
+  background: var(--asa-group-bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  transition:
+    background-color var(--asa-dur-ui) var(--asa-spring),
+    transform var(--asa-dur-tap) ease-out;
+}
+.asa-btn:hover { background: rgb(216 210 198 / 0.1); }
+.asa-btn:active { transform: scale(0.97); }
+.asa-btn:disabled { opacity: 0.45; cursor: default; }
+.asa-btn:disabled:active { transform: none; }
+.asa-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.asa-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color var(--asa-dur-ui) var(--asa-spring), transform var(--asa-dur-tap) ease-out;
+}
+.asa-icon-btn:hover { background: rgb(216 210 198 / 0.1); color: var(--text); }
+.asa-icon-btn:active { transform: scale(0.92); }
+
+/* --- Styles de pièces : options en lignes, sélection teintée. --- */
+.asa-skin-options { border-top: 1px solid var(--asa-hairline); }
+.asa-skin-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 44px;
+  cursor: pointer;
+  transition: background-color var(--asa-dur-ui) var(--asa-spring);
+}
+.asa-skin-option + .asa-skin-option { border-top: 1px solid var(--asa-hairline); }
+.asa-skin-option:hover { background: rgb(216 210 198 / 0.06); }
+.asa-skin-option.is-selected { background: var(--asa-cell-active-bg); }
+.asa-skin-option input {
+  accent-color: var(--study);
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin: 0;
+}
+.asa-skin-name { font-size: var(--fs-body); }
+
+/* --- Profil : cellule basse avec chevron de divulgation. --- */
+.asa-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--asa-hairline);
+  border-radius: var(--asa-radius);
+  background: var(--asa-group-bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--asa-dur-ui) var(--asa-spring), transform var(--asa-dur-tap) ease-out;
+}
+.asa-profile:hover { background: rgb(216 210 198 / 0.1); }
+.asa-profile:active { transform: scale(0.98); }
+.asa-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; }
+.asa-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(216 210 198 / 0.16);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* --- Carte compte : tête + champs + progression. --- */
+.asa-account { padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+.asa-account-head { display: flex; align-items: center; justify-content: space-between; }
+.asa-account-head .asa-kicker { padding: 0; }
+.asa-account-photo { width: 100%; border-radius: 12px; object-fit: cover; }
+.asa-progress { display: flex; flex-direction: column; gap: var(--sp-1); }
+.asa-progress-row { display: flex; align-items: center; justify-content: space-between; }
+
+/* --- Mobile : barre haute, groupes en défilement horizontal. --- */
+@media (max-width: 760px) {
+  .asa-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .asa-kicker,
+  .asa-context,
+  .asa-spacer,
+  .asa-exports { display: none; }
+  .asa-group { overflow-x: auto; }
+  .asa-group > .asa-cell { width: auto; flex: none; }
+  .asa-group > .asa-cell + .asa-cell { border-top: 0; border-left: 1px solid var(--asa-hairline); }
+  nav.asa-group { display: flex; }
+  .asa-profile {
+    position: absolute;
+    top: 12px;
+    right: var(--sp-3);
+    width: auto;
+    max-width: 136px;
+  }
+  .asa-account {
+    position: absolute;
+    top: 104px;
+    right: var(--sp-2);
+    width: min(320px, calc(100vw - 16px));
+    z-index: 50;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-layer);
+  }
+}
+
+/* --- Vestibulaire : fondus courts, pas de ressorts ni de press. --- */
+@media (prefers-reduced-motion: reduce) {
+  .asa-sidebar .asa-brand,
+  .asa-sidebar .asa-cell,
+  .asa-sidebar .asa-btn,
+  .asa-sidebar .asa-icon-btn,
+  .asa-sidebar .asa-profile,
+  .asa-sidebar .asa-skin-option,
+  .asa-sidebar .asa-chevron {
+    transition: background-color 120ms ease, opacity 120ms ease;
+    transform: none;
+  }
+  .asa-sidebar .asa-cell:active,
+  .asa-sidebar .asa-btn:active,
+  .asa-sidebar .asa-icon-btn:active,
+  .asa-sidebar .asa-profile:active,
+  .asa-sidebar button.asa-brand:active { transform: none; }
+  .asa-sidebar .asa-chevron.is-open { transform: none; }
+}
+
+/* --- Transparence réduite : verre dépoli, pas de flou. --- */
+@media (prefers-reduced-transparency: reduce) {
+  .asa-sidebar {
+    background: var(--bg-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

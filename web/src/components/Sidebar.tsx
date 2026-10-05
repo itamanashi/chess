@@ -3,8 +3,11 @@ import type { RepertoireItem, StudioTab } from '../types/chess';
 import { eloTargetLabel } from '../i18n';
 import type { ChesscomAccount } from '../hooks/useChesscomAccount';
 import type { PieceSkin } from '../storage/preferences';
+import BrandMark from './BrandMark';
+import '../styles/sidebar.apple-design.css';
 import {
   BookOpen,
+  ChevronRight,
   Download,
   GitBranch,
   Globe,
@@ -21,7 +24,16 @@ import {
   X,
 } from 'lucide-react';
 
-interface SidebarProps {
+/* ------------------------------------------------------------------
+ * Barre latérale « apple-design » (promue officielle) : navigation,
+ * contexte, compte. Principes WWDC « Designing Fluid Interfaces »
+ * traduits en CSS : feedback :active immédiat (pointer-down, pas au
+ * relâchement), ressorts émulés interruptibles, matériau translucide
+ * hiérarchisé, groupes « réglages », type optique, reduced-motion /
+ * reduced-transparency.
+ * ------------------------------------------------------------------ */
+
+export interface SidebarProps {
   activeView: 'library' | 'studio';
   activeRepertoire: RepertoireItem | null;
   onBackToLibrary: () => void;
@@ -83,20 +95,13 @@ const PIECE_SKINS: Array<{ id: PieceSkin; label: string }> = [
   { id: 'california', label: 'California' },
 ];
 
-/** Compteur compact de pastille (12 345 → « 12,3 k »). */
+/** Compteur compact de pastille (12 345 → « 12,3 k ») : identique à l'original. */
 function compactCount(n: number): string {
   if (n < 1000) return n.toLocaleString('fr-FR');
   const k = n / 1000;
   return `${k >= 100 ? Math.round(k) : (Math.round(k * 10) / 10).toLocaleString('fr-FR')} k`;
 }
 
-/**
- * Barre latérale (remplace l'ancien bandeau haut) : navigation toujours
- * visible — bibliothèque, onglets studio, « Mes parties » et l'analyse
- * libre sont accessibles sans ouvrir un répertoire. Sans répertoire actif,
- * les vues liées à un répertoire sont désactivées,
- * avec garde redondante dans handleChangeStudioTab).
- */
 export const Sidebar: React.FC<SidebarProps> = ({
   activeView,
   activeRepertoire,
@@ -113,12 +118,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPieceSkinChange,
 }) => {
   const inStudio = activeView === 'studio';
-  // Carte compte dépliée au clic sur le profil (sinon chip compact).
   const [accountOpen, setAccountOpen] = useState(false);
   const [pieceSkinsOpen, setPieceSkinsOpen] = useState(false);
-  // Avatar en échec (URL morte) : on retombe sur l'initiale. Comparé à
-  // l'URL courante (pas de setState dans un effet) : un nouvel avatar
-  // réessaie naturellement.
   const [brokenAvatar, setBrokenAvatar] = useState<string | null>(null);
   const chessUser = account.linkedUser;
   const avatar = account.profile?.avatar ?? '';
@@ -136,8 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onChangeStudioTab(tab);
   };
 
-  // Raccourcis Alt+0 (bibliothèque) … Alt+7 (onglets studio) : inactifs en
-  // saisie et sur les onglets désactivés (même garde que le clic).
+  // Raccourcis Alt+0 … Alt+7 : identiques à l'original (mêmes gardes).
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
@@ -160,41 +160,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [inStudio, activeRepertoire, onBackToLibrary, onChangeStudioTab, onOpenGames, onOpenAnalysis]);
 
   const gamesCount = account.games.length;
+  const skinLabel = PIECE_SKINS.find(({ id }) => id === pieceSkin)?.label ?? 'Classique';
 
   return (
-    <aside className="app-sidebar">
+    <aside className="asa-sidebar" aria-label="Barre latérale">
       {inStudio ? (
-        <button className="side-brand" onClick={onBackToLibrary} title="Retour à la bibliothèque">
-          <span className="brand-logo">♞</span>
-          <span className="side-brand-text">
-            <span className="side-brand-name">Repertoire Studio</span>
-            <span className="side-brand-sub">Ouvertures & entraînement</span>
+        <button type="button" className="asa-brand" onClick={onBackToLibrary} title="Retour à la bibliothèque">
+          <span className="asa-brand-mark" aria-hidden="true"><BrandMark /></span>
+          <span className="asa-brand-text">
+            <span className="asa-brand-name">Repertoire Studio</span>
+            <span className="asa-brand-sub">Ouvertures & entraînement</span>
           </span>
+          <ChevronRight size={15} className="asa-brand-chevron" aria-hidden="true" />
         </button>
       ) : (
-        <div className="side-brand" title="Chess Repertoire Studio">
-          <span className="brand-logo">♞</span>
-          <span className="side-brand-text">
-            <span className="side-brand-name">Repertoire Studio</span>
-            <span className="side-brand-sub">Ouvertures & entraînement</span>
+        <div className="asa-brand" title="Chess Repertoire Studio">
+          <span className="asa-brand-mark" aria-hidden="true"><BrandMark /></span>
+          <span className="asa-brand-text">
+            <span className="asa-brand-name">Repertoire Studio</span>
+            <span className="asa-brand-sub">Ouvertures & entraînement</span>
           </span>
         </div>
       )}
 
-      <nav className="side-nav" aria-label="Navigation principale">
+      <nav className="asa-group" aria-label="Navigation principale">
         <button
-          className={`side-nav-btn ${!inStudio ? 'active' : ''}`}
+          type="button"
+          className={`asa-cell ${!inStudio ? 'is-active' : ''}`}
           onClick={inStudio ? onBackToLibrary : undefined}
           disabled={!inStudio}
           aria-label="Bibliothèque"
           title={inStudio ? 'Retour à la bibliothèque (Alt+0)' : 'Vous êtes dans la bibliothèque (Alt+0)'}
         >
-          <Library size={16} />
-          <span>Bibliothèque</span>
+          <Library size={17} aria-hidden="true" />
+          <span className="asa-cell-label">Bibliothèque</span>
         </button>
+      </nav>
 
-        <div className="side-nav-label">Studio</div>
+      <div className="asa-kicker" aria-hidden="true">Studio</div>
 
+      <nav className="asa-group" aria-label="Onglets du studio">
         {STUDIO_TABS.map(({ key, label, hint, shortcut, Icon }) => {
           const needsRep = key !== 'games' && key !== 'analysis';
           const disabled = needsRep && !activeRepertoire;
@@ -203,16 +208,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={key}
-              className={`side-nav-btn ${active ? 'active' : ''}`}
+              type="button"
+              className={`asa-cell ${active ? 'is-active' : ''}`}
               onClick={() => handleTab(key)}
               disabled={disabled}
               aria-label={showBadge ? `${label}, ${gamesCount.toLocaleString('fr-FR')} parties` : label}
               title={disabled ? 'Ouvrez un répertoire pour accéder à cet onglet' : `${hint} (Alt+${shortcut})`}
             >
-              <Icon size={16} />
-              <span>{label}</span>
+              <Icon size={17} aria-hidden="true" />
+              <span className="asa-cell-label">{label}</span>
               {showBadge && (
-                <span className="side-nav-badge" title={`${gamesCount.toLocaleString('fr-FR')} parties chargées`}>
+                <span className="asa-badge" title={`${gamesCount.toLocaleString('fr-FR')} parties chargées`}>
                   {compactCount(gamesCount)}
                 </span>
               )}
@@ -222,9 +228,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {activeRepertoire && (
-        <div className="side-context-card" title={activeRepertoire.title}>
-          <div className="side-context-title">{activeRepertoire.title}</div>
-          <div className="side-context-badges">
+        <div className="asa-group asa-context" title={activeRepertoire.title}>
+          <div className="asa-context-title">{activeRepertoire.title}</div>
+          <div className="asa-context-badges">
             <span className={`rep-color-tag-sm tag-${activeRepertoire.color}`}>
               {activeRepertoire.color === 'white' ? '♔ Blancs' : '♚ Noirs'}
             </span>
@@ -234,7 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </div>
           {repertoireStats && (
-            <div className="side-context-stats">
+            <div className="asa-context-stats">
               <span>{repertoireStats.totalPositions.toLocaleString('fr-FR')} pos</span>
               <span aria-hidden="true">•</span>
               <span>{repertoireStats.totalLines} lignes</span>
@@ -243,45 +249,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      <div className="side-spacer" />
+      <div className="asa-spacer" />
 
       {activeRepertoire && (
-        <div className="side-actions">
-          <button className="side-action-btn" onClick={onExportPgn} title="Exporter en PGN">
-            <Download size={15} />
-            <span className="btn-label">PGN</span>
+        <div className="asa-exports">
+          <button type="button" className="asa-btn" onClick={onExportPgn} title="Exporter en PGN">
+            <Download size={15} aria-hidden="true" />
+            <span>PGN</span>
           </button>
-          <button className="side-action-btn" onClick={onExportJson} title="Exporter en JSON">
-            <Download size={15} />
-            <span className="btn-label">JSON</span>
+          <button type="button" className="asa-btn" onClick={onExportJson} title="Exporter en JSON">
+            <Download size={15} aria-hidden="true" />
+            <span>JSON</span>
           </button>
         </div>
       )}
 
-      <section className="side-piece-skin" aria-labelledby="piece-skin-title">
-        <div className="side-piece-skin-head">
-          <h2 id="piece-skin-title" className="form-label">Style des pièces</h2>
-          <button
-            className="piece-skin-toggle"
-            type="button"
-            aria-expanded={pieceSkinsOpen}
-            aria-controls="piece-skin-options"
-            onClick={() => setPieceSkinsOpen((open) => !open)}
-          >
-            {pieceSkinsOpen ? 'Réduire' : 'Déployer'}
-          </button>
-        </div>
-        {!pieceSkinsOpen && (
-          <span className="piece-skin-current">
-            {PIECE_SKINS.find(({ id }) => id === pieceSkin)?.label ?? 'Classique'}
-          </span>
-        )}
-        <div id="piece-skin-options" className={`piece-skin-options ${pieceSkinsOpen ? 'is-open' : ''}`} hidden={!pieceSkinsOpen}>
+      <section className="asa-group asa-disclosure" aria-labelledby="asa-piece-skin-title">
+        <button
+          type="button"
+          className="asa-cell"
+          aria-expanded={pieceSkinsOpen}
+          aria-controls="asa-piece-skin-options"
+          onClick={() => setPieceSkinsOpen((open) => !open)}
+        >
+          <span className="asa-cell-label" id="asa-piece-skin-title">Style des pièces</span>
+          {!pieceSkinsOpen && <span className="asa-cell-value">{skinLabel}</span>}
+          <ChevronRight
+            size={15}
+            aria-hidden="true"
+            className={`asa-chevron ${pieceSkinsOpen ? 'is-open' : ''}`}
+          />
+        </button>
+        <div
+          id="asa-piece-skin-options"
+          className={`asa-skin-options ${pieceSkinsOpen ? 'is-open' : ''}`}
+          hidden={!pieceSkinsOpen}
+        >
           {PIECE_SKINS.map(({ id, label }) => (
-            <label key={id} className={`piece-skin-option ${pieceSkin === id ? 'selected' : ''}`}>
+            <label key={id} className={`asa-skin-option ${pieceSkin === id ? 'is-selected' : ''}`}>
               <input
                 type="radio"
-                name="piece-skin"
+                name="asa-piece-skin"
                 value={id}
                 checked={pieceSkin === id}
                 onChange={() => onPieceSkinChange(id)}
@@ -293,67 +301,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 ))}
               </span>
-              <span className="piece-skin-name">{label}</span>
+              <span className="asa-skin-name">{label}</span>
             </label>
           ))}
         </div>
       </section>
 
       {!accountOpen ? (
-        chessUser ? (
-          <button
-            className="side-profile-chip"
-            onClick={() => setAccountOpen(true)}
-            aria-label={chessUser ? `Compte Chess.com : ${chessUser}` : 'Lier un compte Chess.com'}
-            title={`Compte Chess.com : ${chessUser} — gérer le compte`}
-          >
-            {showPhoto ? (
+        <button
+          type="button"
+          className="asa-profile"
+          onClick={() => setAccountOpen(true)}
+          aria-label={chessUser ? `Compte Chess.com : ${chessUser}` : 'Lier un compte Chess.com'}
+          title={chessUser ? `Compte Chess.com : ${chessUser} — gérer le compte` : 'Lier un compte Chess.com'}
+        >
+          {chessUser ? (
+            showPhoto ? (
               <img
                 src={avatar}
                 alt={`Photo de profil de ${chessUser}`}
-                className="side-profile-photo"
+                className="asa-avatar"
                 onError={() => setBrokenAvatar(avatar)}
               />
             ) : (
-              <span className="side-profile-avatar" aria-hidden="true">
+              <span className="asa-avatar asa-avatar-fallback" aria-hidden="true">
                 {chessUser[0].toUpperCase()}
               </span>
-            )}
-            <span className="side-profile-name">@{chessUser}</span>
-            {account.syncing && (
-              <span className="side-sync-dot" title="Téléchargement de l'historique en cours…" aria-label="Téléchargement en cours" />
-            )}
-          </button>
-        ) : (
-          <button
-            className="side-profile-chip"
-            onClick={() => setAccountOpen(true)}
-            aria-label="Lier un compte Chess.com"
-            title="Lier un compte Chess.com"
-          >
-            <span className="side-profile-avatar" aria-hidden="true">
+            )
+          ) : (
+            <span className="asa-avatar asa-avatar-fallback" aria-hidden="true">
               <User size={15} />
             </span>
-            <span className="side-profile-name">Lier Chess.com</span>
-            {account.syncing && (
-              <span className="side-sync-dot" title="Téléchargement de l'historique en cours…" aria-label="Téléchargement en cours" />
-            )}
-          </button>
-        )
+          )}
+          <span className="asa-cell-label">{chessUser ? `@${chessUser}` : 'Lier Chess.com'}</span>
+          {account.syncing && (
+            <span className="side-sync-dot" title="Téléchargement de l'historique en cours…" aria-label="Téléchargement en cours" />
+          )}
+          <ChevronRight size={15} className="asa-chevron" aria-hidden="true" />
+        </button>
       ) : (
-        <div className="side-account-card">
-          <div className="side-account-head">
-            <span className="side-nav-label">Compte Chess.com</span>
-            <button className="icon-btn" onClick={() => setAccountOpen(false)} title="Fermer">
+        <div className="asa-group asa-account">
+          <div className="asa-account-head">
+            <span className="asa-kicker">Compte Chess.com</span>
+            <button type="button" className="asa-icon-btn" onClick={() => setAccountOpen(false)} title="Fermer">
               <X size={14} />
             </button>
           </div>
           {showPhoto && (
-            <img src={avatar} alt={`Photo de profil de ${chessUser}`} className="side-account-photo" onError={() => setBrokenAvatar(avatar)} />
+            <img src={avatar} alt={`Photo de profil de ${chessUser}`} className="asa-account-photo" onError={() => setBrokenAvatar(avatar)} />
           )}
-          <label className="form-label" htmlFor="chesscom-username">Pseudo Chess.com</label>
+          <label className="form-label" htmlFor="asa-chesscom-username">Pseudo Chess.com</label>
           <input
-            id="chesscom-username"
+            id="asa-chesscom-username"
             type="text"
             className="text-input"
             placeholder="Pseudo (ex. hikaru)"
@@ -368,46 +367,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {chessUser && account.linkedUser === account.username.trim().toLowerCase() && account.username.trim() !== '' ? (
             <>
               <button
-                className="side-action-btn"
+                type="button"
+                className="asa-btn"
                 onClick={() => void account.startSync(account.linkedUser)}
                 disabled={account.syncing}
               >
-                <RefreshCw size={14} />
-                <span className="btn-label">{account.syncing ? 'Téléchargement…' : 'Actualiser'}</span>
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>{account.syncing ? 'Téléchargement…' : 'Actualiser'}</span>
               </button>
               <button
-                className="side-action-btn"
+                type="button"
+                className="asa-btn"
                 onClick={account.handleUnlink}
                 disabled={account.syncing}
                 title="Dissocier ce compte"
               >
-                <Unlink size={14} />
-                <span className="btn-label">Dissocier</span>
+                <Unlink size={14} aria-hidden="true" />
+                <span>Dissocier</span>
               </button>
             </>
           ) : (
             <button
-              className="side-action-btn"
+              type="button"
+              className="asa-btn"
               onClick={() => void account.startSync(account.username)}
               disabled={account.syncing || !account.username.trim()}
             >
-              <Link2 size={14} />
-              <span className="btn-label">{account.syncing ? 'Téléchargement…' : 'Lier et télécharger'}</span>
+              <Link2 size={14} aria-hidden="true" />
+              <span>{account.syncing ? 'Téléchargement…' : 'Lier et télécharger'}</span>
             </button>
           )}
           {account.syncing && account.progress.total > 0 && (
-            <div className="side-account-progress">
+            <div className="asa-progress">
               <div className="advice-scorebar" title="Téléchargement de l'historique">
                 <div
                   className="advice-scorebar-fill"
                   style={{ width: `${Math.max(2, Math.round((account.progress.done / account.progress.total) * 100))}%` }}
                 />
               </div>
-              <div className="side-account-progress-row">
+              <div className="asa-progress-row">
                 <span className="text-muted">
                   {account.progress.done}/{account.progress.total}
                 </span>
-                <button className="side-action-btn" onClick={account.cancelSync} title="Annuler">
+                <button type="button" className="asa-icon-btn" onClick={account.cancelSync} title="Annuler">
                   <X size={13} />
                 </button>
               </div>
@@ -415,15 +417,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           {account.error && <div className="mini-error-box"><span>{account.error}</span></div>}
           <button
-            className="side-action-btn"
+            type="button"
+            className="asa-btn"
             onClick={() => {
               setAccountOpen(false);
               handleTab('games');
             }}
             title="Ouvrir l'onglet Mes parties"
           >
-            <History size={14} />
-            <span className="btn-label">Voir mes parties</span>
+            <History size={14} aria-hidden="true" />
+            <span>Voir mes parties</span>
           </button>
         </div>
       )}
