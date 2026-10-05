@@ -1,0 +1,112 @@
+/* ------------------------------------------------------------------
+ * Onglet Parties (Mes parties) — refonte Apple, portée .games-apple.
+ * Logique, props et a11y inchangés : seuls matériaux, segments et
+ * table évoluent (verre, pilules, en-tête flouté sticky).
+ * ------------------------------------------------------------------ */
+
+.games-apple .panel-card {
+  border-radius: 16px;
+}
+
+/* Titre : tracking resserré propre aux petites tailles. */
+.games-apple .card-title { letter-spacing: -0.01em; }
+
+/* Résumé : chiffres en chasse fixe, statut discret. */
+.games-apple .chesscom-summary strong { font-variant-numeric: tabular-nums; }
+
+/* Résultat : pastille (point + libellé), couleur pilotée par la donnée. */
+.ga-result {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+.ga-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ga-c, var(--text-3));
+}
+
+/* Filtres segmentés : piste translucide unique, pastille active.
+   Jamais de translate/glow : fond et bordure seuls (système). */
+.games-apple .chesscom-filters { gap: var(--sp-3); }
+.games-apple .chesscom-filter-group {
+  background: rgb(236 232 223 / 0.06);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+}
+.games-apple .chesscom-filter-group .db-toggle-btn {
+  border: none;
+  border-radius: 999px;
+  padding: var(--sp-1) var(--sp-3);
+}
+.games-apple .chesscom-filter-group .db-toggle-btn:hover:not(:disabled) { color: var(--text); }
+.games-apple .chesscom-filter-group .db-toggle-btn.active {
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* Table : carte arrondie, en-tête verre sticky (le contenu défile
+   dessous), lignes en fondus, retour instantané à l'appui. */
+.games-apple .table-scroll {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: auto;
+  /* Remplit la carte jusqu'en bas (chaîne flex ci-dessous), pas de
+     plafond : le panneau descend jusqu'au bas de l'écran. */
+  flex: 1;
+  min-height: 240px;
+  max-height: none;
+}
+.games-apple .chesscom-games-table th,
+.games-apple .chesscom-games-table td {
+  padding: 8px 10px;
+}
+.games-apple .chesscom-games-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgb(22 21 18 / 0.82);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+}
+.games-apple .chesscom-games-table tbody tr:active { background: var(--bg-raised); }
+
+/* « Afficher plus » en pilule pleine largeur. */
+.games-apple .primary-btn.full-width { border-radius: 999px; }
+
+/* Préférences : transparence réduite → surfaces pleines. */
+@media (prefers-reduced-transparency: reduce) {
+  .games-apple .chesscom-games-table thead th {
+    background: var(--bg-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .games-apple .chesscom-filter-group { background: var(--bg-surface); }
+}
+
+/* Étirement pleine hauteur : la chaîne conteneur → carte remplit le
+   viewport, la table défile en interne jusqu'en bas de l'écran.
+   Scopé via :has : les autres onglets sont intacts. */
+.main-content-container:has(.games-apple) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.main-content-container:has(.games-apple) .chesscom-panel,
+.chesscom-top-row:has(.games-apple),
+.games-apple {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.games-apple .panel-card {
+  flex: 1;
+  min-height: 0;
+}

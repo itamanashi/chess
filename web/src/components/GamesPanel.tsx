@@ -96,7 +96,7 @@ export const GamesPanel: React.FC<GamesPanelProps> = ({
   const remaining = games.length - visibleCount;
 
   return (
-    <div className="chesscom-left-column">
+    <div className="chesscom-left-column games-apple">
       <div className="panel-card">
         <div className="card-title-row">
           <h3 className="card-title">
@@ -225,8 +225,15 @@ export const GamesPanel: React.FC<GamesPanelProps> = ({
                     return (
                       <tr key={g.url} onClick={() => onOpenGame(g.url)}>
                         <td>
-                          <span style={{ color: outcomeColor[outcome], fontWeight: 600 }}>
-                            {outcomeLabel[outcome]}
+                          <span className="ga-result">
+                            <span
+                              className="ga-dot"
+                              aria-hidden="true"
+                              style={{ '--ga-c': outcomeColor[outcome] } as React.CSSProperties}
+                            />
+                            <span style={{ color: outcomeColor[outcome], fontWeight: 600 }}>
+                              {outcomeLabel[outcome]}
+                            </span>
                           </span>
                         </td>
                         <td>
