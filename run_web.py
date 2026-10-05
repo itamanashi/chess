@@ -26,6 +26,43 @@ def port_occupe(port, hote_v4="127.0.0.1", hote_v6="::1"):
             pass
     return False
 
+def liberer_port(port, nom=""):
+    """Tue les processus à l'écoute sur `port` (serveurs zombies d'un
+    précédent `start.bat` : `npm run dev` caché, vieux cache SQLite) et
+    attend que le port se libère. Ne fait rien si le port est déjà libre."""
+    if not port_occupe(port):
+        return
+    label = f" ({nom})" if nom else ""
+    print(f"[INFO] Le port {port}{label} est occupé — arrêt de l'ancien serveur...")
+    try:
+        out = subprocess.run(
+            ["netstat", "-ano"], capture_output=True, text=True,
+            errors="replace", timeout=10,
+        ).stdout or ""
+    except (OSError, subprocess.SubprocessError):
+        out = ""
+    moi = os.getpid()
+    for line in out.splitlines():
+        parts = line.split()
+        # TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    1234
+        if len(parts) == 5 and parts[0] == "TCP" and parts[3] == "LISTENING":
+            if parts[1].rsplit(":", 1)[-1].rstrip("]") == str(port):
+                try:
+                    pid = int(parts[4])
+                except ValueError:
+                    continue
+                if pid != moi:
+                    subprocess.run(
+                        ["taskkill", "/F", "/PID", str(pid)],
+                        capture_output=True, timeout=10,
+                    )
+    for _ in range(100):
+        if not port_occupe(port):
+            print(f"[INFO] Port {port} libéré.")
+            return
+        time.sleep(0.1)
+    print(f"[AVERTISSEMENT] Le port {port} est toujours occupé.", file=sys.stderr)
+
 def main():
     print("=" * 60)
     print("  Chess Repertoire Studio — Démarrage du serveur Web...")
@@ -41,6 +78,10 @@ def main():
         subprocess.run(["npm", "install"], cwd=WEB_DIR, check=True, shell=True)
 
     print("\nLancement de la base SQLite locale et du serveur Web...")
+    # Nettoyage des serveurs zombies d'un précédent lancement (ports dédiés
+    # à l'app : aucun autre programme légitime ne les utilise).
+    liberer_port(8765, "base SQLite")
+    liberer_port(5173, "Vite")
     cache_server = subprocess.Popen(
         [sys.executable, os.path.join(os.path.dirname(__file__), "web_cache_server.py")],
         cwd=os.path.dirname(os.path.abspath(__file__)),

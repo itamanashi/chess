@@ -16,7 +16,6 @@
     "lucide-react": "^1.45.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "stockfish.js": "^10.0.2",
     "ts-fsrs": "^5.4.2"
   },
   "devDependencies": {

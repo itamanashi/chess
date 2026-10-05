@@ -31,6 +31,7 @@ if errorlevel 1 (
 )
 
 echo Lancement du serveur Vite sur http://localhost:5173 ...
+echo Les ports 5173 et 8765 sont liberes automatiquement si un ancien serveur les occupe.
 python run_web.py
 if errorlevel 1 (
   echo.
