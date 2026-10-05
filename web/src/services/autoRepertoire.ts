@@ -7,6 +7,12 @@
  * à notre tour on suit le répertoire donc facteur 1, pas la fréquence).
  * L'ordre « couverture » opt-in explore les profondeurs plus faibles d'abord,
  * puis départage par cette même probabilité.
+ * Garantie réplique (modes blancs/noirs) : tout coup adverse ÉMIS reçoit
+ * exactement une réplique — les nœuds à nous sont toujours étendus (exemptés
+ * du prune popularité), les nœuds adverses ne s'étendent que si le budget
+ * restant couvre toutes les répliques en attente (discipline de réserve), et
+ * nos positions à la limite de profondeur reçoivent une réplique de clôture
+ * (+1 pli, enfant plafonné). Le budget reste un plafond dur.
  * Sélection par couverture, profondeur adaptative (moyenne géométrique),
  * transpositions en graphe (masse sommée sur tous les chemins, profondeur
  * minimale, repriorisation des positions en attente), réplication récursive
@@ -135,6 +141,18 @@ export interface AutoGenStats {
   mates: number;
   /** Positions stabilisées par prolongement tactique (quiescence sur échec/capture). */
   quiescenceExtended: number;
+  /**
+   * Répliques de clôture : à nos positions atteignant la profondeur limite,
+   * on émet quand même l'unique réplique (+1 pli, enfant plafonné jamais
+   * étendu) au lieu de laisser le coup adverse sans réponse.
+   */
+  closingReplies: number;
+  /**
+   * Positions à nous refermées sans réplique (échec réseau après réessais,
+   * base vide, ou budget épuisé en file de sécurité) : les seuls trous
+   * tolérés de la garantie « tout coup adverse émis a sa réplique ».
+   */
+  unanswered: number;
 }
 
 export interface EngineEvalLine {
@@ -592,18 +610,16 @@ async function judgeOwnReplies(
 }
 
 /**
- * Plafond du budget positions : sans borne, une valeur tapée trop grande
- * (le champ était "illimité") lançait une boucle de dizaines de milliers
- * de positions qui monopolisait le thread principal — l'onglet semblait
- * gelé et seul sa fermeture aidait. Le panneau borne déjà la saisie, ce
- * garde-fou protège aussi les appels directs.
+ * Budget positions : PAS de plafond (décision utilisateur — l'ancien
+ * MAX_AUTO_POSITIONS = 5000 est supprimé). La terminaison vient de
+ * l'épuisement de la file (seuils de profondeur/couverture/popularité) ou
+ * du budget saisi ; un run démesuré (profondeur haute + couverture large
+ * + seuils à zéro) peut durer longtemps et cogner les 429 — le bouton
+ * Arrêter du panneau interrompt en gardant le partiel.
  */
-export const MAX_AUTO_POSITIONS = 5000;
-
-/** Borne anti-freeze du budget (saisie panneau + appels directs). */
 export function clampAutoBudget(n: unknown): number {
   return typeof n === 'number' && Number.isFinite(n)
-    ? Math.max(1, Math.min(MAX_AUTO_POSITIONS, Math.round(n)))
+    ? Math.max(1, Math.round(n))
     : DEFAULTS.maxPositions;
 }
 
@@ -839,9 +855,24 @@ export async function generateAutoRepertoire(
     maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
     positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0,
     engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
-    quiescenceExtended: 0,
+    quiescenceExtended: 0, closingReplies: 0, unanswered: 0,
   };
   let completed = true;
+  const repColor = cfg.repertoireColor as string;
+  const colorMode = repColor === 'white' || repColor === 'black';
+  // Lignes ouvertes : coups adverses émis dont notre réplique unique n'est
+  // pas encore sortie (modes blancs/noirs). Tant qu'il en reste, le budget
+  // leur est réservé : on n'ouvre plus de nouvelles branches adverses.
+  let openOwnTurn = 0;
+  /** Trait à nous dans ce FEN (modes blancs/noirs) ? FEN illisible → faux. */
+  const isOwnTurnFen = (f: string): boolean => {
+    try {
+      const turn = new Chess(f).turn();
+      return (repColor === 'white' && turn === 'w') || (repColor === 'black' && turn === 'b');
+    } catch {
+      return false;
+    }
+  };
 
   const initialFenKey = normalizeFen(rootFen);
   const heap = new PriorityQueue<HeapItem>(
@@ -866,6 +897,8 @@ export async function generateAutoRepertoire(
     pathSans: [], pathUcis: [], pathFens: [initialFenKey],
     parentId: 'root', popularity: 1,
   });
+  // Racine à nous : sa réplique entre dans la réserve comme les autres.
+  if (colorMode && isOwnTurnFen(rootFen)) openOwnTurn++;
 
   let order = 0;
   const visited = new Set<string>();
@@ -891,19 +924,35 @@ export async function generateAutoRepertoire(
     const itemKey = item.fenKey ?? normalizeFen(item.fen);
     if (latestSeq.get(itemKey) !== (item.seq ?? -1)) continue;
     const { depth, fen, pathSans, pathUcis, pathFens, parentId, popularity } = item;
+    // Tour à nous ? (modes blancs/noirs : nos positions sont les seules qui
+    // DOIVENT sortir — chaque coup adverse émis attend sa réplique unique.)
+    const isOwnTurnNode = colorMode && isOwnTurnFen(fen);
 
     try {
       const probe = new Chess(fen);
-      if (probe.isGameOver()) continue;
+      // Fin de partie : rien à répondre, la ligne est close d'elle-même.
+      if (probe.isGameOver()) {
+        if (isOwnTurnNode) openOwnTurn--;
+        continue;
+      }
     } catch {
+      if (isOwnTurnNode) openOwnTurn--;
       continue;
     }
-    if (popularity < (cfg.minPopularity as number)) {
+    // Prune popularité : nos positions en sont EXEMPTÉES (leur réplique est
+    // obligatoire, même rare) ; chez l'adversaire, comportement inchangé.
+    if (!isOwnTurnNode && popularity < (cfg.minPopularity as number)) {
       stats.popPruned++;
       continue;
     }
     const limit = effectiveMaxDepth(cfg.maxDepth as number, depth, popularity, cfg);
     const maxQuiescence = cfg.maxQuiescence ?? DEFAULTS.maxQuiescence;
+    // Estimation large des répliques qu'ouvrirait l'extension d'un nœud
+    // adverse (plafond de branches : le réel est toujours ≤, sens prudent).
+    const branchEstimate = depth >= limit
+      ? Math.min(2, cfg.maxBranching as number)
+      : (cfg.maxBranching as number);
+    let closing = false;
     if (depth >= limit) {
       let isUnstable = false;
       if (maxQuiescence > 0 && depth < limit + maxQuiescence) {
@@ -924,12 +973,33 @@ export async function generateAutoRepertoire(
       }
       if (isUnstable) {
         stats.quiescenceExtended = (stats.quiescenceExtended || 0) + 1;
+      } else if (isOwnTurnNode) {
+        // Clôture : la ligne a atteint sa profondeur mais le coup adverse
+        // resterait sans réponse — on émet quand même l'unique réplique
+        // (+1 pli, enfant plafonné jamais étendu, compté dans le budget).
+        closing = true;
       } else {
         stats.depthPruned++;
         continue;
       }
     }
-    if (stats.positionsInterrogees >= (cfg.maxPositions as number)) break;
+    if (stats.positionsInterrogees >= (cfg.maxPositions as number)) {
+      // Filet de sécurité (l'invariant de réserve rend ce cas impossible en
+      // pratique hors annulation) : trou compté, pas masqué.
+      if (isOwnTurnNode) stats.unanswered++;
+      break;
+    }
+    // Discipline de réserve (modes blancs/noirs) : on n'étend un nœud adverse
+    // que si le budget restant couvre aussi toutes les répliques en attente.
+    // Sinon la ligne reste close sur notre réplique (arbre complet, pas
+    // tronqué en pleine variante).
+    if (colorMode && !isOwnTurnNode) {
+      const remaining = (cfg.maxPositions as number) - stats.positionsInterrogees;
+      if (remaining - 1 < openOwnTurn + branchEstimate) continue;
+    }
+    // À partir d'ici la position sera interrogée : la réplique en attente
+    // (si c'en est une) est en cours de clôture.
+    if (isOwnTurnNode) openOwnTurn--;
 
     const fenKey = normalizeFen(fen);
     if (visited.has(fenKey)) continue;
@@ -966,7 +1036,11 @@ export async function generateAutoRepertoire(
         events.onProgress?.({ ...stats });
       }
     }
-    if (!data) continue;
+    if (!data) {
+      // Échec réseau après réessais : trou compté (pas de réplique possible).
+      if (isOwnTurnNode) stats.unanswered++;
+      continue;
+    }
     const lookupMs = Date.now() - lookupStartedAt;
     stats.positionsInterrogees++;
     const wasCached = data.source !== 'network';
@@ -1008,21 +1082,15 @@ export async function generateAutoRepertoire(
     const total = positionTotal > 0 ? positionTotal : movesSum;
     if (!total || movesSum <= 0) {
       stats.emptyPositions++;
+      // Base vide : aucune réplique à choisir, trou compté.
+      if (isOwnTurnNode) stats.unanswered++;
       continue;
     }
 
     // À notre tour (modes blancs/noirs) : Stockfish tranche seul.
     // Le pool adverse reste toujours le nôtre uniquement (ce qu'on va
     // affronter) ; en mode 'both', pas de choix à faire.
-    let isOwnTurnNode = false;
-    try {
-      const turn = new Chess(fen).turn(); // 'w' | 'b'
-      const repColor = cfg.repertoireColor as string;
-      isOwnTurnNode =
-        (repColor === 'white' && turn === 'w') || (repColor === 'black' && turn === 'b');
-    } catch {
-      /* FEN illisible : pas de choix moteur */
-    }
+    // (`isOwnTurnNode` est calculé en tête de boucle, avant le fetch.)
 
     // Couverture pondérée par profondeur (large à la base, resserrée en haut).
     const effCoverage = depthWeightedCoverage(
@@ -1138,6 +1206,8 @@ export async function generateAutoRepertoire(
     }
     if (selected.length === 0) {
       stats.emptyPositions++;
+      // Tous les coups filtrés par les seuils : trou compté.
+      if (isOwnTurnNode) stats.unanswered++;
       continue;
     }
     stats.branchesTotal += selected.length;
@@ -1213,25 +1283,41 @@ export async function generateAutoRepertoire(
       emitted.set(nodeId, node);
       stats.sent++;
       if (mate) stats.mates++;
+      if (closing && !mate) stats.closingReplies++;
       stats.maxEmittedDepth = Math.max(stats.maxEmittedDepth, depth + 1);
       events.onNode?.(node, parentId, nodeId);
       events.onProgress?.({ ...stats });
 
+      // Profondeur plafonnée de l'enfant en clôture : à son tour il sera
+      // élagué par la limite (jamais étendu). Les transpositions gardent
+      // leur profondeur canonique (copie via la passe de résolution).
+      const childHeapDepth = closing && !isTranspo
+        ? limit + maxQuiescence
+        : depth + 1;
+
       if (!isTranspo) {
         if (!canonicalNodesByFen.has(childKey)) {
           canonicalNodesByFen.set(childKey, node);
+        }
+        // Réserve : tout coup adverse émis (enfant à nous, non mat, sous le
+        // plafond absolu) attend sa réplique — compté dès l'émission.
+        if (
+          colorMode && !mate && isOwnTurnFen(childFen) &&
+          depth + 1 < (cfg.maxDepth as number) + (cfg.maxQuiescence ?? DEFAULTS.maxQuiescence)
+        ) {
+          openOwnTurn++;
         }
         order++;
         pendingInfo.set(childKey, {
           fen: childFen, parentId: nodeId,
           pathSans: [...pathSans, move.san], pathUcis: [...pathUcis, stdUci],
           pathFens: [...pathFens, childKey],
-          order, depth: depth + 1, mult: edgeMult, mateBonus,
+          order, depth: childHeapDepth, mult: edgeMult, mateBonus,
         });
         seq++;
         latestSeq.set(childKey, seq);
         heap.push({
-          priority, depth: depth + 1, order, fen: childFen, fenKey: childKey, seq,
+          priority, depth: childHeapDepth, order, fen: childFen, fenKey: childKey, seq,
           pathSans: [...pathSans, move.san], pathUcis: [...pathUcis, stdUci],
           pathFens: [...pathFens, childKey],
           parentId: nodeId, popularity: mass,
@@ -1341,7 +1427,6 @@ export async function generateAutoRepertoire(
   // faibles (Line Value), jamais chez l'adversaire (ses coups sont la
   // réalité). Le meilleur est toujours conservé.
   const minLV = cfg.pruneMinLineValue as number;
-  const repColor = cfg.repertoireColor as string;
   if (minLV > 0 && (repColor === 'white' || repColor === 'black')) {
     stats.prunedValue = pruneLowValueLines(root, {
       side: repColor,

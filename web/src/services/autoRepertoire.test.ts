@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
-  MAX_AUTO_POSITIONS,
   clampAutoBudget,
   computeBookScore,
   computeContestedness,
@@ -653,21 +652,21 @@ describe('generateAutoRepertoire — échecs et arrêt', () => {
 describe('anti-freeze (budget + yield)', () => {
   const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-  it('clampAutoBudget borne le budget (fini, énorme, NaN)', () => {
-    expect(MAX_AUTO_POSITIONS).toBe(5000);
+  it('clampAutoBudget : fini ≥ 1, pas de plafond (décision utilisateur)', () => {
     expect(clampAutoBudget(60)).toBe(60);
     expect(clampAutoBudget(4)).toBe(4);
     expect(clampAutoBudget(0)).toBe(1);
-    expect(clampAutoBudget(1e9)).toBe(MAX_AUTO_POSITIONS);
+    expect(clampAutoBudget(5000)).toBe(5000);
+    expect(clampAutoBudget(1e9)).toBe(1e9);
     expect(clampAutoBudget(Number.NaN)).toBe(200);
     expect(clampAutoBudget(Number.POSITIVE_INFINITY)).toBe(200);
     expect(clampAutoBudget(undefined)).toBe(200);
   });
 
-  it('budget énorme + positions en cache → borné, sans blocage', async () => {
-    // Le chemin 100 % cache n\'a aucune pause réseau : c\'était la boucle
-    // de microtasks qui gelait l\'onglet. Ici chaque position rend la main
-    // (yieldToUI) et le budget est plafonné.
+  it('budget énorme + positions en cache → se termine par épuisement, sans blocage', async () => {
+    // Le chemin 100 % cache n'a aucune pause réseau : chaque position rend
+    // la main (yieldToUI). Sans plafond, le run se termine quand la file
+    // est vide (ici profondeur 1 : une seule position interrogée).
     mockHasCache.mockReturnValue(true);
     mockFetch.mockResolvedValue({
       white: 5000, draws: 1300, black: 3700,
@@ -681,7 +680,7 @@ describe('anti-freeze (budget + yield)', () => {
       repertoireColor: 'both', pruneMinLineValue: 0,
     });
     expect(completed).toBe(true);
-    expect(stats.positionsInterrogees).toBeLessThanOrEqual(MAX_AUTO_POSITIONS);
+    expect(stats.positionsInterrogees).toBe(1);
     expect(stats.cached).toBe(stats.positionsInterrogees);
     // Le partiel est persisté en fin de run (jamais de session perdue).
     expect(vi.mocked(flushLichessPersist)).toHaveBeenCalled();
@@ -1114,5 +1113,106 @@ describe('correctifs audit — probabilité d’atteinte, transpositions, quiesc
     expect(JSON.stringify(warm.root)).toBe(JSON.stringify(cold.root));
     expect(cold.stats.api).toBeGreaterThan(0);
     expect(warm.stats.cached).toBeGreaterThan(0);
+  });
+});
+
+describe('garantie réplique (tout coup adverse émis a sa réponse)', () => {
+  const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+  /** Coups légaux factices (parts décroissantes) pour n'importe quel FEN. */
+  function mockLegalMoves(slice: number): void {
+    mockHasCache.mockReturnValue(false);
+    mockFetch.mockImplementation(async (fen: string) => {
+      const c = new Chess(fen);
+      const legal = c.moves({ verbose: true }).slice(0, slice);
+      return {
+        white: 6000, draws: 2000, black: 2000,
+        moves: legal.map((m, i) => ({
+          san: m.san,
+          uci: `${m.from}${m.to}${m.promotion ?? ''}`,
+          white: i === 0 ? 4000 : 1000,
+          draws: 300,
+          black: 700,
+        })),
+      };
+    });
+  }
+
+  /**
+   * Invariant : tout nœud à nous non terminal a ≥ 1 enfant (la réplique).
+   * Les feuilles au trait adverse sont des lignes closes normales, les fins
+   * de partie n'attendent aucune réplique.
+   */
+  function expectAllOpponentMovesAnswered(root: RepertoireRoot, ourColor: 'white' | 'black'): void {
+    const holes: string[] = [];
+    const walk = (node: RepertoireMove | RepertoireRoot, fen: string): void => {
+      const c = new Chess(fen);
+      if (c.isGameOver()) return;
+      const ours = (ourColor === 'white') === (c.turn() === 'w');
+      const kids = node.children ?? [];
+      if (ours && kids.length === 0) holes.push(fen);
+      for (const k of kids) walk(k, k.fen);
+    };
+    walk(root, root.fen);
+    expect(holes).toEqual([]);
+  }
+
+  it('blancs, budget serré : plafond respecté ET arbre clos (pas de trou)', async () => {
+    mockLegalMoves(3);
+    const { root, stats } = await generateAutoRepertoire(START, {
+      maxDepth: 4, maxBranching: 3, minFreq: 0, minPopularity: 0, coveragePercent: 100,
+      maxPositions: 8, gapMs: 0, repertoireColor: 'white' as const, pruneMinLineValue: 0,
+    });
+    // Discipline de réserve : le budget n'est jamais dépassé…
+    expect(stats.positionsInterrogees).toBeLessThanOrEqual(8);
+    // …et pourtant chaque coup adverse émis a sa réplique.
+    expectAllOpponentMovesAnswered(root, 'white');
+    expect(stats.unanswered).toBe(0);
+  });
+
+  it('blancs, profondeur 2 : répliques de clôture au-delà de la limite', async () => {
+    mockLegalMoves(2);
+    const { root, stats } = await generateAutoRepertoire(START, {
+      maxDepth: 2, maxBranching: 2, minFreq: 0, minPopularity: 0, coveragePercent: 100,
+      maxPositions: 200, gapMs: 0, maxQuiescence: 0,
+      repertoireColor: 'white' as const, pruneMinLineValue: 0,
+    });
+    expectAllOpponentMovesAnswered(root, 'white');
+    expect(stats.unanswered).toBe(0);
+    // Les nœuds à nous en limite ont reçu leur +1 pli (jamais étendu).
+    expect(stats.closingReplies).toBeGreaterThan(0);
+    expect(stats.maxEmittedDepth).toBe(3);
+  });
+
+  it('noirs : invariant tenu sur l\'autre couleur', async () => {
+    mockLegalMoves(2);
+    const { root, stats } = await generateAutoRepertoire(START, {
+      maxDepth: 3, maxBranching: 2, minFreq: 0, minPopularity: 0, coveragePercent: 100,
+      maxPositions: 30, gapMs: 0, maxQuiescence: 0,
+      repertoireColor: 'black' as const, pruneMinLineValue: 0,
+    });
+    expect(stats.positionsInterrogees).toBeLessThanOrEqual(30);
+    expectAllOpponentMovesAnswered(root, 'black');
+    expect(stats.unanswered).toBe(0);
+  });
+
+  it('réserve : la largeur cède devant la clôture quand le budget fond', async () => {
+    mockLegalMoves(4);
+    const wide = await generateAutoRepertoire(START, {
+      maxDepth: 6, maxBranching: 4, minFreq: 0, minPopularity: 0, coveragePercent: 100,
+      maxPositions: 1000, gapMs: 0, maxQuiescence: 0,
+      repertoireColor: 'white' as const, pruneMinLineValue: 0,
+    });
+    mockLegalMoves(4);
+    const tight = await generateAutoRepertoire(START, {
+      maxDepth: 6, maxBranching: 4, minFreq: 0, minPopularity: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, maxQuiescence: 0,
+      repertoireColor: 'white' as const, pruneMinLineValue: 0,
+    });
+    expect(tight.stats.positionsInterrogees).toBeLessThanOrEqual(10);
+    expectAllOpponentMovesAnswered(tight.root, 'white');
+    expect(tight.stats.unanswered).toBe(0);
+    // Budget serré = moins de positions ouvertes, mais toujours clos.
+    expect(tight.stats.positionsInterrogees).toBeLessThan(wide.stats.positionsInterrogees);
   });
 });

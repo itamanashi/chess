@@ -4,7 +4,6 @@ import type { BoardOrientation, EloTargetKey, EngineMove, RepertoireRoot } from 
 import { ELO_TARGET_OPTIONS } from '../types/chess';
 import { INITIAL_FEN, downloadFile, generateTreePgn } from '../utils/repertoire';
 import {
-  MAX_AUTO_POSITIONS,
   generateAutoRepertoire,
   type AutoGenConfig,
   type AutoGenStats,
@@ -37,7 +36,7 @@ const DEFAULT_STATS: AutoGenStats = {
   maxDepthReached: 0, maxEmittedDepth: 0, branchesTotal: 0, emptyPositions: 0,
   positionsInterrogees: 0, apiWaitMs: 0, cacheWaitMs: 0,
   engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
-  quiescenceExtended: 0,
+  quiescenceExtended: 0, closingReplies: 0, unanswered: 0,
 };
 
 /**
@@ -227,7 +226,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   const depthNum = useUncontrolledNumber(setDepth, clampInt(2, 24));
   const branchNum = useUncontrolledNumber(setMaxBranching, clampInt(1, 12));
   const minDepthNum = useUncontrolledNumber(setMinDepth, clampInt(1, 24));
-  const maxPosNum = useUncontrolledNumber(setMaxPositions, (n) => Math.min(MAX_AUTO_POSITIONS, Math.max(5, Math.round(n))));
+  const maxPosNum = useUncontrolledNumber(setMaxPositions, (n) => Math.max(5, Math.round(n)));
   const minLVNum = useUncontrolledNumber(setMinLV, (n) => Math.max(0, Math.min(1, n)));
   const minGamesNum = useUncontrolledNumber(setMinGames, (n) => Math.max(0, Math.min(1000000, Math.round(n))));
 
@@ -493,10 +492,10 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
             onKeyDown={blurOnEnter}
           />
         </label>
-        <label className="auto-gen-field" title={`Plafonné à ${MAX_AUTO_POSITIONS} : au-delà, l'onglet sature (positions en cache quasi gratuites mais tri + chess.js par position). L'arrêt conserve le partiel, les 429 sont réessayés`}>
-          <span>Budget positions (max {MAX_AUTO_POSITIONS})</span>
+        <label className="auto-gen-field" title="Sans plafond : la génération s'arrête quand l'arbre est exhaustif sous les seuils ou quand le budget est atteint. Un gros budget + seuils à zéro peut durer longtemps et cogner les 429 — le bouton Arrêter garde le partiel.">
+          <span>Budget positions (sans plafond)</span>
           <input
-            type="number" min={5} max={MAX_AUTO_POSITIONS} defaultValue={maxPositions}
+            type="number" min={5} defaultValue={maxPositions}
             disabled={running} ref={maxPosNum.attach('maxPos')}
             onBlur={maxPosNum.commit('maxPos', maxPositions)}
             onKeyDown={blurOnEnter}
@@ -592,6 +591,8 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
             {done.stats.mates > 0 ? ` · ${done.stats.mates} mat(s) prioritaire(s)` : ''}
             {done.stats.prunedValue > 0 ? ` · ${done.stats.prunedValue} élagué(s) LV` : ''}
             {done.stats.emptyPositions > 0 ? ` · ${done.stats.emptyPositions} sans suite en base` : ''}
+            {done.stats.closingReplies > 0 ? ` · ${done.stats.closingReplies} réplique(s) de clôture (+1 pli)` : ''}
+            {done.stats.unanswered > 0 ? ` · ${done.stats.unanswered} sans réplique (voir avertissement)` : ''}
           </span>
           {(done.stats.apiWaitMs + done.stats.cacheWaitMs + done.stats.engineWaitMs) > 0 && (
             <span
@@ -620,6 +621,12 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
           {done.stats.failed > 0 && (
             <span className="auto-gen-warn">
               {done.stats.failed} position(s) en échec après réessai — relancez pour les compléter.
+            </span>
+          )}
+          {done.stats.unanswered > 0 && (
+            <span className="auto-gen-warn">
+              {done.stats.unanswered} coup(s) adverse(s) sans réplique (panne réseau ou base vide)
+              — relancez pour les compléter.
             </span>
           )}
         </div>

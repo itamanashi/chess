@@ -27,6 +27,9 @@ python run_web.py                                  # dev server, fixed port 5173
 ## Repertoire generation rules (explicit user decisions — do not violate)
 
 - Pure frequentist generation by Explorer coverage at target Elo. No winrate (`white/draws/black` never read in the loop) and no engine in the selection/priority/pruning path (`pruneMinLineValue: 0` default).
+- **Reply guarantee (auto, blancs/noirs modes): every emitted opponent move gets exactly one reply.** Reserve discipline: opponent nodes expand only if remaining budget covers all pending replies; own-turn nodes are always expanded (exempt from popularity prune). Lines close on our reply, never mid-variation for budget reasons. `stats.unanswered` counts the only tolerated holes (network failure, empty base).
+- **Closing +1 ply:** our-turn nodes at the depth limit still get their single reply (child capped at limit+quiescence, never expanded). `stats.closingReplies` counts them.
+- **No budget cap** (explicit user decision, `MAX_AUTO_POSITIONS` removed): the user budget is a hard ceiling, termination otherwise comes from queue exhaustion under depth/coverage/popularity thresholds. Huge runs can hit 429s — the panel Arrêter button keeps the partial.
 - **Only exception: forced mate.** Mate-in-1 from Explorer `#` + legal check (`findMateInOneUcis`, no engine) is always included, never pruned. Mate in N>1 = engine = manual analysis only.
 - **Our replies, blancs/noirs modes**: keep argmax `qualityScore` (local share × lift vs Masters, ×3 max / ×0.1 min), not raw top-1. Masters double-read per own position only (opponent = target pool only); if engine judge enabled, Stockfish decides alone with zero Masters reads.
 - **Engine judge is opt-in** ("Répliques moteur" checkbox): local Stockfish MultiPV 6/D14 re-ranks our replies, keeps equivalents (±30 cp), deepens only top-2 within ≤15 cp. Blind/partial/evicted → gradient fallback, never abort. Engine/winrate elsewhere = display labels only.
