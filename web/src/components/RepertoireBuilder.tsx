@@ -1,3 +1,13 @@
+/* ------------------------------------------------------------------
+ * Constructeur « apple-design » (style officiel) : réponses du joueur,
+ * suggestions, robustesse, pièges, génération auto. Principes WWDC
+ * « Designing Fluid Interfaces » traduits en CSS : feedback :active
+ * immédiat (pointer-down), ressorts émulés interruptibles, matériau
+ * translucide hiérarchisé, groupes façon réglages, type optique,
+ * reduced-motion / reduced-transparency.
+ * Préfixe ab- : couche visuelle de ce composant.
+ * ------------------------------------------------------------------ */
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Chess, type Square } from 'chess.js';
 import type { 
@@ -14,6 +24,7 @@ import { rankRepertoireMoves, eloTierForTarget } from '../services/repertoireSco
 import { analyzeBranchRobustnessReport, stopRobustness, type BranchRobustness, type RobustnessReport } from '../services/branchRobustness';
 import { analyzeTrapPotential, type TrapPotentialReport } from '../services/trapPotential';
 import { RepertoireAdvisor } from './RepertoireAdvisor';
+import '../styles/builder.apple-design.css';
 import { RobustnessView } from './RobustnessView';
 import { AutoRepertoirePanel } from './AutoRepertoirePanel';
 import { fetchLichessMoves } from '../services/lichess';
@@ -699,7 +710,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
   };
 
   return (
-    <div className="builder-panel">
+    <div className="ab-builder">
       {onAutoMerge && (
         <AutoRepertoirePanel
           repertoireColor={repertoire.color}
@@ -713,17 +724,17 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
       {/* Fin de partie : sortie visible au lieu de rester bloqué */}
       {gameOver && (
         <div
-          className={`panel-card gameover-card ${
+          className={`ab-card ab-gameover ${
             gameOver.kind === 'mate'
               ? gameOver.weLost
-                ? 'gameover-lost'
-                : 'gameover-won'
-              : 'gameover-draw'
+                ? 'ab-gameover-lost'
+                : 'ab-gameover-won'
+              : 'ab-gameover-draw'
           }`}
         >
-          <div className="turn-content">
+          <div className="ab-turn">
             <div>
-              <h4 className="gameover-title">
+              <h4 className="ab-gameover-title">
                 {gameOver.kind === 'mate' && gameOver.weLost && <AlertTriangle size={16} />}
                 {gameOver.kind === 'mate'
                   ? gameOver.weLost
@@ -738,13 +749,13 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
               </p>
             </div>
           </div>
-          <div className="priority-action-buttons" style={{ marginTop: 10 }}>
-            <button className="primary-btn" onClick={() => onBackToStart?.()}>
+          <div className="ab-actions" style={{ marginTop: 10 }}>
+            <button className="ab-cta" onClick={() => onBackToStart?.()}>
               <RotateCcw size={15} />
               <span>Retour au début</span>
             </button>
             {canGoBack && (
-              <button className="secondary-btn" onClick={onGoBack}>
+              <button className="ab-secondary" onClick={onGoBack}>
                 <span>Reculer d'un coup</span>
               </button>
             )}
@@ -752,17 +763,17 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
         </div>
       )}
       {/* Bannière de Contexte de Répertoire */}
-      <div className="panel-card builder-status-card">
-        <div className="builder-header-row">
-          <div className="builder-tag-group">
-            <span className={`rep-color-tag tag-${repertoire.color}`}>
+      <div className="ab-card ab-status">
+        <div className="ab-hero-row">
+          <div className="ab-tag-group">
+            <span className={`ab-camptag ab-${repertoire.color}`}>
               {repertoire.color === 'white' ? '♔ Vous : Blancs' : '♚ Vous : Noirs'}
             </span>
           </div>
 
-          <div className="header-toggle-actions">
+          <div className="ab-hero-actions">
             <button 
-              className={`auto-toggle-btn ${autoPlayOpponent ? 'enabled' : 'disabled'}`}
+              className={`ab-autotoggle ${autoPlayOpponent ? 'ab-on' : 'ab-off'}`}
               onClick={handleToggleAutoPlay}
               title={autoPlayOpponent ? "Désactiver la réponse adverse automatique" : "Activer la réponse adverse automatique"}
             >
@@ -771,7 +782,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
             </button>
 
             {canGoBack && (
-              <button className="icon-btn" onClick={onGoBack} title="Reculer d'un coup">
+              <button className="ab-ghost" onClick={onGoBack} title="Reculer d'un coup">
                 <RotateCcw size={13} />
                 <span>Précédent</span>
               </button>
@@ -780,9 +791,9 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
         </div>
 
         {/* Qui a le trait ? */}
-        <div className="turn-indicator-box">
+        <div className="ab-turnbox">
           {isOpponentTurn ? (
-            <div className="turn-content opponent-turn">
+            <div className="ab-turn ab-opp">
               <Zap size={18} className="text-amber" />
               <div>
                 <h4>
@@ -794,7 +805,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
               </div>
             </div>
           ) : (
-            <div className="turn-content player-turn">
+            <div className="ab-turn ab-you">
               <Compass size={18} className="text-accent" />
               <div>
                 <h4>À votre tour ({repertoire.color === 'white' ? 'Blancs' : 'Noirs'})</h4>
@@ -807,58 +818,58 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
 
       {/* CAS 1 : TOUR DE L'ADVERSAIRE -> Réponse automatique & Coups les plus joués */}
       {isOpponentTurn && (
-        <div className="panel-card opponent-analysis-card">
-          <div className="card-title-row">
-            <h3 className="card-title">
+        <div className="ab-card ab-distrib-card">
+          <div className="ab-cardhead">
+            <h3 className="ab-cardtitle">
               <Flame size={16} className="text-amber" />
               Fréquence réelle des coups adverses ({eloTargetLabel(repertoire.targetElo)})
             </h3>
             {loadingOpponent && (
-              <span className="loading-badge">
-                <Loader2 size={13} className="spin" />
+              <span className="ab-loading">
+                <Loader2 size={13} className="ab-spin" />
                 <span>Analyse Elo...</span>
               </span>
             )}
           </div>
 
           {fetchError && (
-            <div className="mini-error-box">
+            <div className="ab-error">
               <span>{fetchError}</span>
             </div>
           )}
 
           {/* Recommandation prioritaire du coup #1 le plus joué */}
           {topOpponentMove && !loadingOpponent && (
-            <div className="priority-opponent-banner">
-              <div className="priority-banner-top">
-                <div className="priority-badge">
+            <div className="ab-priority">
+              <div className="ab-priority-top">
+                <div className="ab-kicker">
                   <Sparkles size={13} />
                   <span>Réponse majoritaire ({topMovePct}% des parties)</span>
                 </div>
                 {autoPlayCountdown !== null && (
-                  <span className="auto-playing-pill">
-                    <Zap size={12} className="spin-fast text-amber" />
+                  <span className="ab-livepill">
+                    <Zap size={12} className="ab-spin-fast text-amber" />
                     <span>Réponse automatique en cours...</span>
                   </span>
                 )}
                 {innovationResetSan && (
-                  <span className="auto-playing-pill">
+                  <span className="ab-livepill">
                     <RotateCcw size={12} />
                     <span>Innovation {innovationResetSan} ajoutée — à vous, retour au début après votre réponse…</span>
                   </span>
                 )}
               </div>
 
-              <div className="priority-details">
-                <span className="priority-san">{topOpponentMove.san}</span>
-                <span className="priority-stats">
+              <div className="ab-priority-main">
+                <span className="ab-san-hero">{topOpponentMove.san}</span>
+                <span className="ab-priority-sub">
                   Joué à <strong>{topMovePct}%</strong> par les adversaires ({eloTargetLabel(repertoire.targetElo)})
                 </span>
               </div>
 
-              <div className="priority-action-buttons">
+              <div className="ab-actions">
                 <button
-                  className="primary-btn"
+                  className="ab-cta"
                   onClick={() => onPlayMove(topOpponentMove.uci)}
                   onMouseEnter={() => onHoverMove?.(topOpponentMove.uci)}
                   onMouseLeave={() => onHoverMove?.(null)}
@@ -871,7 +882,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
 
                 {onBatchAddOpponentMoves && (
                   <button 
-                    className="secondary-btn"
+                    className="ab-secondary"
                     onClick={handleDeployMajorVariations}
                     disabled={majorMovesCount === 0}
                     title={majorMovesCount === 0
@@ -884,7 +895,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                 )}
               </div>
               {balancedChoice && (
-                <span className="auto-vary-note">
+                <span className="ab-note">
                   {balancedChoice.balanced
                     ? `Branches équilibrées — auto-réponse : ${balancedChoice.san} (ligne principale).`
                     : balancedChoice.isNew
@@ -897,8 +908,8 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
           )}
 
           {/* Liste de toutes les réponses de l'adversaire ordonnées par fréquence */}
-          <div className="opponent-moves-list">
-            <span className="sub-section-label">
+          <div className="ab-distrib">
+            <span className="ab-label">
               Distribution des réponses adverses à cet Elo :
             </span>
             {opponentMoves.slice(0, 8).map((m, idx) => {
@@ -913,33 +924,34 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
               return (
                 <button
                   key={m.uci}
-                  className={`opponent-move-btn ${isTop ? 'is-top' : ''}`}
+                  className={`ab-row ${isTop ? 'ab-top' : ''}`}
+                  style={{ '--ab-i': idx } as React.CSSProperties}
                   onClick={() => onPlayMove(m.uci)}
                   onMouseEnter={() => onHoverMove?.(m.uci)}
                   onMouseLeave={() => onHoverMove?.(null)}
                   onFocus={() => onHoverMove?.(m.uci)}
                   onBlur={() => onHoverMove?.(null)}
                 >
-                  <div className="move-btn-left">
-                    <span className="rank-badge">{idx + 1}</span>
-                    <span className="san-text">{m.san}</span>
-                    {isTop && <span className="majority-tag">Majoritaire</span>}
+                  <div className="ab-row-left">
+                    <span className="ab-rank">{idx + 1}</span>
+                    <span className="ab-san">{m.san}</span>
+                    {isTop && <span className="ab-tag-major">Majoritaire</span>}
                     {dangerShort && (
-                      <span className="danger-tag" title={`${dangerTitle} — ligne négative à travailler en priorité`}>
+                      <span className="ab-tag-danger" title={`${dangerTitle} — ligne négative à travailler en priorité`}>
                         {dangerShort}
                       </span>
                     )}
-                    {m.opening?.eco && <span className="eco-pill">{m.opening.eco}</span>}
+                    {m.opening?.eco && <span className="ab-eco">{m.opening.eco}</span>}
                   </div>
 
-                  <div className="move-btn-right">
+                  <div className="ab-row-right">
                     {/* Barre proportionnelle */}
-                    <div className="frequency-progress-bar">
-                      <div className="frequency-progress-fill" style={{ width: `${Math.min(pct * 2, 100)}%` }} />
+                    <div className="ab-bar">
+                      <div className="ab-bar-fill" style={{ width: `${Math.min(pct * 2, 100)}%` }} />
                     </div>
-                    <span className="freq-pct">{pct}%</span>
-                    <span className="parties-small">({parties.toLocaleString('fr-FR')})</span>
-                    <ArrowRight size={14} className="arrow-icon" />
+                    <span className="ab-pct">{pct}%</span>
+                    <span className="ab-count">({parties.toLocaleString('fr-FR')})</span>
+                    <ArrowRight size={14} className="ab-arrow" />
                   </div>
                 </button>
               );
@@ -950,9 +962,9 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
 
       {/* CAS 2 : TOUR DU JOUEUR -> Choix de sa propre réponse */}
       {!isOpponentTurn && (
-        <div className="panel-card player-decision-card">
-          <div className="card-title-row">
-            <h3 className="card-title">
+        <div className="ab-card ab-decision-card">
+          <div className="ab-cardhead">
+            <h3 className="ab-cardtitle">
               <Compass size={16} className="text-accent" />
               Votre Réponse de Répertoire
             </h3>
@@ -960,16 +972,16 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
 
           {/* Si un coup est déjà enregistré pour cette position */}
           {registeredMoves.length > 0 ? (
-            <div className="registered-move-banner">
-              <div className="registered-header">
+            <div className="ab-registered">
+              <div className="ab-reg-head">
                 <CheckCircle2 size={18} className="text-success" />
                 <h4>Coup mémorisé dans votre répertoire :</h4>
               </div>
-              <div className="registered-moves-chips">
+              <div className="ab-chips">
                 {registeredMoves.map((m) => (
                   <button
                     key={m.uci}
-                    className="adopted-chip"
+                    className="ab-chip"
                     onClick={() => onPlayMove(m.uci)}
                     onMouseEnter={() => onHoverMove?.(m.uci)}
                     onMouseLeave={() => onHoverMove?.(null)}
@@ -977,22 +989,22 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                     onBlur={() => onHoverMove?.(null)}
                     title="Cliquer pour avancer dans cette variante"
                   >
-                    <span className="chip-san">{m.san}</span>
+                    <span className="ab-chip-san">{m.san}</span>
                     {m.isMate && (
-                      <span className="mate-tag" title="Mat — fin forcée, toujours prioritaire à la génération">
+                      <span className="ab-chip-mate" title="Mat — fin forcée, toujours prioritaire à la génération">
                         MAT
                       </span>
                     )}
-                    <span className="chip-label">Adopté ✓</span>
+                    <span className="ab-chip-label">Adopté ✓</span>
                   </button>
                 ))}
               </div>
-              <p className="registered-hint">
+              <p className="ab-hint">
                 Cliquez pour continuer cette variante, ou jouez un autre coup sur l'échiquier pour ajouter une alternative.
               </p>
             </div>
           ) : (
-            <div className="unregistered-prompt">
+            <div className="ab-empty">
               <p>
                 Aucune réponse n'est encore adoptée pour cette position. 
                 Jouez votre coup favori sur l'échiquier ou sélectionnez l'un des coups recommandés ci-dessous :
@@ -1001,12 +1013,12 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
           )}
 
           {/* Suggestions de coups pour le joueur — ORDINATEUR par défaut */}
-          <div className="candidate-suggestions-list">
-            <div className="suggestion-source-toggle">
-              <span className="sub-section-label" style={{ marginBottom: 0 }}>Coups recommandés :</span>
-              <div className="source-toggle-group">
+          <div className="ab-suggest">
+            <div className="ab-sourcebar">
+              <span className="ab-label" style={{ marginBottom: 0 }}>Coups recommandés :</span>
+              <div className="ab-segment">
                 <button
-                  className={`source-toggle-btn ${suggestionSource === 'advice' ? 'active' : ''}`}
+                  className={`ab-seg ${suggestionSource === 'advice' ? 'ab-on' : ''}`}
                   onClick={() => handleChangeSource('advice')}
                   title="Meilleur coup de répertoire : compromis moteur + résultats pratiques adapté à votre Elo"
                 >
@@ -1014,7 +1026,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   <span>Conseil</span>
                 </button>
                 <button
-                  className={`source-toggle-btn ${suggestionSource === 'engine' ? 'active' : ''}`}
+                  className={`ab-seg ${suggestionSource === 'engine' ? 'ab-on' : ''}`}
                   onClick={() => handleChangeSource('engine')}
                   title="Suggestions du moteur Stockfish (évaluation objective)"
                 >
@@ -1022,7 +1034,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   <span>Ordinateur</span>
                 </button>
                 <button
-                  className={`source-toggle-btn ${suggestionSource === 'users' ? 'active' : ''}`}
+                  className={`ab-seg ${suggestionSource === 'users' ? 'ab-on' : ''}`}
                   onClick={() => handleChangeSource('users')}
                   title="Coups les plus joués par les utilisateurs (popularité)"
                 >
@@ -1033,18 +1045,18 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
             </div>
 
             {suggestionSource === 'advice' ? (
-              <div className="advice-suggestions">
-                <span className="sub-section-label">
+              <div className="ab-advice">
+                <span className="ab-label">
                   Meilleur coup de répertoire ({eloTargetLabel(repertoire.targetElo)}) — moteur + pratique :
                 </span>
                 {(loadingEngine || loadingOpponent) && advisedMoves.length === 0 && (
-                  <span className="loading-badge">
-                    <Loader2 size={13} className="spin" />
+                  <span className="ab-loading">
+                    <Loader2 size={13} className="ab-spin" />
                     <span>Calcul du conseil (moteur + stats)...</span>
                   </span>
                 )}
                 {fetchError && !loadingOpponent && (
-                  <div className="mini-error-box">
+                  <div className="ab-error">
                     <span>Stats Lichess indisponibles : {fetchError}</span>
                   </div>
                 )}
@@ -1056,10 +1068,10 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   trapByUci={trapByUci}
                 />
                 {/* Robustesse des branches : que se passe-t-il APRÈS les réponses adverses ? */}
-                <div className="robust-section">
+                <div className="ab-group">
                   {!robustProgress && !robustResults && !robustError && advisedMoves.length > 0 && (
                     <button
-                      className="secondary-btn"
+                      className="ab-secondary"
                       onClick={handleAnalyzeRobustness}
                       title="Analyse les réponses adverses du top 3 (moteur local prof. 12 + stats) : moyenne, pire cas, danger"
                     >
@@ -1068,18 +1080,18 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                     </button>
                   )}
                   {robustProgress && (
-                    <div className="robust-progress-row">
-                      <span className="loading-badge">
-                        <Loader2 size={13} className="spin" />
+                    <div className="ab-progress">
+                      <span className="ab-loading">
+                        <Loader2 size={13} className="ab-spin" />
                         <span>Robustesse {robustProgress.done}/{robustProgress.total} — {robustProgress.label}</span>
                       </span>
-                      <button className="icon-btn" onClick={handleCancelRobustness} title="Annuler l'analyse">
+                      <button className="ab-ghost" onClick={handleCancelRobustness} title="Annuler l'analyse">
                         <span>Annuler</span>
                       </button>
                     </div>
                   )}
                   {robustError && (
-                    <div className="mini-error-box">
+                    <div className="ab-error">
                       <span>{robustError}</span>
                     </div>
                   )}
@@ -1099,10 +1111,10 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   )}
                 </div>
                 {/* Potentiel de piège : risqué en théorie mais rentable en pratique ? */}
-                <div className="trap-section">
+                <div className="ab-group">
                   {!trapProgress && advisedMoves.length > 0 && (
                     <button
-                      className="secondary-btn"
+                      className="ab-secondary"
                       onClick={handleAnalyzeTrap}
                       disabled={!!engineError || loadingEngine}
                       title={
@@ -1118,32 +1130,32 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                     </button>
                   )}
                   {trapProgress && (
-                    <div className="robust-progress-row">
-                      <span className="loading-badge">
-                        <Loader2 size={13} className="spin" />
+                    <div className="ab-progress">
+                      <span className="ab-loading">
+                        <Loader2 size={13} className="ab-spin" />
                         <span>Piège {trapProgress.done}/{trapProgress.total} — {trapProgress.label}</span>
                       </span>
-                      <button className="icon-btn" onClick={handleCancelTrap} title="Annuler l'analyse">
+                      <button className="ab-ghost" onClick={handleCancelTrap} title="Annuler l'analyse">
                         <span>Annuler</span>
                       </button>
                     </div>
                   )}
                   {trapError && (
-                    <div className="mini-error-box">
+                    <div className="ab-error">
                       <span>{trapError}</span>
                     </div>
                   )}
                 </div>
               </div>
             ) : suggestionSource === 'engine' ? (
-              <div className="engine-suggestions">
-                <div className="engine-depth-row">
-                  <span className="engine-depth-label" title="Profondeur d'analyse du moteur local">
+              <div className="ab-engine">
+                <div className="ab-depthbar">
+                  <span className="ab-depthlabel" title="Profondeur d'analyse du moteur local">
                     <Cpu size={12} /> Stockfish local — profondeur :
                   </span>
-                  <div className="engine-depth-options">
+                  <div className="ab-depthseg">
                     <button
-                      className={`depth-btn ${localDepth === 'auto' ? 'active' : ''}`}
+                      className={`ab-depth ${localDepth === 'auto' ? 'ab-on' : ''}`}
                       onClick={() => handleChangeDepth('auto')}
                       title="Adaptatif : D12 puis paliers +4 tant que l'éval bouge (max D28)"
                     >
@@ -1152,7 +1164,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                     {LOCAL_ENGINE_DEPTHS.map((d) => (
                       <button
                         key={d}
-                        className={`depth-btn ${localDepth === d ? 'active' : ''}`}
+                        className={`ab-depth ${localDepth === d ? 'ab-on' : ''}`}
                         onClick={() => handleChangeDepth(d)}
                         title={`Analyser à profondeur ${d}`}
                       >
@@ -1162,7 +1174,7 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   </div>
                 </div>
                 {!loadingEngine && localDepth === 'auto' && engineAutoSummary && (
-                  <span className="auto-depth-note">
+                  <span className="ab-note">
                     Auto : arrêté en prof. {engineAutoSummary.depth} —{' '}
                     {engineAutoSummary.stable
                       ? 'éval stable.'
@@ -1172,15 +1184,15 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   </span>
                 )}
                 {loadingEngine && (
-                  <span className="loading-badge">
-                    <Loader2 size={13} className="spin" />
+                  <span className="ab-loading">
+                    <Loader2 size={13} className="ab-spin" />
                     <span>
                       Analyse locale en cours{engineProgressDepth > 0 ? (localDepth === 'auto' ? ` (prof. ${engineProgressDepth}, adaptatif)…` : ` (prof. ${engineProgressDepth}/${localDepth})…`) : ' (démarrage du moteur…)'}…
                     </span>
                   </span>
                 )}
                 {!loadingEngine && engineError && engineMoves.length === 0 && (
-                  <div className="mini-error-box">
+                  <div className="ab-error">
                     <span>{engineError} Jouez librement sur l'échiquier ou basculez sur « Utilisateurs ».</span>
                   </div>
                 )}
@@ -1198,31 +1210,32 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   return (
                     <div
                       key={e.uci}
-                      className={`player-candidate-card engine-card ${i === 0 ? 'is-best' : ''}`}
+                      className={`ab-cand ${i === 0 ? 'ab-best' : ''}`}
+                      style={{ '--ab-i': i } as React.CSSProperties}
                       onMouseEnter={() => onHoverMove?.(e.uci)}
                       onMouseLeave={() => onHoverMove?.(null)}
                     >
-                      <div className="candidate-info">
-                        <span className="candidate-rank-small">{i + 1}</span>
-                        <span className="candidate-san-bold">{e.san}</span>
-                        <span className={`eval-badge ${typeof e.mate === 'number' ? 'eval-mate' : ''}`} title={`Profondeur ${e.depth}`}>
+                      <div className="ab-cand-head">
+                        <span className="ab-rank">{i + 1}</span>
+                        <span className="ab-san">{e.san}</span>
+                        <span className={`ab-eval ${typeof e.mate === 'number' ? 'ab-eval-mate' : ''}`} title={`Profondeur ${e.depth}`}>
                           {e.scoreFormatted}
                         </span>
-                        {i === 0 && <span className="best-move-tag">Meilleur</span>}
+                        {i === 0 && <span className="ab-tag-best">Meilleur</span>}
                       </div>
-                      <div className="engine-pv-line" title="Suite principale du moteur">
+                      <div className="ab-pv" title="Suite principale du moteur">
                         {e.pvSans.slice(0, 6).join(' ')}
-                        <span className="engine-depth"> (prof. {e.depth})</span>
+                        <span className="ab-pvdepth"> (prof. {e.depth})</span>
                       </div>
                       {knownOpening?.name && (
-                        <div className="candidate-op-name">{knownOpening.name}</div>
+                        <div className="ab-opening">{knownOpening.name}</div>
                       )}
-                      <div className="engine-card-footer">
-                        <span className="engine-source-label">
+                      <div className="ab-cand-foot">
+                        <span className="ab-source">
                           <Cpu size={12} /> Stockfish local (prof. {e.depth})
                         </span>
                         <button
-                          className={`adopt-btn ${isAlreadyAdopted ? 'already-adopted' : ''}`}
+                          className={`ab-adopt ${isAlreadyAdopted ? 'ab-adopted' : ''}`}
                           onClick={() => onAddAndPlayMove(lichessMove)}
                           disabled={isAlreadyAdopted}
                         >
@@ -1244,8 +1257,8 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                 })}
               </div>
             ) : (
-              <div className="users-suggestions">
-                <span className="sub-section-label">Coups les plus joués par les utilisateurs ({eloTargetLabel(repertoire.targetElo)}) :</span>
+              <div className="ab-users">
+                <span className="ab-label">Coups les plus joués par les utilisateurs ({eloTargetLabel(repertoire.targetElo)}) :</span>
                 {opponentMoves.slice(0, 6).map((m, i) => {
                   const parties = m.white + m.draws + m.black;
                   const pw = parties > 0 ? Math.round((m.white / parties) * 100) : 0;
@@ -1256,26 +1269,27 @@ export const RepertoireBuilder: React.FC<RepertoireBuilderProps> = ({
                   return (
                     <div
                       key={m.uci}
-                      className="player-candidate-card"
+                      className="ab-cand"
+                      style={{ '--ab-i': i } as React.CSSProperties}
                       onMouseEnter={() => onHoverMove?.(m.uci)}
                       onMouseLeave={() => onHoverMove?.(null)}
                     >
-                      <div className="candidate-info">
-                        <span className="candidate-rank-small">{i + 1}</span>
-                        <span className="candidate-san-bold">{m.san}</span>
+                      <div className="ab-cand-head">
+                        <span className="ab-rank">{i + 1}</span>
+                        <span className="ab-san">{m.san}</span>
                         {m.opening?.name && (
-                          <span className="candidate-op-name">{frenchOpeningName(m.opening.name)}</span>
+                          <span className="ab-opening">{frenchOpeningName(m.opening.name)}</span>
                         )}
                       </div>
 
-                      <div className="candidate-score">
-                        <span className="score-badge text-success" title="Taux de victoires pour votre camp">
+                      <div className="ab-score">
+                        <span className="ab-winrate text-success" title="Taux de victoires pour votre camp">
                           {myWinRate}% victoires
                         </span>
                       </div>
 
                       <button
-                        className={`adopt-btn ${isAlreadyAdopted ? 'already-adopted' : ''}`}
+                        className={`ab-adopt ${isAlreadyAdopted ? 'ab-adopted' : ''}`}
                         onClick={() => onAddAndPlayMove(m)}
                         disabled={isAlreadyAdopted}
                       >
