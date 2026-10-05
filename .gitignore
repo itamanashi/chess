@@ -44,3 +44,7 @@ dist/
 
 # Graphify
 graphify-out/
+
+# Local agent harness (ECC / opencode, machine-specific)
+.agents/
+skills-lock.json

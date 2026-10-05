@@ -79,7 +79,7 @@ import {
 import { TheoryPanel } from './TheoryPanel';
 import { TacticsPanel } from './TacticsPanel';
 import { GamesPanel } from './GamesPanel';
-import { OverviewApple } from './mes-parties-variants/Overview.apple';
+import { GamesOverview } from './GamesOverview';
 import { CastlingPanel } from './CastlingPanel';
 import { frenchOpeningName } from '../utils/openingsFr';
 import type { ChesscomAccount } from '../hooks/useChesscomAccount';
@@ -2058,7 +2058,7 @@ export const ChesscomPanel: React.FC<ChesscomPanelProps> = ({
         {statsTab !== 'parties' && (
         <div className="chesscom-right-column">
         {statsTab === 'overview' && (
-          <OverviewApple games={listedGames} me={me} />
+          <GamesOverview games={listedGames} me={me} />
         )}
         {statsTab === 'precision' && (
         <div className="chesscom-stats-grid">

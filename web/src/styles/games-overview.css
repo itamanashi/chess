@@ -1,0 +1,305 @@
+/* ------------------------------------------------------------------
+ * Vue d'ensemble (Mes parties) — section extraite de ChesscomPanel.
+ * Préfixe oa-, tout est scopé sous .oa-overview. Français uniquement.
+ * ------------------------------------------------------------------ */
+
+.oa-overview {
+  /* Matériaux : verre hiérarchisé (jamais clair-sur-clair). */
+  --oa-glass-bg: rgb(30 28 24 / 0.6);
+  --oa-glass-blur: blur(22px) saturate(170%);
+  --oa-edge-light: rgb(236 232 223 / 0.14);
+  --oa-radius: 20px;
+  --oa-radius-sm: 12px;
+  --oa-shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 48px rgb(0 0 0 / 0.38);
+  --oa-dur: 140ms;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Grille des cartes : deux colonnes, une en étroit. */
+.oa-overview .oa-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .oa-overview .oa-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Carte-matériau : le flou encode la hiérarchie (carte > fond). */
+.oa-overview .oa-card {
+  background: var(--oa-glass-bg);
+  backdrop-filter: var(--oa-glass-blur);
+  -webkit-backdrop-filter: var(--oa-glass-blur);
+  border: 1px solid var(--oa-edge-light);
+  border-radius: var(--oa-radius);
+  box-shadow: var(--oa-shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  /* Carte large : traverse la grille (rythme, pas SaaS). */
+  transition: background-color var(--oa-dur) ease, border-color var(--oa-dur) ease;
+}
+.oa-overview .oa-card--wide {
+  grid-column: 1 / -1;
+}
+
+/* En-tête de carte : kicker discret + titre resserré (type optique). */
+.oa-overview .oa-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.oa-overview .oa-icon {
+  color: var(--text-3);
+  flex: none;
+}
+.oa-overview .oa-title {
+  font-family: var(--font-ui);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+/* Sous-titre sur verre : vibrancy (graisse + chasse, pas gris plat). */
+.oa-overview .oa-sub {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+}
+
+/* Ligne de résumé : chiffres tabulaires, tracking resserré. */
+.oa-overview .oa-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+.oa-overview .oa-summary strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.oa-overview .oa-sep {
+  color: var(--text-3);
+}
+
+/* Barre V/N/D en pilule : segments continus, lecture d'un coup d'œil. */
+.oa-overview .oa-wdl {
+  display: flex;
+  height: 20px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  font-size: var(--fs-kicker);
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+}
+.oa-overview .oa-wdl--sm {
+  height: 14px;
+  line-height: 12px;
+  font-size: 10px;
+  min-width: 120px;
+}
+.oa-overview .oa-wdl-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  transition: background-color var(--oa-dur) ease;
+}
+.oa-overview .oa-wdl-win { background: var(--accent); }
+.oa-overview .oa-wdl-draw { background: #8e887c; }
+.oa-overview .oa-wdl-loss { background: var(--danger-fill); }
+
+/* Calendrier d'activité : 13 semaines, cases rondes, score V/N/D
+   identique à l'original (rouge → ambre → vert). */
+.oa-overview .oa-cal-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.oa-overview .oa-cal {
+  display: flex;
+  gap: 3px;
+}
+.oa-overview .oa-cal-week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+.oa-overview .oa-cal-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: rgb(236 232 223 / 0.07);
+  border: 1px solid transparent;
+  min-width: 0;
+}
+.oa-overview .oa-cal-cell.is-future {
+  background: transparent;
+}
+.oa-overview .oa-cal-caption {
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pastilles sobres de légende (pilules réservées aux pastilles). */
+.oa-overview .oa-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.oa-overview .oa-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.oa-overview .oa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* Graphiques SVG : traits fins, axes discrets, barres arrondies. */
+.oa-overview .oa-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.oa-overview .oa-chart .oa-grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.oa-overview .oa-chart .oa-axis {
+  fill: var(--text-3);
+  font-size: 10px;
+  font-family: var(--font-ui);
+}
+.oa-overview .oa-chart rect {
+  /* Coins adoucis comme les cartes, sans toucher la géométrie. */
+  rx: 3px;
+}
+.oa-overview .oa-chart-foot {
+  font-size: var(--fs-small);
+  color: var(--text-3);
+  margin-top: var(--sp-1);
+}
+
+/* Tables : filets hairline, chiffres tabulaires, en-tête kicker. */
+.oa-overview .oa-table-wrap {
+  overflow-x: auto;
+}
+.oa-overview .oa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+.oa-overview .oa-table th,
+.oa-overview .oa-table td {
+  padding: 8px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.oa-overview .oa-table th:first-child,
+.oa-overview .oa-table td:first-child {
+  text-align: left;
+}
+.oa-overview .oa-table thead th {
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: var(--fs-kicker);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.oa-overview .oa-table tbody tr {
+  transition: background-color var(--oa-dur) ease;
+}
+.oa-overview .oa-table tbody tr:hover {
+  background-color: rgb(236 232 223 / 0.04);
+}
+.oa-overview .oa-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Panneaux réutilisés (Heure / Jour / Géographie) : logique intacte,
+   seule la carte-matériau est alignée sur les cartes oa. */
+.oa-overview .oa-embed {
+  min-width: 0;
+}
+.oa-overview .oa-embed > .chesscom-stats-grid {
+  display: block;
+}
+.oa-overview .oa-embed .panel-card {
+  background: var(--oa-glass-bg);
+  backdrop-filter: var(--oa-glass-blur);
+  -webkit-backdrop-filter: var(--oa-glass-blur);
+  border: 1px solid var(--oa-edge-light);
+  border-radius: var(--oa-radius);
+  box-shadow: var(--oa-shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+/* État vide repris du système, sans y toucher. */
+.oa-overview .oa-empty {
+  color: var(--text-3);
+  font-size: var(--fs-body);
+  padding: var(--sp-3) 0;
+}
+
+/* Transparence réduite : verre dépoli plein, lisibilité d'abord. */
+@media (prefers-reduced-transparency: reduce) {
+  .oa-overview .oa-card,
+  .oa-overview .oa-embed .panel-card {
+    background: var(--bg-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Contraste renforcé : filets nets, texte plein. */
+@media (prefers-contrast: more) {
+  .oa-overview .oa-card,
+  .oa-overview .oa-embed .panel-card {
+    background: var(--bg-surface);
+    border-color: var(--border-strong);
+  }
+  .oa-overview .oa-sub,
+  .oa-overview .oa-legend-item {
+    color: var(--text);
+  }
+}
+
+/* Mouvement réduit : fondus opaques courts, jamais de ressort. */
+@media (prefers-reduced-motion: reduce) {
+  .oa-overview .oa-card,
+  .oa-overview .oa-wdl-seg,
+  .oa-overview .oa-table tbody tr {
+    transition: background-color 150ms ease, border-color 150ms ease;
+  }
+}
