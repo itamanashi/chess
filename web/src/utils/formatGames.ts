@@ -25,3 +25,25 @@ export function pct(part: number, total: number): number {
   if (part <= 0) return 0;
   return Math.round((part / total) * 100);
 }
+
+/** Formate une durée en millisecondes en chaîne lisible (ex: "2h 15m", "45m", "30s"). */
+export function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return '0s';
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}j ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
+}
+
+/** Évaluation moyenne lisible en pions (ex: "+1.25", "-0.30", "0.00", "—" si null). */
+export function formatEval(evalValue: number | null): string {
+  if (evalValue === null) return '—';
+  if (evalValue > 0) return `+${(evalValue / 100).toFixed(2)}`;
+  if (evalValue < 0) return `${(evalValue / 100).toFixed(2)}`;
+  return '0.00';
+}

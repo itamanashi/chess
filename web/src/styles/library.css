@@ -2,35 +2,59 @@
  * Bibliothèque : index des répertoires, avec le camp joué comme repère.
  * ------------------------------------------------------------------ */
 
+.app-main-library {
+  background: var(--bg-app);
+}
+
 .library-view-container {
-  max-width: 1160px;
+  max-width: 1800px;
   width: 100%;
   margin: 0 auto;
   padding: var(--sp-6) var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
+  background: var(--bg-app);
+  min-height: 100%;
+  flex: 1;
 }
 
-/* En-tête : description et actions restent alignées à gauche. */
+/* En-tête : panneau verre (flou + filet lumineux), contenu à gauche,
+   action à droite. */
 .library-hero-section {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-6);
-  padding-bottom: var(--sp-6);
-  border-bottom: 1px solid var(--border);
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  background: rgb(236 232 223 / 0.05);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgb(236 232 223 / 0.08);
 }
-.hero-content { max-width: 62ch; display: flex; flex-direction: column; gap: var(--sp-3); }
+.hero-content { max-width: 62ch; display: flex; flex-direction: column; gap: var(--sp-2); }
 .hero-kicker {
   font-size: var(--fs-small);
   color: var(--accent-text);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 .hero-description { color: var(--text-2); max-width: 56ch; }
 .hero-description strong { color: var(--text); }
+/* Preuve réelle du carnet (mêmes sources que les cartes), chiffres en chasse fixe. */
+.hero-proof {
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+.hero-proof strong { color: var(--text); font-weight: 600; }
 .hero-action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-start; }
+/* CTA du hero en pilule, sans toucher au système de boutons. */
+.hero-action-buttons .primary-btn { border-radius: 999px; padding-left: var(--sp-5); padding-right: var(--sp-5); }
 
 .library-section-header {
   display: flex;
@@ -46,39 +70,46 @@
 }
 .library-count { color: var(--text-3); font-size: var(--fs-small); }
 
-.repertoires-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: var(--sp-4);
+/* Section répertoires */
+.repertoires-section {
+  padding: var(--sp-4) 0;
+}
+.repertoires-section .library-section-header {
+  margin-bottom: var(--sp-4);
+  color: var(--text);
 }
 
-/* La lisière indique le camp joué ; chaque répertoire garde ses actions réunies. */
+.repertoires-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+/* Chaque répertoire garde ses actions réunies. Carte adoucie Gén +1. */
 .repertoire-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-panel);
+  border-radius: 14px;
   padding: var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  border-left-width: 3px;
   transition: border-color var(--dur) ease, background-color var(--dur) ease;
 }
-.repertoire-card.card-white { border-left-color: var(--camp-white); }
-.repertoire-card.card-black { border-left-color: var(--camp-black); }
 .repertoire-card:hover {
   background: var(--bg-raised);
-  border-top-color: var(--border-strong);
-  border-right-color: var(--border-strong);
-  border-bottom-color: var(--border-strong);
+  border-color: var(--border-strong);
 }
 
 .rep-card-top { display: flex; flex-direction: column; gap: var(--sp-1); }
-.rep-badges-row { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+/* Titre et menu ⋯ sur la même ligne (le menu reste collé à droite). */
+.rep-title-row { display: flex; align-items: center; gap: var(--sp-2); }
+.rep-title-row .rep-title-wrap { flex: 1; min-width: 0; }
+.rep-title-row .rep-menu-btn { margin-left: auto; flex: none; }
 .rep-title-wrap { margin: 0; font-size: inherit; }
 .rep-title {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: var(--fs-h3);
   font-weight: 400;
   text-align: left;
   background: none;
@@ -88,7 +119,135 @@
   padding: 0;
 }
 button.rep-title:hover { color: var(--accent-text); }
-.rep-elo-desc { font-size: var(--fs-small); color: var(--text-3); }
+/* Elo accolé au titre (fourchette seule, sans le mot de niveau). */
+.rep-title-elo {
+  color: var(--text-3);
+  font-size: 0.82em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.rep-title-elo::before { content: ' · '; }
+.rep-elo-desc { font-size: var(--fs-small); color: var(--text-3); margin: 0; }
+
+/* Corps de carte : échiquier à gauche, informations à droite. */
+.rep-card-body {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: flex-start;
+}
+.rep-board-btn {
+  flex: 0 0 280px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.rep-board-btn .miniboard { transition: border-color var(--dur) ease; }
+.rep-board-btn:hover .miniboard { border-color: var(--accent-text); }
+
+/* Statistiques simples (texte) */
+.rep-simple-stats {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+/* Progression d'étude : compteur + fine barre sauge + dernière étude.
+   Mêmes sources que l'entraîneur, aucune donnée inventée. */
+.rep-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+}
+.rep-progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+}
+.rep-progress-top .simple-stat-val { color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rep-progress-top .simple-stat-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-progress-track {
+  display: block;
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(236 232 223 / 0.12);
+  overflow: hidden;
+}
+.rep-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--success);
+}
+.rep-progress-sub { font-size: var(--fs-small); color: var(--text-3); }
+.simple-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  font-size: var(--fs-small);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+}
+.simple-stat-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+.simple-stat-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+.simple-stat-row .simple-stat-val { color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.simple-stat-row .simple-stat-label { text-transform: none; letter-spacing: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rep-info-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+/* Métriques en colonne dans la carte (valeur + libellé sur une ligne). */
+.rep-info-col .rep-metrics-row {
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--sp-1);
+  border-top: none;
+  border-bottom: none;
+}
+.rep-info-col .metric-box {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 0;
+}
+.rep-info-col .metric-box + .metric-box { border-left: none; padding-left: 0; }
+.rep-info-col .metric-val { font-size: var(--fs-body); }
 
 .rep-metrics-row {
   display: flex;
@@ -107,9 +266,81 @@ button.rep-title:hover { color: var(--accent-text); }
 
 .rep-date-row { display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-small); color: var(--text-3); }
 .rep-actions-footer { display: flex; gap: var(--sp-2); }
+/* Boutons de carte en pilule, couleurs inchangées (vert étude + contour). */
+.rep-actions-footer .rep-study-btn,
+.rep-actions-footer .train-btn { border-radius: 999px; }
 .rep-actions-footer .primary-btn { flex: 1; }
 .rep-actions-footer .action-pill-btn { flex: 1; }
-.sub-actions { display: flex; gap: var(--sp-1); }
+/* Menu ⋯ de la carte : arbre, JSON, suppression (haut droite). */
+.repertoire-card { position: relative; }
+.rep-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+.rep-menu {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  min-width: 230px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-control);
+  box-shadow: var(--shadow-layer);
+  padding: var(--sp-1);
+}
+.rep-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+.rep-menu-item:hover:not(:disabled) { background: var(--bg-raised); color: var(--text); }
+.rep-menu-item.danger { color: var(--text-3); }
+.rep-menu-item.danger:hover:not(:disabled) { color: var(--danger-text); background: var(--danger-tint); }
+
+/* Étudier (carte bibliothèque) : action primaire de la carte — occupe
+   l'espace, contenu centré sur une ligne, à plat (ni bordure ni relief).
+   Le vert reste réservé à l'étude (voir --study). */
+.rep-actions-footer .rep-study-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-color: transparent;
+}
+.rep-study-btn .rep-study-icon,
+.rep-study-btn .rep-study-go {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.rep-study-btn svg {
+  display: block;
+}
+.rep-study-btn .rep-study-go {
+  opacity: 0.75;
+}
 
 /* Vide : explication + une seule action. */
 .empty-library-card {
@@ -128,20 +359,36 @@ button.rep-title:hover { color: var(--accent-text); }
 /* Astuce sous le graphe (conservée : utilisée par RepertoireGraphTree). */
 .tree-hint { font-size: var(--fs-small); color: var(--text-3); font-family: var(--font-ui); }
 
+/* Modale de création : fond flouté et dialogue adouci (portée bibliothèque). */
+.library-view-container .modal-backdrop {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.library-view-container .modal-dialog { border-radius: 16px; }
+
+@media (max-width: 1200px) {
+  .repertoires-grid { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 760px) {
   .library-view-container { padding: var(--sp-5) var(--sp-3); gap: var(--sp-5); }
-  .library-hero-section { align-items: flex-start; }
+  .library-hero-section { align-items: flex-start; padding: var(--sp-4); }
   .hero-action-buttons { width: 100%; }
   .hero-action-buttons .primary-btn { width: 100%; }
   .repertoires-grid { grid-template-columns: minmax(0, 1fr); }
   .repertoire-card { padding: var(--sp-4); }
 }
 
+/* Cartes étroites : l'échiquier passe au-dessus des informations. */
+@media (max-width: 420px) {
+  .rep-card-body { flex-direction: column; }
+  .rep-board-btn { flex: none; width: 100%; }
+}
+
 /* Grands écrans / 2K : la bibliothèque ne reste pas en bande étroite. */
 @media (min-width: 1600px) {
-  .library-view-container { max-width: 1280px; }
-  .repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+  .library-view-container { max-width: 1720px; }
+  .repertoires-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); }
 }
 @media (min-width: 2100px) {
-  .library-view-container { max-width: 1440px; }
+  .library-view-container { max-width: 1920px; }
 }

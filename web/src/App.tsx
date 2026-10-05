@@ -925,7 +925,7 @@ export const App: React.FC = () => {
         onPieceSkinChange={handlePieceSkinChange}
       />
 
-      <div className="app-main">
+      <div className={appView === 'library' ? 'app-main app-main-library' : 'app-main'}>
       {/* VUE 1 : LA BIBLIOTHÈQUE DE RÉPERTOIRES (Interface d'accueil principale) */}
       {appView === 'library' && (
         <RepertoireLibrary

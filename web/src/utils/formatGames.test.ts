@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatGames, pct } from './formatGames';
+import { formatDuration, formatEval, formatGames, pct } from './formatGames';
 
 describe('formatGames', () => {
   it('petites valeurs exactes', () => {
@@ -36,5 +36,28 @@ describe('pct', () => {
     expect(pct(5, 0)).toBe(0);
     expect(pct(5, -2)).toBe(0);
     expect(pct(NaN, 100)).toBe(0);
+  });
+});
+
+describe('formatDuration', () => {
+  it('secondes et minutes', () => {
+    expect(formatDuration(0)).toBe('0s');
+    expect(formatDuration(-3)).toBe('0s');
+    expect(formatDuration(30_000)).toBe('30s');
+    expect(formatDuration(192_000)).toBe('3m 12s');
+  });
+
+  it('heures et jours', () => {
+    expect(formatDuration(7_500_000)).toBe('2h 5m');
+    expect(formatDuration(90_000_000)).toBe('1j 1h');
+  });
+});
+
+describe('formatEval', () => {
+  it('signe et null', () => {
+    expect(formatEval(null)).toBe('—');
+    expect(formatEval(125)).toBe('+1.25');
+    expect(formatEval(-30)).toBe('-0.30');
+    expect(formatEval(0)).toBe('0.00');
   });
 });
