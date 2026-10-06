@@ -201,6 +201,10 @@ export function mergeAutoRoot(target: RepertoireRoot, source: RepertoireRoot): n
         if (!existing.ouverture && s.ouverture) existing.ouverture = s.ouverture;
         if (!existing.eco && s.eco) existing.eco = s.eco;
         if (!existing.fen && s.fen) existing.fen = s.fen;
+        if (existing.trapScore === undefined && s.trapScore !== undefined) {
+          existing.trapScore = s.trapScore;
+          if (!existing.eval && s.eval) existing.eval = s.eval;
+        }
         // Le mat est une propriété de la position, pas un avis : jamais perdu à la fusion.
         if (!existing.isMate && s.isMate) existing.isMate = true;
         mergeLists(existing.children || (existing.children = []), s.children || []);
@@ -338,6 +342,18 @@ export function buildHistoryFromSans(sans: string[]): MoveHistoryItem[] {
     items.push({ san: m.san, uci: `${m.from}${m.to}${m.promotion || ''}`, fen: c.fen() });
   }
   return items;
+}
+
+/** Compte les coups d'un arbre de répertoire (racine exclue). */
+export function countNodes(root: RepertoireRoot): number {
+  let n = 0;
+  const stack = [...(root.children || [])];
+  while (stack.length > 0) {
+    const cur = stack.pop()!;
+    n++;
+    if (cur.children) stack.push(...cur.children);
+  }
+  return n;
 }
 
 /** Trait à partir d'un FEN ('w' | 'b'), sans instance Chess mutable. */

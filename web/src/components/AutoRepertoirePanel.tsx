@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { GitBranch, Loader2, Play, Square, Download } from 'lucide-react';
 import type { BoardOrientation, EloTargetKey, EngineMove, RepertoireRoot } from '../types/chess';
 import { ELO_TARGET_OPTIONS } from '../types/chess';
@@ -12,6 +12,8 @@ import { analyzeLocalFen, desiredEngineThreads, getLocalEngineThreads, onLocalEn
 import { explorerCacheReady, lichessCacheMemorySize, lichessPersistHealthy } from '../services/lichess';
 import { explorerSqliteStatus, loadExplorerSqliteStats } from '../storage/explorerSqlite';
 import { isAbortError } from '../utils/async';
+import { countNodes } from '../utils/repertoireTree';
+import { blurOnEnter, clampInt, useUncontrolledNumber } from '../hooks/useUncontrolledNumber';
 
 interface AutoRepertoirePanelProps {
   repertoireColor: BoardOrientation;
@@ -38,79 +40,6 @@ const DEFAULT_STATS: AutoGenStats = {
   engineWaitMs: 0, failed: 0, failedFens: [], prunedValue: 0, mates: 0,
   quiescenceExtended: 0, closingReplies: 0, unanswered: 0,
 };
-
-/**
- * Champs numériques NON contrôlés : zéro rendu React à la frappe (seule la
- * validation au blur/Entrée touche l'état). Chaque frappe coûtait 200 ms+
- * dans un onglet chargé (extensions écoutant les inputs + rendus) ; ici la
- * frappe ne fait que remplir le DOM, sans aucun travail.
- *
- * Les callbacks sont stables par clé (useCallback + refs) : avant, `attach`
- * recréait une fonction à chaque rendu, forçant React à détacher/rattacher
- * les champs à chaque tick d'horloge pendant un run (churn inutile).
- */
-function useUncontrolledNumber(
-  setValue: (n: number) => void,
-  clamp: (n: number) => number,
-): {
-  attach: (key: string) => (el: HTMLInputElement | null) => void;
-  commit: (key: string, fallback: number) => () => void;
-  write: (key: string, v: number) => void;
-} {
-  const refs = useRef<{ [k: string]: HTMLInputElement | null }>({});
-  // Dernier setValue/clamp vus (synchro post-rendu : jamais d'écriture de
-  // ref pendant le rendu). Les handlers stables par clé lisent via ce miroir.
-  const latest = useRef({ setValue, clamp });
-  useEffect(() => {
-    latest.current = { setValue, clamp };
-  });
-  const attachFns = useRef<{ [k: string]: (el: HTMLInputElement | null) => void }>({});
-  const commitFns = useRef<{ [k: string]: { fallback: number; fn: () => void } }>({});
-
-  const attach = useCallback(
-    (key: string) => {
-      if (!attachFns.current[key]) {
-        attachFns.current[key] = (el: HTMLInputElement | null): void => {
-          refs.current[key] = el;
-        };
-      }
-      return attachFns.current[key];
-    },
-    [],
-  );
-  const commit = useCallback(
-    (key: string, fallback: number) => {
-      const cached = commitFns.current[key];
-      // Le fallback change à chaque rendu (c'est la valeur d'état) : on le
-      // met à jour sans recréer le handler (identité stable → pas de churn).
-      if (!cached) {
-        const fn = (): void => {
-          const el = refs.current[key];
-          if (!el) return;
-          const raw = el.value.trim().replace(',', '.');
-          const parsed = Number(raw);
-          const current = commitFns.current[key]?.fallback ?? 0;
-          const next = raw === '' || !Number.isFinite(parsed) ? current : latest.current.clamp(parsed);
-          latest.current.setValue(next);
-          el.value = String(next);
-        };
-        commitFns.current[key] = { fallback, fn };
-        return fn;
-      }
-      cached.fallback = fallback;
-      return cached.fn;
-    },
-    [],
-  );
-  const write = useCallback((key: string, v: number): void => {
-    const el = refs.current[key];
-    if (el) el.value = String(v);
-  }, []);
-  return { attach, commit, write };
-}
-
-const clampInt = (min: number, max: number) => (n: number): number =>
-  Math.max(min, Math.min(max, Math.round(n)));
 
 const formatWait = (ms: number): string =>
   `${(ms / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} s`;
@@ -229,10 +158,6 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
   const maxPosNum = useUncontrolledNumber(setMaxPositions, (n) => Math.max(5, Math.round(n)));
   const minLVNum = useUncontrolledNumber(setMinLV, (n) => Math.max(0, Math.min(1, n)));
   const minGamesNum = useUncontrolledNumber(setMinGames, (n) => Math.max(0, Math.min(1000000, Math.round(n))));
-
-  const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-  };
 
   const handleStart = async (): Promise<void> => {
     if (running) return;
@@ -666,14 +591,3 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
     </div>
   );
 };
-
-function countNodes(root: RepertoireRoot): number {
-  let n = 0;
-  const stack = [...(root.children || [])];
-  while (stack.length > 0) {
-    const cur = stack.pop()!;
-    n++;
-    if (cur.children) stack.push(...cur.children);
-  }
-  return n;
-}

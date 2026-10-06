@@ -12,6 +12,12 @@ export interface RepertoireMove {
   fen: string;
   frequencyPct?: number; // Taux d'apparition réel (%) à la tranche d'Elo cible
   eval?: string; // Évaluation de l'ordinateur (ex: "+0.27", "-0.10", "#M2")
+  /**
+   * Score piège Stockfish MultiPV (drop-off adverse en cp, 999 = une seule
+   * réponse légale). Posé par generateTrapRepertoire, utilisé par la
+   * réduction à une seule réponse. `eval` ("trap:Xcp") reste l'affichage seul.
+   */
+  trapScore?: number;
   /** Mat (délivré ou mat-en-1) : fin forcée, priorité absolue de génération. Posé par le BFS auto, préservé par fusion/stockage. */
   isMate?: boolean;
   /**
