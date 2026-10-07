@@ -148,7 +148,8 @@ describe('scores', () => {
 
   it('mode noirs : sans moteur → repli popularité, avec moteur → Stockfish tranche', async () => {
     // Après 1.d4, e5 domine en bas (44 %) : sans juge, le repli popularité
-    // garde e5. Avec un juge qui déclasse e5, la réplique retenue est Nf6.
+    // garde e5. Avec un juge qui déclasse e5, Nf6 et d5 (équivalents) sont
+    // explorés, le mieux en tête.
     const rootData = {
       white: 5000, draws: 1000, black: 4000,
       moves: [
@@ -204,7 +205,7 @@ describe('scores', () => {
       ...cfgBase, engineJudge: { judge },
     });
     const d4 = root.children.find((c) => c.san === 'd4');
-    expect((d4?.children ?? []).map((c) => c.san)).toEqual(['Nf6']);
+    expect((d4?.children ?? []).map((c) => c.san)).toEqual(['Nf6', 'd5']);
     expect(stats.failed).toBe(0);
   });
 
@@ -334,10 +335,10 @@ describe('scores', () => {
     expect(stats.failed).toBe(0);
   });
 
-  it('juge moteur : UNE SEULE réplique à nous (e4 OU d4, pas les deux)', async () => {
-    // Non-régression : au départ en mode blancs, e4 et d4 sont équivalents
-    // (±30 cp même après creusage) mais le contrat 1-coup impose un choix —
-    // le meilleur moteur gagne, le BFS creuse UNE ligne.
+  it('juge moteur : coups équivalents tous explorés, le mieux en tête', async () => {
+    // MultiPV sans nombre fixé : e4 et d4 équivalents (±30 cp même après
+    // creusage) sont gardés tous les deux — le meilleur moteur gagne la
+    // première variante, le BFS creuse ensuite chaque ligne.
     mockFetch.mockImplementation(async (_fen: string, _token?: string, db?: 'masters' | 'lichess') => {
       if (db === 'masters') return { white: 0, draws: 0, black: 0, moves: [] };
       return {
@@ -364,10 +365,65 @@ describe('scores', () => {
         engineEvals.push(ranked);
       },
     });
-    expect(root.children.map((c) => c.san)).toEqual(['d4']);
+    expect(root.children.map((c) => c.san)).toEqual(['d4', 'e4']);
     expect(stats.engineNodes).toBe(1);
     expect(engineEvals).toHaveLength(1);
-    expect(engineEvals[0].map((r) => r.san)).toEqual(['d4']);
+    expect(engineEvals[0].map((r) => r.san)).toEqual(['d4', 'e4']);
+    expect(stats.failed).toBe(0);
+  });
+
+  it('juge moteur : coup nettement meilleur seul gardé (+2.0 face à +0.5)', async () => {
+    // Écart > fenêtre d'équivalence : une seule bonne réponse, les autres
+    // sont élaguées avant tout coût profond.
+    mockFetch.mockImplementation(async (_fen: string, _token?: string, db?: 'masters' | 'lichess') => {
+      if (db === 'masters') return { white: 0, draws: 0, black: 0, moves: [] };
+      return {
+        white: 5000, draws: 1000, black: 4000,
+        moves: [
+          { san: 'e4', uci: 'e2e4', white: 2500, draws: 500, black: 2000 },
+          { san: 'd4', uci: 'd2d4', white: 2000, draws: 500, black: 2000 },
+        ],
+      };
+    });
+    const em = (uci: string, san: string, cp: number): EngineMove =>
+      ({ uci, san, cp, depth: 20, scoreFormatted: '', pvSans: [] });
+    const lines = [em('d2d4', 'd4', 200), em('e2e4', 'e4', 50)];
+    const judge = vi.fn(async () => lines);
+    const { root, stats } = await generateAutoRepertoire(INITIAL_FEN, {
+      maxDepth: 1, maxBranching: 6, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'white' as const, pruneMinLineValue: 0,
+      endpoint: 'lichess' as const, ratingsParam: '400,1000',
+      engineJudge: { judge },
+    });
+    expect(root.children.map((c) => c.san)).toEqual(['d4']);
+    expect(stats.engineNodes).toBe(1);
+    expect(stats.failed).toBe(0);
+  });
+
+  it('juge moteur aveugle : repli popularité, une seule réplique', async () => {
+    mockFetch.mockImplementation(async (_fen: string, _token?: string, db?: 'masters' | 'lichess') => {
+      if (db === 'masters') return { white: 0, draws: 0, black: 0, moves: [] };
+      return {
+        white: 5000, draws: 1000, black: 4000,
+        moves: [
+          { san: 'e4', uci: 'e2e4', white: 2500, draws: 500, black: 2000 },
+          { san: 'd4', uci: 'd2d4', white: 2000, draws: 500, black: 2000 },
+        ],
+      };
+    });
+    const judge = vi.fn(async (): Promise<EngineMove[]> => {
+      throw new Error('moteur évincé');
+    });
+    const { root, stats } = await generateAutoRepertoire(INITIAL_FEN, {
+      maxDepth: 1, maxBranching: 6, minFreq: 0, coveragePercent: 100,
+      maxPositions: 10, gapMs: 0, repertoireColor: 'white' as const, pruneMinLineValue: 0,
+      endpoint: 'lichess' as const, ratingsParam: '400,1000',
+      engineJudge: { judge },
+    });
+    // Moteur aveugle : sans éval, impossible de juger la proximité — le plus
+    // joué seul.
+    expect(root.children.map((c) => c.san)).toEqual(['e4']);
+    expect(stats.engineFallbacks).toBe(1);
     expect(stats.failed).toBe(0);
   });
 

@@ -433,9 +433,11 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
         </summary>
         <p className="text-muted" style={{ fontSize: 12 }}>
           Par défaut l'exploration suit la popularité (les plus jouées d'abord)
-          sous le plafond du budget : l'Italienne et l'Espagnole sont explorées
-          car jouées, et Stockfish tranche ta réplique. Ne touche
-          ci-dessous que pour forcer la largeur.
+          sous le plafond du budget. À ton tour, Stockfish MultiPV tranche sans
+          nombre fixé : un coup nettement meilleur reste seul, les coups
+          équivalents sont tous explorés (l'Italienne ET l'Espagnole si le
+          moteur les juge proches), le mieux en première variante.
+          Ne touche ci-dessous que pour forcer la largeur.
         </p>
         <div className="auto-gen-grid">
           <label className="auto-gen-field" title="Populaire : priorité aux positions les plus probables (comportement actuel). Couverture : explore les positions d'un même pli avant de passer au pli suivant ; utile pour répartir un budget limité entre les branches.">
@@ -458,7 +460,7 @@ export const AutoRepertoirePanel: React.FC<AutoRepertoirePanelProps> = ({
               onKeyDown={blurOnEnter}
             />
           </label>
-          <label className="auto-gen-field" title="Coups max conservés par position (la couverture décide, ce plafond évite l'explosion sur les positions plates). Monte-le pour élargir l'arbre.">
+          <label className="auto-gen-field" title="Coups max conservés par position adverse (la couverture décide, ce plafond évite l'explosion sur les positions plates). Monte-le pour élargir l'arbre.">
             <span>Branches max</span>
             <input
               type="number" min={1} max={12} defaultValue={maxBranching}

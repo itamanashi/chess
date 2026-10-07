@@ -7,12 +7,15 @@
  * à notre tour on suit le répertoire donc facteur 1, pas la fréquence).
  * L'ordre « couverture » opt-in explore les profondeurs plus faibles d'abord,
  * puis départage par cette même probabilité.
- * Garantie réplique (modes blancs/noirs) : tout coup adverse ÉMIS reçoit
- * exactement une réplique — les nœuds à nous sont toujours étendus (exemptés
- * du prune popularité), les nœuds adverses ne s'étendent que si le budget
- * restant couvre toutes les répliques en attente (discipline de réserve), et
- * nos positions à la limite de profondeur reçoivent une réplique de clôture
- * (+1 pli, enfant plafonné). Le budget reste un plafond dur.
+ * Garantie réplique (modes blancs/noirs) : les nœuds à nous sont toujours
+ * étendus (exemptés du prune popularité), les nœuds adverses ne s'étendent
+ * que si le budget restant couvre toutes les répliques en attente
+ * (discipline de réserve), et nos positions à la limite de profondeur
+ * reçoivent une réplique de clôture (+1 pli, enfant plafonné). À notre tour,
+ * Stockfish MultiPV tranche SANS nombre fixé : tous les coups équivalents
+ * sont explorés (le mieux en première variante, comme l'argmax trap score
+ * des Pièges), un coup dominant reste seul — chaque réplique émise reste
+ * couverte par la réserve. Le budget reste un plafond dur.
  * Sélection par couverture, profondeur adaptative (moyenne géométrique),
  * transpositions en graphe (masse sommée sur tous les chemins, profondeur
  * minimale, repriorisation des positions en attente), réplication récursive
@@ -1123,12 +1126,16 @@ export async function generateAutoRepertoire(
     }
     // Tri stable : mats d'abord, le reste garde l'ordre de couverture.
     selected.sort((a, b) => Number(isMateMove(b.move)) - Number(isMateMove(a.move)));
-    // Mode couleur : à notre tour, Stockfish choisit la réplique (le
-    // meilleur, départagé en creusant si le top-2 est serré ; repli coup
-    // le plus joué si aveugle).
-    // UNE SEULE réplique (contrat 1-coup des modes blancs/noirs). Si un mat est disponible à notre tour, la partie s'y
-    // termine : on ne garde QUE les mats (le « meilleur » coup sain est
-    // inatteignable, son sous-arbre consommerait du budget pour rien).
+    // Mode couleur : à notre tour, Stockfish tranche par MultiPV, SANS nombre
+    // fixé : on garde tous les coups équivalents au sens moteur (le BFS
+    // creuse ensuite chaque ligne via l'API et re-jugera en profondeur).
+    // +2.0 face à +0.5 (écart > fenêtre) → un seul gardé ; +1.6 / +1.5 /
+    // +1.4 (tous dans la fenêtre) → les trois explorés, le mieux (argmax
+    // moteur, comme l'argmax trap score des Pièges) en première variante.
+    // Repli coup le plus joué si aveugle. Si un mat est disponible à notre
+    // tour, la partie s'y termine : on ne garde QUE les mats (le « meilleur »
+    // coup sain est inatteignable, son sous-arbre consommerait du budget
+    // pour rien).
     if (isOwnTurnNode && selected.length > 0) {
       const mates = selected.filter((s) => isMateMove(s.move));
       const others = selected.filter((s) => !isMateMove(s.move));
@@ -1183,20 +1190,27 @@ export async function generateAutoRepertoire(
         await prefetchPromise;
         stats.engineWaitMs += Date.now() - engineStartedAt;
         if (judged) {
-          // Le juge rend les équivalents classés (meilleur d'abord pour les
-          // flèches live) mais l'arbre ne garde que le MEILLEUR : en mode
-          // blancs/noirs, à notre tour, on choisit une ligne (e4 OU d4, pas
-          // les deux). `judged` suit l'ordre candidats (popularité), on trie
-          // donc par valeur moteur pour extraire l'argmax.
+          // Le juge rend les équivalents classés (fenêtre ±30 cp, ex æquo
+          // départagés en creusant) : on les garde TOUS, triés meilleur
+          // d'abord — `judged` suit l'ordre candidats (popularité), on trie
+          // donc par valeur moteur pour extraire l'argmax en tête, comme
+          // les Pièges extraient l'argmax trap score. Le compte est
+          // dynamique : une seule réplique si un coup domine, plusieurs si
+          // le MultiPV les déclare équivalentes (Italienne ET Espagnole).
           const ranked = [...judged].sort((a, b) => b.value - a.value);
-          // Flèche finale = le coup retenu seul (l'arbre ne garde que lui).
-          const best = ranked[0];
+          // Flèches finales = les coups retenus (le mieux en premier).
           events.onEngineEval?.(
             fen,
-            [{ uci: best.candidate.uci, san: best.candidate.san, value: best.value }],
+            ranked.map((k) => ({ uci: k.candidate.uci, san: k.candidate.san, value: k.value })),
           );
-          const bestSel = others.find((s) => s.move === best.candidate) ?? others[0];
-          selected = [bestSel];
+          const keptMoves = new Set(ranked.map((k) => k.candidate));
+          selected = others.filter((s) => keptMoves.has(s.move));
+          // Ordre meilleur-d'abord (première variante = le mieux, comme Pièges).
+          selected.sort((a, b) => {
+            const va = ranked.find((k) => k.candidate === a.move)?.value ?? -Infinity;
+            const vb = ranked.find((k) => k.candidate === b.move)?.value ?? -Infinity;
+            return vb - va;
+          });
         } else {
           // Moteur aveugle/évincé ou dominant : le plus joué (others suit
           // l'ordre de couverture, popularité décroissante).
